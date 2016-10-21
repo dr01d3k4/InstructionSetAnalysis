@@ -1,0 +1,116 @@
+ben@ben-XPS-L701X:~/Documents/CompSciProject/HelloWorld/obj/Debug$ readelf -W -a  main.o
+ELF Header:
+  Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF64
+  Data:                              2's complement, little endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              REL (Relocatable file)
+  Machine:                           Advanced Micro Devices X86-64
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          0 (bytes into file)
+  Start of section headers:          1064 (bytes into file)
+  Flags:                             0x0
+  Size of this header:               64 (bytes)
+  Size of program headers:           0 (bytes)
+  Number of program headers:         0
+  Size of section headers:           64 (bytes)
+  Number of section headers:         21
+  Section header string table index: 18
+
+Section Headers:
+  [Nr] Name              Type            Address          Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            0000000000000000 000000 000000 00      0   0  0
+  [ 1] .text             PROGBITS        0000000000000000 000040 000015 00  AX  0   0  1
+  [ 2] .rela.text        RELA            0000000000000000 000b00 000030 18     19   1  8
+  [ 3] .data             PROGBITS        0000000000000000 000055 000000 00  WA  0   0  1
+  [ 4] .bss              NOBITS          0000000000000000 000055 000000 00  WA  0   0  1
+  [ 5] .rodata           PROGBITS        0000000000000000 000055 00000d 00   A  0   0  1
+  [ 6] .debug_info       PROGBITS        0000000000000000 000062 00009f 00      0   0  1
+  [ 7] .rela.debug_info  RELA            0000000000000000 000b30 0001c8 18     19   6  8
+  [ 8] .debug_abbrev     PROGBITS        0000000000000000 000101 000042 00      0   0  1
+  [ 9] .debug_aranges    PROGBITS        0000000000000000 000143 000030 00      0   0  1
+  [10] .rela.debug_aranges RELA            0000000000000000 000cf8 000030 18     19   9  8
+  [11] .debug_line       PROGBITS        0000000000000000 000173 000069 00      0   0  1
+  [12] .rela.debug_line  RELA            0000000000000000 000d28 000018 18     19  11  8
+  [13] .debug_str        PROGBITS        0000000000000000 0001dc 000138 01  MS  0   0  1
+  [14] .comment          PROGBITS        0000000000000000 000314 00002c 01  MS  0   0  1
+  [15] .note.GNU-stack   PROGBITS        0000000000000000 000340 000000 00      0   0  1
+  [16] .eh_frame         PROGBITS        0000000000000000 000340 000038 00   A  0   0  8
+  [17] .rela.eh_frame    RELA            0000000000000000 000d40 000018 18     19  16  8
+  [18] .shstrtab         STRTAB          0000000000000000 000378 0000b0 00      0   0  1
+  [19] .symtab           SYMTAB          0000000000000000 000968 000180 18     20  14  8
+  [20] .strtab           STRTAB          0000000000000000 000ae8 000012 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings), l (large)
+  I (info), L (link order), G (group), T (TLS), E (exclude), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+
+There are no section groups in this file.
+
+There are no program headers in this file.
+
+Relocation section '.rela.text' at offset 0xb00 contains 2 entries:
+    Offset             Info             Type               Symbol's Value  Symbol's Name + Addend
+0000000000000005  000000050000000a R_X86_64_32            0000000000000000 .rodata + 0
+000000000000000a  0000000f00000002 R_X86_64_PC32          0000000000000000 puts - 4
+
+Relocation section '.rela.debug_info' at offset 0xb30 contains 19 entries:
+    Offset             Info             Type               Symbol's Value  Symbol's Name + Addend
+0000000000000006  000000070000000a R_X86_64_32            0000000000000000 .debug_abbrev + 0
+000000000000000c  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + ac
+0000000000000011  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + 20
+0000000000000015  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + 7e
+0000000000000019  0000000200000001 R_X86_64_64            0000000000000000 .text + 0
+0000000000000029  000000090000000a R_X86_64_32            0000000000000000 .debug_line + 0
+0000000000000030  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + 55
+0000000000000037  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + ea
+000000000000003e  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + 106
+0000000000000045  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + e
+000000000000004c  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + 119
+0000000000000053  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + 125
+0000000000000061  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + fd
+0000000000000068  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + 12f
+000000000000006f  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + f8
+0000000000000076  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + 0
+000000000000007d  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + 67
+0000000000000082  0000000a0000000a R_X86_64_32            0000000000000000 .debug_str + 1b
+000000000000008c  0000000200000001 R_X86_64_64            0000000000000000 .text + 0
+
+Relocation section '.rela.debug_aranges' at offset 0xcf8 contains 2 entries:
+    Offset             Info             Type               Symbol's Value  Symbol's Name + Addend
+0000000000000006  000000060000000a R_X86_64_32            0000000000000000 .debug_info + 0
+0000000000000010  0000000200000001 R_X86_64_64            0000000000000000 .text + 0
+
+Relocation section '.rela.debug_line' at offset 0xd28 contains 1 entries:
+    Offset             Info             Type               Symbol's Value  Symbol's Name + Addend
+0000000000000058  0000000200000001 R_X86_64_64            0000000000000000 .text + 0
+
+Relocation section '.rela.eh_frame' at offset 0xd40 contains 1 entries:
+    Offset             Info             Type               Symbol's Value  Symbol's Name + Addend
+0000000000000020  0000000200000002 R_X86_64_PC32          0000000000000000 .text + 0
+
+The decoding of unwind sections for machine type Advanced Micro Devices X86-64 is not currently supported.
+
+Symbol table '.symtab' contains 16 entries:
+   Num:    Value          Size Type    Bind   Vis      Ndx Name
+     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS main.c
+     2: 0000000000000000     0 SECTION LOCAL  DEFAULT    1 
+     3: 0000000000000000     0 SECTION LOCAL  DEFAULT    3 
+     4: 0000000000000000     0 SECTION LOCAL  DEFAULT    4 
+     5: 0000000000000000     0 SECTION LOCAL  DEFAULT    5 
+     6: 0000000000000000     0 SECTION LOCAL  DEFAULT    6 
+     7: 0000000000000000     0 SECTION LOCAL  DEFAULT    8 
+     8: 0000000000000000     0 SECTION LOCAL  DEFAULT    9 
+     9: 0000000000000000     0 SECTION LOCAL  DEFAULT   11 
+    10: 0000000000000000     0 SECTION LOCAL  DEFAULT   13 
+    11: 0000000000000000     0 SECTION LOCAL  DEFAULT   15 
+    12: 0000000000000000     0 SECTION LOCAL  DEFAULT   16 
+    13: 0000000000000000     0 SECTION LOCAL  DEFAULT   14 
+    14: 0000000000000000    21 FUNC    GLOBAL DEFAULT    1 main
+    15: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND puts
+
+No version information found in this file.

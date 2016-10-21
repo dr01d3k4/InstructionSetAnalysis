@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1476797629 source:/home/ben/Documents/CompSciProject/ArrayLoop/main.c
+	<stdio.h>
+	<stdlib.h>
+

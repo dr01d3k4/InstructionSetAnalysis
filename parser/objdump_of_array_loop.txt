@@ -1,0 +1,122 @@
+ben@ben-XPS-L701X:~/Documents/CompSciProject/parser$ objdump -d array_loop.o 
+
+array_loop.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <main>:
+   0:	55                   	push   %rbp
+   1:	48 89 e5             	mov    %rsp,%rbp
+   4:	41 54                	push   %r12
+   6:	53                   	push   %rbx
+   7:	48 83 ec 20          	sub    $0x20,%rsp
+   b:	48 89 e6             	mov    %rsp,%rsi
+   e:	49 89 f4             	mov    %rsi,%r12
+  11:	c7 45 dc 0a 00 00 00 	movl   $0xa,-0x24(%rbp)
+  18:	8b 75 dc             	mov    -0x24(%rbp),%esi
+  1b:	48 63 f6             	movslq %esi,%rsi
+  1e:	48 83 ee 01          	sub    $0x1,%rsi
+  22:	48 89 75 e0          	mov    %rsi,-0x20(%rbp)
+  26:	8b 75 dc             	mov    -0x24(%rbp),%esi
+  29:	48 63 f6             	movslq %esi,%rsi
+  2c:	48 89 f1             	mov    %rsi,%rcx
+  2f:	bb 00 00 00 00       	mov    $0x0,%ebx
+  34:	8b 4d dc             	mov    -0x24(%rbp),%ecx
+  37:	48 63 c9             	movslq %ecx,%rcx
+  3a:	48 89 c8             	mov    %rcx,%rax
+  3d:	ba 00 00 00 00       	mov    $0x0,%edx
+  42:	8b 45 dc             	mov    -0x24(%rbp),%eax
+  45:	48 98                	cltq   
+  47:	48 c1 e0 02          	shl    $0x2,%rax
+  4b:	48 8d 50 03          	lea    0x3(%rax),%rdx
+  4f:	b8 10 00 00 00       	mov    $0x10,%eax
+  54:	48 83 e8 01          	sub    $0x1,%rax
+  58:	48 01 d0             	add    %rdx,%rax
+  5b:	bb 10 00 00 00       	mov    $0x10,%ebx
+  60:	ba 00 00 00 00       	mov    $0x0,%edx
+  65:	48 f7 f3             	div    %rbx
+  68:	48 6b c0 10          	imul   $0x10,%rax,%rax
+  6c:	48 29 c4             	sub    %rax,%rsp
+  6f:	48 89 e0             	mov    %rsp,%rax
+  72:	48 83 c0 03          	add    $0x3,%rax
+  76:	48 c1 e8 02          	shr    $0x2,%rax
+  7a:	48 c1 e0 02          	shl    $0x2,%rax
+  7e:	48 89 45 e8          	mov    %rax,-0x18(%rbp)
+  82:	c7 45 d8 00 00 00 00 	movl   $0x0,-0x28(%rbp)
+  89:	eb 17                	jmp    a2 <main+0xa2>
+  8b:	8b 45 d8             	mov    -0x28(%rbp),%eax
+  8e:	8d 48 01             	lea    0x1(%rax),%ecx
+  91:	48 8b 45 e8          	mov    -0x18(%rbp),%rax
+  95:	8b 55 d8             	mov    -0x28(%rbp),%edx
+  98:	48 63 d2             	movslq %edx,%rdx
+  9b:	89 0c 90             	mov    %ecx,(%rax,%rdx,4)
+  9e:	83 45 d8 01          	addl   $0x1,-0x28(%rbp)
+  a2:	8b 45 d8             	mov    -0x28(%rbp),%eax
+  a5:	3b 45 dc             	cmp    -0x24(%rbp),%eax
+  a8:	7c e1                	jl     8b <main+0x8b>
+  aa:	48 8b 45 e8          	mov    -0x18(%rbp),%rax
+  ae:	8b 55 dc             	mov    -0x24(%rbp),%edx
+  b1:	89 d6                	mov    %edx,%esi
+  b3:	48 89 c7             	mov    %rax,%rdi
+  b6:	e8 00 00 00 00       	callq  bb <main+0xbb>
+  bb:	48 8b 45 e8          	mov    -0x18(%rbp),%rax
+  bf:	8b 55 dc             	mov    -0x24(%rbp),%edx
+  c2:	89 d6                	mov    %edx,%esi
+  c4:	48 89 c7             	mov    %rax,%rdi
+  c7:	e8 00 00 00 00       	callq  cc <main+0xcc>
+  cc:	b8 00 00 00 00       	mov    $0x0,%eax
+  d1:	4c 89 e4             	mov    %r12,%rsp
+  d4:	48 8d 65 f0          	lea    -0x10(%rbp),%rsp
+  d8:	5b                   	pop    %rbx
+  d9:	41 5c                	pop    %r12
+  db:	5d                   	pop    %rbp
+  dc:	c3                   	retq   
+
+00000000000000dd <squareArray>:
+  dd:	55                   	push   %rbp
+  de:	48 89 e5             	mov    %rsp,%rbp
+  e1:	48 89 7d e8          	mov    %rdi,-0x18(%rbp)
+  e5:	89 75 e4             	mov    %esi,-0x1c(%rbp)
+  e8:	c7 45 fc 00 00 00 00 	movl   $0x0,-0x4(%rbp)
+  ef:	eb 1e                	jmp    10f <squareArray+0x32>
+  f1:	48 8b 45 e8          	mov    -0x18(%rbp),%rax
+  f5:	8b 10                	mov    (%rax),%edx
+  f7:	48 8b 45 e8          	mov    -0x18(%rbp),%rax
+  fb:	8b 00                	mov    (%rax),%eax
+  fd:	0f af d0             	imul   %eax,%edx
+ 100:	48 8b 45 e8          	mov    -0x18(%rbp),%rax
+ 104:	89 10                	mov    %edx,(%rax)
+ 106:	48 83 45 e8 04       	addq   $0x4,-0x18(%rbp)
+ 10b:	83 45 fc 01          	addl   $0x1,-0x4(%rbp)
+ 10f:	8b 45 fc             	mov    -0x4(%rbp),%eax
+ 112:	3b 45 e4             	cmp    -0x1c(%rbp),%eax
+ 115:	7c da                	jl     f1 <squareArray+0x14>
+ 117:	5d                   	pop    %rbp
+ 118:	c3                   	retq   
+
+0000000000000119 <printArray>:
+ 119:	55                   	push   %rbp
+ 11a:	48 89 e5             	mov    %rsp,%rbp
+ 11d:	48 83 ec 20          	sub    $0x20,%rsp
+ 121:	48 89 7d e8          	mov    %rdi,-0x18(%rbp)
+ 125:	89 75 e4             	mov    %esi,-0x1c(%rbp)
+ 128:	c7 45 fc 00 00 00 00 	movl   $0x0,-0x4(%rbp)
+ 12f:	eb 2b                	jmp    15c <printArray+0x43>
+ 131:	8b 45 fc             	mov    -0x4(%rbp),%eax
+ 134:	48 98                	cltq   
+ 136:	48 8d 14 85 00 00 00 	lea    0x0(,%rax,4),%rdx
+ 13d:	00 
+ 13e:	48 8b 45 e8          	mov    -0x18(%rbp),%rax
+ 142:	48 01 d0             	add    %rdx,%rax
+ 145:	8b 00                	mov    (%rax),%eax
+ 147:	89 c6                	mov    %eax,%esi
+ 149:	bf 00 00 00 00       	mov    $0x0,%edi
+ 14e:	b8 00 00 00 00       	mov    $0x0,%eax
+ 153:	e8 00 00 00 00       	callq  158 <printArray+0x3f>
+ 158:	83 45 fc 01          	addl   $0x1,-0x4(%rbp)
+ 15c:	8b 45 fc             	mov    -0x4(%rbp),%eax
+ 15f:	3b 45 e4             	cmp    -0x1c(%rbp),%eax
+ 162:	7c cd                	jl     131 <printArray+0x18>
+ 164:	c9                   	leaveq 
+ 165:	c3                   	retq  
