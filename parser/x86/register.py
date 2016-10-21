@@ -93,18 +93,24 @@ def getRegister(registerId, rexPrefix, applyBBit = True):
 
 	b = rexPrefix.getB();
 
-	if ((not applyBBit) or (b == 0)):
-		adjustedSize = 0;
-		if (dataSize == 16):
-			adjustedSize = 1;
-		elif (dataSize == 32):
-			adjustedSize = 2;
-		elif (dataSize == 64):
-			adjustedSize = 3;
+	adjustedSize = 0;
+	if (dataSize == 16):
+		adjustedSize = 1;
+	elif (dataSize == 32):
+		adjustedSize = 2;
+	elif (dataSize == 64):
+		adjustedSize = 3;
 
-		if (registerId == 4) or (registerId == 5):
-			adjustedSize = 3;
+	if (registerId == 4) or (registerId == 5):
+		adjustedSize = 3;
 			
-		return Registers[adjustedSize][registerId];
+
+	# if ((not applyBBit) or (b == 0)):
+	if (applyBBit):
+		if (not b):
+			return Registers[adjustedSize][registerId];
+		else:
+			return Registers[4][registerId];
+
 	else:
-		return Registers[4][registerId];
+		return Registers[adjustedSize][registerId];

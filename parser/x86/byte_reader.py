@@ -28,6 +28,13 @@ class ByteReader(object):
 	def currentlyRead(self):
 		return self._currentlyRead;
 
+	def goBack(self):
+		if (self._index > 0):
+			self._index = self._index - 1;
+
+		if (len(self._currentlyRead) > 0):
+			self._currentlyRead = self._currentlyRead[:-1];
+
 	def __repr__(self):
 		return "ByteReader(\n\t" + \
 			"bytes = " + bytesToHexString(self._bytes) + ", \n\t" + \

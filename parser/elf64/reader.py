@@ -7,13 +7,14 @@ from util.binary_file import BinaryFile;
 import util.endian as endian;
 import constant;
 
-
 """
 https://0xax.gitbooks.io/linux-insides/content/Theory/ELF.html
 
 https://github.com/torvalds/linux/blob/master/include/uapi/linux/elf.h
 
 https://uclibc.org/docs/elf-64-gen.pdf
+
+http://www.skyfree.org/linux/references/ELF_Format.pdf
 """
 
 # https://github.com/torvalds/linux/blob/master/include/uapi/linux/elf.h#L14

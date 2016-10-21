@@ -16,6 +16,7 @@ https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture
 
 In x86 manual:
 	Volume 2 starts on page 469
+	Instruction set contents starts on page 473
 	Chapter 2 starts on page 503
 	Format used in instruction set reference explained on page 572
 
@@ -108,14 +109,6 @@ baseMask  = rmMask;
 debugPrint = True;
 
 
-def readModRegRmByte(byte):
-	mod = (byte & modMask) >> 6;
-	reg = (byte & regMask) >> 3;
-	rm = (byte & rmMask) >> 0;
-
-	return mod, reg, rm;
-
-
 def readImmediateUnsigned(bytes, n):
 	byteArray = [ ];
 	for _ in xrange(n):
@@ -160,7 +153,50 @@ def readRegBottomOpcodeBits(byte, rexPrefix):
 	return Opcode(byte & top5BitsMask), operand.RegisterOperand(getRegister(byte & registerMask, rexPrefix));
 
 
-def decodeModRegRm(bytes, rexPrefix, readRmDisplacement = False, regIsOpcodeExtension = False):
+def readModRegRmByte(byte):
+	mod = (byte & modMask) >> 6;
+	reg = (byte & regMask) >> 3;
+	rm = (byte & rmMask) >> 0;
+
+	return mod, reg, rm;
+
+
+def readScaleIndexBaseByte(byte):
+	scale = (byte & scaleMask) >> 6;
+	index = (byte & indexMask) >> 3;
+	base = (byte & baseMask) >> 0;
+
+	return scale, index, base;
+
+
+def decodeScaleIndexBaseByte(bytes, rexPrefix):
+	scaleBits, indexBits, baseBits = readScaleIndexBaseByte(bytes.readByte()[0]);
+	print("Scale bits:", getDisplayByteString(scaleBits));
+	print("Index bits:" , getDisplayByteString(indexBits));
+	print("Base bits: ", getDisplayByteString(baseBits));
+
+	scale = 1;
+	if (scaleBits == 0b00):
+		scale = 1;
+	elif (scaleBits == 0b01):
+		scale = 2;
+	elif (scaleBits == 0b10):
+		scale = 4;
+	elif (scaleBits == 0b11):
+		scale = 8;
+
+	index = getRegister(indexBits, NoRexPrefix(64));
+	base = getRegister(baseBits, NoRexPrefix(64));
+
+	print("-");
+	print("Scale:", scale);
+	print("Index:", index);
+	print("Base:", base);
+
+	return scale, index, base;
+
+
+def decodeModRegRm(bytes, rexPrefix, readRmDisplacement = False, regIsOpcodeExtension = False, rmCanBe64 = True, flipSourceTarget = False, isRmDisplacement = False):
 	mod, reg, rm = readModRegRmByte(bytes.readByte()[0]);
 	print("Mod:", getDisplayByteString(mod));
 	print("Reg:" , getDisplayByteString(reg));
@@ -169,9 +205,12 @@ def decodeModRegRm(bytes, rexPrefix, readRmDisplacement = False, regIsOpcodeExte
 	operands = [ ];
 
 	if (mod == 0b11):
-		regRegister = getRegister(reg, rexPrefix, applyBBit = False);
-		operands.append(operand.RegisterOperand(regRegister));
+		if (not regIsOpcodeExtension):
+			regRegister = getRegister(reg, rexPrefix, applyBBit = False);
+			operands.append(operand.RegisterOperand(regRegister));
 
+		if ((not rmCanBe64) and (rexPrefix.getDataSize() == 64)):
+			rexPrefix.setDataSize(32);
 		rmRegister = getRegister(rm, rexPrefix);
 		operands.append(operand.RegisterOperand(rmRegister));
 
@@ -179,9 +218,23 @@ def decodeModRegRm(bytes, rexPrefix, readRmDisplacement = False, regIsOpcodeExte
 		regRegister = getRegister(reg, rexPrefix, applyBBit = False);
 		rmRegister = getRegister(rm, rexPrefix);
 
+		displacementRegister = rmRegister;
+		otherRegister = regRegister;
+
+		if (rm == 0b100):
+			print("Work out why SIB registers are wrong");
+			temp = displacementRegister;
+			displacementRegister = otherRegister;
+			otherRegister = temp;
+
 		modDisplacement = 0;
+
 		if (mod == 0b00):
-			rmOperand = operand.RegisterOperand(rmRegister);
+			# rmOperand = operand.RegisterOperand(displacementRegister);
+			if (isRmDisplacement):
+				rmOperand = operand.RegisterDisplacementOperand(displacementRegister, 0);
+			else:
+				rmOperand = operand.RegisterOperand(displacementRegister);
 		else:
 			if (mod == 0b01):
 				modDisplacement = readImmediate8Signed(bytes);
@@ -189,15 +242,28 @@ def decodeModRegRm(bytes, rexPrefix, readRmDisplacement = False, regIsOpcodeExte
 			elif (mod == 0b10):
 				modDisplacement = readImmediate32Signed(bytes);
 
-			rmOperand = operand.RegisterDisplacementOperand(rmRegister, modDisplacement);
+			rmOperand = operand.RegisterDisplacementOperand(displacementRegister, modDisplacement);
+
+		# print(rmOperand);
+
 
 		if (readRmDisplacement and (rm == 0b101)):
 			source = readImmediate32Signed(bytes);
 			operands.append(operand.ImmediateOperand(source));
+		elif (rm == 0b100):
+			scale, index, base = decodeScaleIndexBaseByte(bytes, rexPrefix);
+			operands.append(operand.ScaleIndexBaseOperand(scale, index, base));
+			print("Fix SIB param order flipped");
+			flipSourceTarget = True;
 		else:
-			operands.append(operand.RegisterOperand(regRegister));
+			if (not regIsOpcodeExtension):
+				operands.append(operand.RegisterOperand(otherRegister));
+				# operands.append(operand.RegisterDisplacementOperand(otherRegister, 0));
 
 		operands.append(rmOperand);
+
+		if (flipSourceTarget):
+			operands.reverse();
 
 	return operands;
 
@@ -275,7 +341,11 @@ def decodex86(bytes):
 		rexPrefix, byte = readRexPrefix(byte, bytes);
 		print("Next byte: " + getDisplayByteString(byte));
 
-		if (byte == 0x01):
+		if (byte == 0x00):
+			# nop
+			opcode = Opcode(byte);
+
+		elif (byte == 0x01):
 			# add r to rm
 			opcode = Opcode(byte);
 			operands = decodeModRegRm(bytes, rexPrefix);
@@ -287,9 +357,16 @@ def decodex86(bytes):
 			print("TODO: modregrm for 0x83");
 
 			opcode = Opcode(byte, reg);
-			register = operand.RegisterOperand(getRegister(rm, rexPrefix));
-			data = operand.ImmediateOperand(readImmediateSigned(bytes, 1));
-			operands = [data, register];
+			bytes.goBack();
+			operands = decodeModRegRm(bytes, rexPrefix, regIsOpcodeExtension = True);
+			data = readImmediate8Signed(bytes);
+			operands.append(operand.ImmediateOperand(data));
+			operands.reverse();
+
+
+			# register = operand.RegisterOperand(getRegister(rm, rexPrefix));
+			# data = operand.ImmediateOperand(readImmediateSigned(bytes, 1));
+			# operands = [data, register];
 
 		elif ((byte & top5BitsMask == opcodes.PUSH) or (byte & top5BitsMask == 0x58)):
 			# push register
@@ -299,13 +376,14 @@ def decodex86(bytes):
 			operands = [registerOperand];
 
 		elif ((byte == 0x89) or (byte == 0x8b)):
-			# 0x89 = mov r -> r/m
-			# 0x8b = mov r/m -> r
+			# 0x89 = mov r/m -> r
+			# 0x8b = mov r -> r/m
+			is8b = (byte == 0x8b);
 			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix);
+			operands = decodeModRegRm(bytes, rexPrefix, flipSourceTarget = is8b, isRmDisplacement = is8b);
 
-			if (byte == 0x8b):
-				operands.reverse();
+			# if (byte == 0x8b):
+			# 	operands.reverse();
 
 		elif (byte & top5BitsMask == 0xb8):
 			# mov imm32 -> r32
@@ -322,13 +400,29 @@ def decodex86(bytes):
 			# movsxd r64 -> r/m32 with rex.w
 			print("TODO: movsxd/movslq 0x63 32/64 bit");
 			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix);
+			operands = decodeModRegRm(bytes, rexPrefix, rmCanBe64 = False);
+			operands.reverse();
 
 		elif (byte == 0xe8):
 			# call near rel16/32
 			opcode = Opcode(byte);
 			data = readImmediate32Signed(bytes);
 			operands = [operand.ImmediateOperand(data)];
+
+
+		elif (byte == 0xeb):
+			# jmp rel8
+			opcode = Opcode(byte);
+			data = readImmediate8Signed(bytes);
+			operands = [operand.ImmediateOperand(data)];
+
+
+		elif (byte == 0x7c):
+			# jmp rel8
+			opcode = Opcode(byte);
+			data = readImmediate8Signed(bytes);
+			operands = [operand.ImmediateOperand(data)];
+
 
 		elif (byte == 0xc3):
 			# return near
@@ -338,10 +432,71 @@ def decodex86(bytes):
 			# leaveq
 			opcode = Opcode(byte);
 
+		elif (byte == 0x98):
+			# cltq
+			opcode = Opcode(byte);
+
+		elif (byte == 0xc1):
+			# rol/ror/rcl/rcr/shl/shr/sal/sar
+			# shift r/m by imm
+			modRegRmByte = bytes.readByte()[0];
+			mod, reg, rm = readModRegRmByte(modRegRmByte);
+			opcode = Opcode(byte, reg);
+			bytes.goBack();
+			operands = decodeModRegRm(bytes, rexPrefix, regIsOpcodeExtension = True);
+			data = readImmediate8Signed(bytes);
+			operands.append(operand.ImmediateOperand(data));
+			operands.reverse();
+
+		elif (byte == 0x8d):
+			# lea
+			opcode = Opcode(byte);
+			operands = decodeModRegRm(bytes, rexPrefix, flipSourceTarget = True);
+			print("For lea 0x8d, should rm (first param) always be 64 bit?");
+
+		elif (byte == 0xf7):
+			# test/test/not/neg/mul/imul/div/idiv
+			modRegRmByte = bytes.readByte()[0];
+			mod, reg, rm = readModRegRmByte(modRegRmByte);
+			opcode = Opcode(byte, reg);
+			bytes.goBack();
+			operands = decodeModRegRm(bytes, rexPrefix, readRmDisplacement = False, regIsOpcodeExtension = True);
+
+		elif (byte == 0x6b):
+			# imul
+			opcode = Opcode(byte);
+			operands = decodeModRegRm(bytes, rexPrefix);
+			data = readImmediate8Signed(bytes);
+			operands.append(operand.ImmediateOperand(data));
+			operands.reverse();
+
+		elif (byte == 0x29):
+			# sub
+			opcode = Opcode(byte);
+			operands = decodeModRegRm(bytes, rexPrefix);
+
+		elif (byte == 0x3b):
+			# cmp
+			opcode = Opcode(byte);
+			operands = decodeModRegRm(bytes, rexPrefix, flipSourceTarget = True);
+
+		elif (byte == 0x0f):
+			print("\tTwo byte opcode");
+			byte, _ = bytes.readByte();
+
+			opcodeByte = 0x0f00 | byte;
+			# print("\tOpcode byte:", getDisplayByteString(opcodeByte));
+			if (byte == 0xaf):
+				# imul
+				opcode = Opcode(opcodeByte);
+				operands = decodeModRegRm(bytes, rexPrefix, flipSourceTarget = True);
+
+
 		else:
 			print("\tRead unknown byte");
 			print("\t\tLocation: \t" + getDisplayByteString(startByte));
 			print("\t\tValue: \t\t" + getDisplayByteString(byte));
+			print("\t\tBytes read so far: " + bytesToHexString(bytes.currentlyRead, bytesBetweenSpaces = 1));
 			break;
 
 
@@ -350,6 +505,9 @@ def decodex86(bytes):
 			instructions.append(instruction);
 		else:
 			print("Opcode is None");
+			print("\t\tLocation: \t" + getDisplayByteString(startByte));
+			print("\t\tValue: \t\t" + getDisplayByteString(byte));
+			print("\t\tBytes read so far: " + bytesToHexString(bytes.currentlyRead, bytesBetweenSpaces = 1));
 			break;
 
 

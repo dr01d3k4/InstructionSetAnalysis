@@ -55,7 +55,7 @@ class RexPrefix(RexPrefixBase):
 		self._w = (dataSize == 64);
 
 	def getB(self):
-		return 1 if self._b else 0;
+		return True if self._b else False;
 
 	def __repr__(self):
 		return "RexPrefix(" + \
@@ -80,7 +80,7 @@ class NoRexPrefix(RexPrefixBase):
 		self._dataSize = dataSize;
 
 	def getB(self):
-		return 0;
+		return False;
 
 	def __repr__(self):
 		return "NoRexPrefix(dataSize = " + str(self._dataSize) + ")";

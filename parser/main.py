@@ -7,13 +7,20 @@ import math;
 
 
 """
-https://0xax.gitbooks.io/linux-insides/content/Theory/ELF.html
+TODO:
 
-https://github.com/torvalds/linux/blob/master/include/uapi/linux/elf.h
 
-https://uclibc.org/docs/elf-64-gen.pdf
+In array_loop:
+	0x104
+		Why is rax a memory access for opcode 89?
+		Source/target flipped compared to opcode 8b which has the first param be a memory access.
 
-http://www.skyfree.org/linux/references/ELF_Format.pdf
+	0x136
+		Why are operands flipped?
+		Why is the base blank?
+		What's with the 0s
+
+
 """
 
 
