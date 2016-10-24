@@ -6,22 +6,44 @@ from x86.decoder import decodex86;
 import math;
 
 
-"""
-TODO:
+def printInstructions(instructions, showInstructionDetails = False):
+	if (len(instructions) == 0):
+		print("No instructions");
+		return;
 
+	lastInstructionStartByte = instructions[-1][0];
+	startByteLength = len(byteToHexStringSpaceAlign(lastInstructionStartByte));
 
-In array_loop:
-	0x104
-		Why is rax a memory access for opcode 89?
-		Source/target flipped compared to opcode 8b which has the first param be a memory access.
+	maxInstructionLength = 0;
+	maxOpcodeLength = 0;
+	for _, instructionBytes, instruction in instructions:
+		instructionLength = len(instructionBytes);
+		if (instructionLength > maxInstructionLength):
+			maxInstructionLength = instructionLength;
 
-	0x136
-		Why are operands flipped?
-		Why is the base blank?
-		What's with the 0s
+		opcodeLength = len(instruction.opcode.name);
+		if (opcodeLength > maxOpcodeLength):
+			maxOpcodeLength = opcodeLength;
 
+	for startByte, instructionBytes, instruction in instructions:
+		s = "";
+		s += byteToHexStringSpaceAlign(startByte, length = startByteLength);
+		s += ": ";
 
-"""
+		bytesString = bytesToHexString(instructionBytes, bytesBetweenSpaces = 1);
+		# 3 because 2 hex chars for 1 byte + 1 space char
+		while (len(bytesString) < maxInstructionLength * 3):
+			bytesString += " ";
+
+		s += bytesString;
+		s += " ";
+		s += instruction.toString(maxOpcodeLength);
+		print(s);
+
+		if (showInstructionDetails):
+			print(repr(instruction));
+			if (startByte != lastInstructionStartByte):
+				print("-" * 80);
 
 
 def decodeObjectFile(fileLocation):
@@ -50,27 +72,8 @@ def decodeObjectFile(fileLocation):
 
 	print("");
 	print("Decoded");
-	if (len(instructions) > 0):
-		lastInstructionStartByte = instructions[-1].startByte;
-		startByteLength = len(byteToHexStringSpaceAlign(lastInstructionStartByte));
-
-		maxInstructionLength = 0;
-		maxOpcodeLength = 0;
-		for instruction in instructions:
-			instructionLength = len(instruction.bytes);
-			if (instructionLength > maxInstructionLength):
-				maxInstructionLength = instructionLength;
-
-			opcodeLength = len(instruction.opcode.name);
-			if (opcodeLength > maxOpcodeLength):
-				maxOpcodeLength = opcodeLength;
-
-		for instruction in instructions:
-			instructionString = instruction.toString(startByteLength, maxInstructionLength, maxOpcodeLength);
-			print(instructionString);
-
-	else:
-		print("No instructions");
+	
+	printInstructions(instructions);
 
 	print("");
 	print("Done");

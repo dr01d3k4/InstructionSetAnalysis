@@ -80,7 +80,7 @@ Registers = [
 ];
 
 
-def getRegister(registerId, rexPrefix, applyBBit = True):
+def getRegister(registerId, rexPrefix, adjustingBit = False):
 	if ((registerId < 0) or (registerId >= 8)):
 		print("Invalid register:", registerId);
 		return None;
@@ -90,8 +90,6 @@ def getRegister(registerId, rexPrefix, applyBBit = True):
 	if ((dataSize != 8) and (dataSize != 16) and (dataSize != 32) and (dataSize != 64)):
 		print("Invalid data size:", dataSize);
 		return None;
-
-	b = rexPrefix.getB();
 
 	adjustedSize = 0;
 	if (dataSize == 16):
@@ -103,14 +101,24 @@ def getRegister(registerId, rexPrefix, applyBBit = True):
 
 	if (registerId == 4) or (registerId == 5):
 		adjustedSize = 3;
-			
 
-	# if ((not applyBBit) or (b == 0)):
-	if (applyBBit):
-		if (not b):
-			return Registers[adjustedSize][registerId];
-		else:
-			return Registers[4][registerId];
-
+	if (adjustingBit):
+		return Registers[4][registerId];
 	else:
 		return Registers[adjustedSize][registerId];
+
+
+def getRegRegister(registerId, rexPrefix):
+	return getRegister(registerId, rexPrefix, rexPrefix.getR());
+
+
+def getRmRegister(registerId, rexPrefix):
+	return getRegister(registerId, rexPrefix, rexPrefix.getB());
+
+
+def getBaseRegister(registerId, rexPrefix):
+	return getRegister(registerId, rexPrefix, rexPrefix.getB());
+
+
+def getIndexRegister(registerId, rexPrefix):
+	return getRegister(registerId, rexPrefix, rexPrefix.getX());

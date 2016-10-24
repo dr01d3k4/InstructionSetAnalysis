@@ -1,21 +1,7 @@
-from util.byte_util import byteToHexStringSpaceAlign, bytesToHexString;
-
-
 class Instruction(object):
-	def __init__(self, startByte, bytes, opcode, operands):
-		self._startByte = startByte;
-		self._bytes = bytes;
+	def __init__(self, opcode, operands):
 		self._opcode = opcode;
 		self._operands = operands;
-
-
-	@property
-	def startByte(self):
-		return self._startByte;
-
-	@property
-	def bytes(self):
-		return self._bytes;
 
 	@property
 	def opcode(self):
@@ -29,24 +15,12 @@ class Instruction(object):
 		return "Instruction()";
 
 
-	def toString(self, startByteLength, maxBytesPerInstruction, maxOpcodeLength):
-		s = "";
-		s += byteToHexStringSpaceAlign(self._startByte, length = startByteLength);
-		s += ": ";
-
-		bytesString = bytesToHexString(self._bytes, bytesBetweenSpaces = 1);
-		# 3 because 2 hex chars for 1 byte + 1 space char
-		while (len(bytesString) < maxBytesPerInstruction * 3):
-			bytesString += " ";
-
-		s += bytesString;
-		s += " ";
+	def toString(self, maxOpcodeLength = 0):
+		s = self._opcode.name;
 
 		if (len(self._operands) > 0):
-			opcode = self._opcode.name;
-			while (len(opcode) < maxOpcodeLength):
-				opcode += " ";
-			s += opcode;
+			while (len(s) < maxOpcodeLength):
+				s += " ";
 			s += "  ";
 
 			for operand in self._operands:
@@ -54,11 +28,25 @@ class Instruction(object):
 				s += ", ";
 			
 			s = s[:-2];
-		else:
-			s += self._opcode.name;
 
 		return s;
 
 
 	def __str__(self):
-		return self.toString(8, 16, 0);
+		return self.toString(0);
+
+
+	def __repr__(self):
+		s = "Instruction(\n";
+		s += "\topcode = " + repr(self._opcode) + "\n";
+		s += "\toperands = [";
+		if (len(self._operands) > 0):
+			for operand in self._operands:
+				s += "\n\t\t" + repr(operand);
+				s += ",";
+			s = s[:-1];
+			s += "\n\t";
+		s += "]\n";
+		s += ")";
+
+		return s;

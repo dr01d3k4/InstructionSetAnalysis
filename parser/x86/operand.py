@@ -2,15 +2,24 @@ from abc import ABCMeta;
 
 
 def immediateValueToString(value):
-	s = hex(value);
-	# if (s[0] != '-'):
-	# 	s = "$" + s;
-	s = "$" + s;
-	return s;
+	return "$" + hex(value);
 
 
 def registerValueToString(register):
 	return "%" + str(register);
+
+
+def scaleIndexBaseToString(scale, index, base):
+	sib = "(";
+	if (base != None):
+		sib += registerValueToString(base);
+	sib += ", ";
+	if (index != None):
+		sib += registerValueToString(index);
+	sib += ", ";
+	sib += str(scale);
+	sib += ")";
+	return sib;
 
 
 
@@ -47,7 +56,7 @@ class ImmediateOperand(Operand):
 		self._value = value;
 
 	def __repr__(self):
-		return "ImediateOperand(value = " + repr(self._value) + ")";
+		return "ImmediateOperand(value = " + repr(self._value) + ")";
 
 	def __str__(self):
 		return immediateValueToString(self._value);
@@ -61,7 +70,7 @@ class RegisterDisplacementOperand(Operand):
 		self._displacement = displacement;
 
 	def __repr__(self):
-		return "RegisterDisplacementOperand(register = " + repr(self._register) + ", displaceement = " + repr(self._displacement) + ")";
+		return "RegisterDisplacementOperand(register = " + repr(self._register) + ", displacement = " + repr(self._displacement) + ")";
 
 	def __str__(self):
 		if (self._displacement == 0):
@@ -86,4 +95,37 @@ class ScaleIndexBaseOperand(Operand):
 				"base = " + repr(self._base) + ")";
 
 	def __str__(self):
-		return "(" + registerValueToString(self._base) + ", " + registerValueToString(self._index) + ", " + str(self._scale) + ")";
+		return scaleIndexBaseToString(self._scale, self._index, self._base);
+
+
+class ScaleIndexBaseDisplacementOperand(Operand):
+	def __init__(self, scale, index, base, displacement):
+		super(Operand, self).__init__();
+
+		self._scale = scale;
+		self._index = index;
+		self._base = base;
+		self._displacement = displacement;
+
+	def __repr__(self):
+		return "ScaleIndexBaseDisplacementOperand(" \
+				"scale = " + str(self._scale) + ", " + \
+				"index = " + repr(self._index) + ", " + \
+				"base = " + repr(self._base) + ", " + \
+				"displacement = " + repr(self._displacement) + ")";
+
+	def __str__(self):
+		return immediateValueToString(self._displacement)[1:] + scaleIndexBaseToString(self._scale, self._index, self._base);
+
+
+class ImmediateDisplacementOperand(Operand):
+	def __init__(self, value):
+		super(Operand, self).__init__();
+
+		self._value = value;
+
+	def __repr__(self):
+		return "ImmediateDisplacementOperand(value = " + repr(self._value) + ")";
+
+	def __str__(self):
+		return "(" + immediateValueToString(self._value) + ")";

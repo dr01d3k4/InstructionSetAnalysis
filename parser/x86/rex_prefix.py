@@ -13,6 +13,18 @@ class RexPrefixBase(object):
 		return;
 
 	@abc.abstractmethod
+	def getW(self):
+		return;
+
+	@abc.abstractmethod
+	def getR(self):
+		return;
+
+	@abc.abstractmethod
+	def getX(self):
+		return;
+
+	@abc.abstractmethod
 	def getB(self):
 		return;
 
@@ -54,6 +66,15 @@ class RexPrefix(RexPrefixBase):
 	def setDataSize(self, dataSize):
 		self._w = (dataSize == 64);
 
+	def getW(self):
+		return True if self._w else False;
+
+	def getR(self):
+		return True if self._r else False;
+
+	def getX(self):
+		return True if self._x else False;
+
 	def getB(self):
 		return True if self._b else False;
 
@@ -78,6 +99,15 @@ class NoRexPrefix(RexPrefixBase):
 
 	def setDataSize(self, dataSize):
 		self._dataSize = dataSize;
+
+	def getW(self):
+		return False;
+
+	def getR(self):
+		return False;
+
+	def getX(self):
+		return False;
 
 	def getB(self):
 		return False;

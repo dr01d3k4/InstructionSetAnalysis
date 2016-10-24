@@ -1,5 +1,5 @@
 from __future__ import print_function;
-from register import getRegister;
+from register import getRegRegister, getRmRegister, getBaseRegister, getIndexRegister;
 from util.byte_util import bytesToHexString, byteToHexString, byteToBinaryString, getDisplayByteString;
 from byte_reader import ByteReader;
 from instruction import Instruction;
@@ -106,7 +106,24 @@ scaleMask = modMask;
 indexMask = regMask;
 baseMask  = rmMask;
 
-debugPrint = True;
+shouldPrintDebug = False;
+shouldPrintTodo = True;
+
+
+def debugPrint(*args, **kwargs):
+	if (shouldPrintDebug):
+		print(*args, **kwargs);
+
+
+def todoPrint(*args, **kwargs):
+	if (shouldPrintTodo):
+		print("TODO:", *args, **kwargs);
+
+
+def twosComplement(n, bits):
+	if ((n & (1 << (bits - 1))) != 0):
+		n -= (1 << bits);
+	return n;
 
 
 def readImmediateUnsigned(bytes, n):
@@ -124,12 +141,6 @@ def readImmediateUnsigned(bytes, n):
 
 	i >>= 8;
 	return i;
-
-
-def twosComplement(n, bits):
-	if ((n & (1 << (bits - 1))) != 0):
-		n -= (1 << bits);
-	return n;
 
 
 def readImmediateSigned(bytes, n):
@@ -150,7 +161,7 @@ def readImmediate32Unsigned(bytes):
 
 
 def readRegBottomOpcodeBits(byte, rexPrefix):
-	return Opcode(byte & top5BitsMask), operand.RegisterOperand(getRegister(byte & registerMask, rexPrefix));
+	return Opcode(byte & top5BitsMask), operand.RegisterOperand(getRmRegister(byte & registerMask, rexPrefix));
 
 
 def readModRegRmByte(byte):
@@ -169,11 +180,10 @@ def readScaleIndexBaseByte(byte):
 	return scale, index, base;
 
 
-def decodeScaleIndexBaseByte(bytes, rexPrefix):
-	scaleBits, indexBits, baseBits = readScaleIndexBaseByte(bytes.readByte()[0]);
-	print("Scale bits:", getDisplayByteString(scaleBits));
-	print("Index bits:" , getDisplayByteString(indexBits));
-	print("Base bits: ", getDisplayByteString(baseBits));
+def decodeScaleIndexBaseByte(scaleBits, indexBits, baseBits, rexPrefix):
+	debugPrint("Scale bits:", getDisplayByteString(scaleBits));
+	debugPrint("Index bits:" , getDisplayByteString(indexBits));
+	debugPrint("Base bits: ", getDisplayByteString(baseBits));
 
 	scale = 1;
 	if (scaleBits == 0b00):
@@ -185,84 +195,158 @@ def decodeScaleIndexBaseByte(bytes, rexPrefix):
 	elif (scaleBits == 0b11):
 		scale = 8;
 
-	index = getRegister(indexBits, NoRexPrefix(64));
-	base = getRegister(baseBits, NoRexPrefix(64));
-
-	print("-");
-	print("Scale:", scale);
-	print("Index:", index);
-	print("Base:", base);
+	index = getIndexRegister(indexBits, NoRexPrefix(64));
+	base = getBaseRegister(baseBits, NoRexPrefix(64));
 
 	return scale, index, base;
 
 
-def decodeModRegRm(bytes, rexPrefix, readRmDisplacement = False, regIsOpcodeExtension = False, rmCanBe64 = True, flipSourceTarget = False, isRmDisplacement = False):
-	mod, reg, rm = readModRegRmByte(bytes.readByte()[0]);
-	print("Mod:", getDisplayByteString(mod));
-	print("Reg:" , getDisplayByteString(reg));
-	print("Rm: ", getDisplayByteString(rm));
+def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = False, readImmediateBytes = 0):
+	debugPrint("Reading modregrm");
+	debugPrint("Rm is source:", str(rmIsSource));
+	debugPrint("Reg is opcode extension:", str(regIsOpcodeExtension));
+	debugPrint("Rex prefix:", repr(rexPrefix));
+
+	modRegRmByte = bytes.readByte()[0];
+	mod, reg, rm = readModRegRmByte(modRegRmByte);
+
+	debugPrint("");
+	debugPrint("Byte:", getDisplayByteString(modRegRmByte));
+	debugPrint("Mod: ", getDisplayByteString(mod));
+	debugPrint("Reg: " , getDisplayByteString(reg));
+	debugPrint("Rm:  ", getDisplayByteString(rm));
+
+	regRegister = getRegRegister(reg, rexPrefix);
+	rmRegister = getRmRegister(rm, rexPrefix);
+
+	debugPrint("");
+	debugPrint("Reg register:", repr(regRegister));
+	debugPrint("Rm register: ", repr(rmRegister));
+	debugPrint("");
 
 	operands = [ ];
 
 	if (mod == 0b11):
-		if (not regIsOpcodeExtension):
-			regRegister = getRegister(reg, rexPrefix, applyBBit = False);
-			operands.append(operand.RegisterOperand(regRegister));
-
-		if ((not rmCanBe64) and (rexPrefix.getDataSize() == 64)):
-			rexPrefix.setDataSize(32);
-		rmRegister = getRegister(rm, rexPrefix);
-		operands.append(operand.RegisterOperand(rmRegister));
+		if (regIsOpcodeExtension):
+			operands.append(operand.RegisterOperand(rmRegister));
+		else:
+			if (rmIsSource):
+				operands.append(operand.RegisterOperand(rmRegister));
+				operands.append(operand.RegisterOperand(regRegister));
+			else:
+				operands.append(operand.RegisterOperand(regRegister));
+				operands.append(operand.RegisterOperand(rmRegister));
 
 	else:
-		regRegister = getRegister(reg, rexPrefix, applyBBit = False);
-		rmRegister = getRegister(rm, rexPrefix);
-
-		displacementRegister = rmRegister;
-		otherRegister = regRegister;
-
-		if (rm == 0b100):
-			print("Work out why SIB registers are wrong");
-			temp = displacementRegister;
-			displacementRegister = otherRegister;
-			otherRegister = temp;
+		# http://wiki.osdev.org/X86-64_Instruction_Encoding#32.2F64-bit_addressing
+		# http://wiki.osdev.org/X86-64_Instruction_Encoding#32.2F64-bit_addressing_2
 
 		modDisplacement = 0;
+		if (mod == 0b01):
+			modDisplacement = readImmediate8Signed(bytes);
+		elif (mod == 0b10):
+			modDisplacement = readImmediate32Signed(bytes);
 
-		if (mod == 0b00):
-			# rmOperand = operand.RegisterOperand(displacementRegister);
-			if (isRmDisplacement):
-				rmOperand = operand.RegisterDisplacementOperand(displacementRegister, 0);
+		if (mod != 0b00):
+			debugPrint("Mod displacement:", getDisplayByteString(modDisplacement));
+
+		rmDisplacement = 0;
+		regOperand = None;
+		shouldReadRmDisplacement = False;
+		if (rm == 0b101):
+			if (mod == 0b00):
+				shouldReadRmDisplacement = True;
+			if (regIsOpcodeExtension):
+				shouldReadRmDisplacement = True;
+			if (readImmediateBytes > 0):
+				todoPrint("Read immediate bytes overriding read rm displacement hack");
+				shouldReadRmDisplacement = False;
+
+		if (shouldReadRmDisplacement):
+			rmDisplacement = readImmediate32Signed(bytes);
+			debugPrint("Rm displacement: ", getDisplayByteString(rmDisplacement));
+			regOperand = operand.ImmediateOperand(rmDisplacement);
+		else:
+			if (readImmediateBytes == 0):
+				regOperand = operand.RegisterOperand(regRegister);
+
+	
+
+		rmOperand = None;
+		if (rm == 0b100):
+			todoPrint("Check handling of SIB is correct in modregrm decoder");
+
+			sibBits = readScaleIndexBaseByte(bytes.readByte()[0]);
+			scaleBits = sibBits[0];
+			indexBits = sibBits[1];
+			baseBits = sibBits[2];
+
+			sib = decodeScaleIndexBaseByte(scaleBits, indexBits, baseBits, rexPrefix);
+			scale = sib[0];
+			index = sib[1];
+			base = sib[2];
+
+			debugPrint("SIB bits:", sibBits);
+			debugPrint("SIB:", sib);
+			debugPrint("");
+
+			indexIsSP = ((indexBits == 0b100) and (not rexPrefix.getX()));
+
+			if (mod != 0b00):
+				if (indexIsSP):
+					rmOperand = operand.RegisterDisplacementOperand(base, modDisplacement);
+				else:
+					rmOperand = operand.ScaleIndexBaseDisplacementOperand(scale, index, base, modDisplacement);
 			else:
-				rmOperand = operand.RegisterOperand(displacementRegister);
+				if (baseBits == 0b101):
+					baseDisplacement = readImmediate32Signed(bytes);
+					debugPrint("Base displacement: ", getDisplayByteString(rmDisplacement));
+				
+					if (indexIsSP):
+						rmOperand = operand.ImmediateDisplacementOperand(baseDisplacement);
+					else:
+						rmOperand = operand.ScaleIndexBaseDisplacementOperand(scale, index, None, baseDisplacement);
+						
+				else:
+					if (indexIsSP):
+						rmOperand = operand.RegisterDisplacementOperand(base);
+					else:
+						rmOperand = operand.ScaleIndexBaseOperand(scale, index, base);
 		else:
-			if (mod == 0b01):
-				modDisplacement = readImmediate8Signed(bytes);
+			if (mod != 0b00):
+				rmOperand = operand.RegisterDisplacementOperand(rmRegister, modDisplacement);
+			else:
+				rmOperand = operand.RegisterDisplacementOperand(rmRegister, 0);
 
-			elif (mod == 0b10):
-				modDisplacement = readImmediate32Signed(bytes);
+		debugPrint("Reg operand:", repr(regOperand));
+		debugPrint("Rm operand: ", repr(rmOperand));
 
-			rmOperand = operand.RegisterDisplacementOperand(displacementRegister, modDisplacement);
+		if (rmIsSource):
+			if (rmOperand != None):
+				operands.append(rmOperand);
 
-		# print(rmOperand);
+			if (regOperand != None):
+				operands.append(regOperand);
 
-
-		if (readRmDisplacement and (rm == 0b101)):
-			source = readImmediate32Signed(bytes);
-			operands.append(operand.ImmediateOperand(source));
-		elif (rm == 0b100):
-			scale, index, base = decodeScaleIndexBaseByte(bytes, rexPrefix);
-			operands.append(operand.ScaleIndexBaseOperand(scale, index, base));
-			print("Fix SIB param order flipped");
-			flipSourceTarget = True;
 		else:
-			if (not regIsOpcodeExtension):
-				operands.append(operand.RegisterOperand(otherRegister));
-				# operands.append(operand.RegisterDisplacementOperand(otherRegister, 0));
+			if (regOperand != None):
+				operands.append(regOperand);
+			
+			if (rmOperand != None):
+				operands.append(rmOperand);
 
-		operands.append(rmOperand);
+	if (readImmediateBytes > 0):
+		debugPrint("Reading " + str(readImmediateBytes) + " bytes of immediate");
+		immediate = readImmediateSigned(bytes, readImmediateBytes);
+		immediateOperand = operand.ImmediateOperand(immediate);
 
-		if (flipSourceTarget):
+		debugPrint("Immediate:", getDisplayByteString(immediate));
+		debugPrint("Operand:  ", repr(immediateOperand));
+
+		operands.append(immediateOperand);
+
+		if (not rmIsSource):
+			debugPrint("Rm is not source, flipping operands");
 			operands.reverse();
 
 	return operands;
@@ -284,31 +368,25 @@ def readRexPrefix(prefixByte, bytes):
 		REX_X = 2;
 		REX_B = 3;
 
-		if (debugPrint):
-			print("\tReading REX prefix: " + getDisplayByteString(prefixByte));
+		debugPrint("\tReading REX prefix: " + getDisplayByteString(prefixByte));
 
 		if (prefixByte & 0x08):
-			if (debugPrint):
-				print("\t\tRead REX.W prefix");
+			debugPrint("\t\tRead REX.W prefix");
 			rexPrefixArray[REX_W] = True;
 
 		if (prefixByte & 0x04 != 0):
-			if (debugPrint):
-				print("\tRead REX.R prefix");
+			debugPrint("\tRead REX.R prefix");
 			rexPrefixArray[REX_R] = True;
 
 		if (prefixByte & 0x02 != 0):
-			if (debugPrint):
-				print("\tRead REX.X prefix");
+			debugPrint("\tRead REX.X prefix");
 			rexPrefixArray[REX_X] = True;
 
 		if (prefixByte & 0x01 != 0):
-			if (debugPrint):
-				print("\tRead REX.B prefix");
+			debugPrint("\tRead REX.B prefix");
 			rexPrefixArray[REX_B] = True;
 
 		rexPrefix = RexPrefix(*rexPrefixArray);
-		# rexPrefix = RexPrefix(rexPrefixArray[REX_W], rexPrefixArray[REX_R], rexPrefixArray[REX_X], rexPrefixArray[REX_B]);
 
 	return rexPrefix, byte;
 
@@ -334,12 +412,10 @@ def decodex86(bytes):
 		if (byte == None):
 			break;
 
-		if (debugPrint):
-			print("");
-			print("Reading instruction starting at " + getDisplayByteString(startByte));
+		debugPrint("");
+		debugPrint("Reading instruction starting at " + getDisplayByteString(startByte));
 
 		rexPrefix, byte = readRexPrefix(byte, bytes);
-		print("Next byte: " + getDisplayByteString(byte));
 
 		if (byte == 0x00):
 			# nop
@@ -348,30 +424,20 @@ def decodex86(bytes):
 		elif (byte == 0x01):
 			# add r to rm
 			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix);
+			operands = decodeModRegRm(bytes, rexPrefix, rmIsSource = False);
 
 		elif (byte == 0x83):
 			# add/or/adc/sbb/and/sub/xor/cmp
 			# imm8 to r/m16/32
 			mod, reg, rm = readModRegRmByte(bytes.readByte()[0]);
-			print("TODO: modregrm for 0x83");
-
 			opcode = Opcode(byte, reg);
 			bytes.goBack();
-			operands = decodeModRegRm(bytes, rexPrefix, regIsOpcodeExtension = True);
-			data = readImmediate8Signed(bytes);
-			operands.append(operand.ImmediateOperand(data));
-			operands.reverse();
-
-
-			# register = operand.RegisterOperand(getRegister(rm, rexPrefix));
-			# data = operand.ImmediateOperand(readImmediateSigned(bytes, 1));
-			# operands = [data, register];
+			operands = decodeModRegRm(bytes, rexPrefix, rmIsSource = False, regIsOpcodeExtension = True, readImmediateBytes = 1);
 
 		elif ((byte & top5BitsMask == opcodes.PUSH) or (byte & top5BitsMask == 0x58)):
 			# push register
 			# pop register
-			rexPrefix.setDataSize(64);
+			# rexPrefix.setDataSize(64);
 			opcode, registerOperand = readRegBottomOpcodeBits(byte, rexPrefix);
 			operands = [registerOperand];
 
@@ -380,10 +446,7 @@ def decodex86(bytes):
 			# 0x8b = mov r -> r/m
 			is8b = (byte == 0x8b);
 			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix, flipSourceTarget = is8b, isRmDisplacement = is8b);
-
-			# if (byte == 0x8b):
-			# 	operands.reverse();
+			operands = decodeModRegRm(bytes, rexPrefix, rmIsSource = is8b);
 
 		elif (byte & top5BitsMask == 0xb8):
 			# mov imm32 -> r32
@@ -394,14 +457,12 @@ def decodex86(bytes):
 		elif (byte == 0xc7):
 			# mov imm32 -> rm32
 			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix, readRmDisplacement = True, regIsOpcodeExtension = True);
+			operands = decodeModRegRm(bytes, rexPrefix, regIsOpcodeExtension = True, rmIsSource = False);
 
 		elif (byte == 0x63):
 			# movsxd r64 -> r/m32 with rex.w
-			print("TODO: movsxd/movslq 0x63 32/64 bit");
 			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix, rmCanBe64 = False);
-			operands.reverse();
+			operands = decodeModRegRm(bytes, rexPrefix, rmIsSource = False);
 
 		elif (byte == 0xe8):
 			# call near rel16/32
@@ -443,16 +504,12 @@ def decodex86(bytes):
 			mod, reg, rm = readModRegRmByte(modRegRmByte);
 			opcode = Opcode(byte, reg);
 			bytes.goBack();
-			operands = decodeModRegRm(bytes, rexPrefix, regIsOpcodeExtension = True);
-			data = readImmediate8Signed(bytes);
-			operands.append(operand.ImmediateOperand(data));
-			operands.reverse();
+			operands = decodeModRegRm(bytes, rexPrefix, rmIsSource = False, regIsOpcodeExtension = True, readImmediateBytes = 1);
 
 		elif (byte == 0x8d):
 			# lea
 			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix, flipSourceTarget = True);
-			print("For lea 0x8d, should rm (first param) always be 64 bit?");
+			operands = decodeModRegRm(bytes, rexPrefix);
 
 		elif (byte == 0xf7):
 			# test/test/not/neg/mul/imul/div/idiv
@@ -460,36 +517,33 @@ def decodex86(bytes):
 			mod, reg, rm = readModRegRmByte(modRegRmByte);
 			opcode = Opcode(byte, reg);
 			bytes.goBack();
-			operands = decodeModRegRm(bytes, rexPrefix, readRmDisplacement = False, regIsOpcodeExtension = True);
+			operands = decodeModRegRm(bytes, rexPrefix, regIsOpcodeExtension = True);
 
 		elif (byte == 0x6b):
 			# imul
 			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix);
-			data = readImmediate8Signed(bytes);
-			operands.append(operand.ImmediateOperand(data));
-			operands.reverse();
+			operands = decodeModRegRm(bytes, rexPrefix, rmIsSource = False, readImmediateBytes = 1);
 
 		elif (byte == 0x29):
 			# sub
 			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix);
+			operands = decodeModRegRm(bytes, rexPrefix, rmIsSource = False);
 
 		elif (byte == 0x3b):
 			# cmp
 			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix, flipSourceTarget = True);
+			operands = decodeModRegRm(bytes, rexPrefix);
 
 		elif (byte == 0x0f):
-			print("\tTwo byte opcode");
+			debugPrint("\tTwo byte opcode");
 			byte, _ = bytes.readByte();
 
 			opcodeByte = 0x0f00 | byte;
-			# print("\tOpcode byte:", getDisplayByteString(opcodeByte));
+
 			if (byte == 0xaf):
 				# imul
 				opcode = Opcode(opcodeByte);
-				operands = decodeModRegRm(bytes, rexPrefix, flipSourceTarget = True);
+				operands = decodeModRegRm(bytes, rexPrefix);
 
 
 		else:
@@ -501,8 +555,17 @@ def decodex86(bytes):
 
 
 		if (opcode != None):
-			instruction = Instruction(startByte, bytes.currentlyRead, opcode, operands);
-			instructions.append(instruction);
+			instruction = Instruction(opcode, operands);
+			instructionBytes = bytes.currentlyRead;
+
+			instructions.append((startByte, instructionBytes, instruction));
+
+			debugPrint("");
+			debugPrint("Read instruction:");
+			debugPrint(instruction.toString());
+			debugPrint("Bytes: " + bytesToHexString(instructionBytes, bytesBetweenSpaces = 1));
+			debugPrint("Instruction: " + repr(instruction));
+			debugPrint("-" * 80);
 		else:
 			print("Opcode is None");
 			print("\t\tLocation: \t" + getDisplayByteString(startByte));

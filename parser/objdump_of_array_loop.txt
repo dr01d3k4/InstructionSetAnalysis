@@ -86,7 +86,7 @@ Disassembly of section .text:
   fb:	8b 00                	mov    (%rax),%eax
   fd:	0f af d0             	imul   %eax,%edx
  100:	48 8b 45 e8          	mov    -0x18(%rbp),%rax
- 104:	89 10                	mov    %edx,(%rax)                  <----
+ 104:	89 10                	mov    %edx,(%rax)
  106:	48 83 45 e8 04       	addq   $0x4,-0x18(%rbp)
  10b:	83 45 fc 01          	addl   $0x1,-0x4(%rbp)
  10f:	8b 45 fc             	mov    -0x4(%rbp),%eax
@@ -105,8 +105,8 @@ Disassembly of section .text:
  12f:	eb 2b                	jmp    15c <printArray+0x43>
  131:	8b 45 fc             	mov    -0x4(%rbp),%eax
  134:	48 98                	cltq   
- 136:	48 8d 14 85 00 00 00 	lea    0x0(,%rax,4),%rdx           <----
- 13d:	00 
+ 136:	48 8d 14 85 00 00 00 	lea    0x0(,%rax,4),%rdx
+ 13d:	00
  13e:	48 8b 45 e8          	mov    -0x18(%rbp),%rax
  142:	48 01 d0             	add    %rdx,%rax
  145:	8b 00                	mov    (%rax),%eax
