@@ -160,10 +160,6 @@ def readImmediate32Unsigned(bytes):
 	return readImmediateUnsigned(bytes, 4);
 
 
-def readRegBottomOpcodeBits(byte, rexPrefix):
-	return Opcode(byte & top5BitsMask), operand.RegisterOperand(getRmRegister(byte & registerMask, rexPrefix));
-
-
 def readModRegRmByte(byte):
 	mod = (byte & modMask) >> 6;
 	reg = (byte & regMask) >> 3;
@@ -417,142 +413,93 @@ def decodex86(bytes):
 
 		rexPrefix, byte = readRexPrefix(byte, bytes);
 
-		if (byte == 0x00):
-			# nop
-			opcode = Opcode(byte);
+		opcodeDetails = None;
+		isTop5Bits = False;
+		opcodeByte = byte;
+		opcodeByteLength = 1;
+		opcodeExtension = -1;
 
-		elif (byte == 0x01):
-			# add r to rm
-			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix, rmIsSource = False);
-
-		elif (byte == 0x83):
-			# add/or/adc/sbb/and/sub/xor/cmp
-			# imm8 to r/m16/32
-			mod, reg, rm = readModRegRmByte(bytes.readByte()[0]);
-			opcode = Opcode(byte, reg);
-			bytes.goBack();
-			operands = decodeModRegRm(bytes, rexPrefix, rmIsSource = False, regIsOpcodeExtension = True, readImmediateBytes = 1);
-
-		elif ((byte & top5BitsMask == opcodes.PUSH) or (byte & top5BitsMask == 0x58)):
-			# push register
-			# pop register
-			# rexPrefix.setDataSize(64);
-			opcode, registerOperand = readRegBottomOpcodeBits(byte, rexPrefix);
-			operands = [registerOperand];
-
-		elif ((byte == 0x89) or (byte == 0x8b)):
-			# 0x89 = mov r/m -> r
-			# 0x8b = mov r -> r/m
-			is8b = (byte == 0x8b);
-			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix, rmIsSource = is8b);
-
-		elif (byte & top5BitsMask == 0xb8):
-			# mov imm32 -> r32
-			rexPrefix.setDataSize(32);
-			opcode, registerOperand = readRegBottomOpcodeBits(byte, rexPrefix);
-			operands = [operand.ImmediateOperand(readImmediate32Signed(bytes)), registerOperand];
-
-		elif (byte == 0xc7):
-			# mov imm32 -> rm32
-			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix, regIsOpcodeExtension = True, rmIsSource = False);
-
-		elif (byte == 0x63):
-			# movsxd r64 -> r/m32 with rex.w
-			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix, rmIsSource = False);
-
-		elif (byte == 0xe8):
-			# call near rel16/32
-			opcode = Opcode(byte);
-			data = readImmediate32Signed(bytes);
-			operands = [operand.ImmediateOperand(data)];
-
-
-		elif (byte == 0xeb):
-			# jmp rel8
-			opcode = Opcode(byte);
-			data = readImmediate8Signed(bytes);
-			operands = [operand.ImmediateOperand(data)];
-
-
-		elif (byte == 0x7c):
-			# jmp rel8
-			opcode = Opcode(byte);
-			data = readImmediate8Signed(bytes);
-			operands = [operand.ImmediateOperand(data)];
-
-
-		elif (byte == 0xc3):
-			# return near
-			opcode = Opcode(byte);
-
-		elif (byte == 0xc9):
-			# leaveq
-			opcode = Opcode(byte);
-
-		elif (byte == 0x98):
-			# cltq
-			opcode = Opcode(byte);
-
-		elif (byte == 0xc1):
-			# rol/ror/rcl/rcr/shl/shr/sal/sar
-			# shift r/m by imm
-			modRegRmByte = bytes.readByte()[0];
-			mod, reg, rm = readModRegRmByte(modRegRmByte);
-			opcode = Opcode(byte, reg);
-			bytes.goBack();
-			operands = decodeModRegRm(bytes, rexPrefix, rmIsSource = False, regIsOpcodeExtension = True, readImmediateBytes = 1);
-
-		elif (byte == 0x8d):
-			# lea
-			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix);
-
-		elif (byte == 0xf7):
-			# test/test/not/neg/mul/imul/div/idiv
-			modRegRmByte = bytes.readByte()[0];
-			mod, reg, rm = readModRegRmByte(modRegRmByte);
-			opcode = Opcode(byte, reg);
-			bytes.goBack();
-			operands = decodeModRegRm(bytes, rexPrefix, regIsOpcodeExtension = True);
-
-		elif (byte == 0x6b):
-			# imul
-			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix, rmIsSource = False, readImmediateBytes = 1);
-
-		elif (byte == 0x29):
-			# sub
-			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix, rmIsSource = False);
-
-		elif (byte == 0x3b):
-			# cmp
-			opcode = Opcode(byte);
-			operands = decodeModRegRm(bytes, rexPrefix);
+		if (byte & top5BitsMask in opcodes.top5BitsOpcodes):
+			opcodeDetails = opcodes.top5BitsOpcodes[byte & top5BitsMask];
+			isTop5Bits = True;
+		elif (byte in opcodes.oneByteOpcodes):
+			opcodeDetails = opcodes.oneByteOpcodes[byte];
 
 		elif (byte == 0x0f):
 			debugPrint("\tTwo byte opcode");
 			byte, _ = bytes.readByte();
 
-			opcodeByte = 0x0f00 | byte;
+			opcodeByte = (opcodeByte << 8) | byte;
+			opcodeByteLength = 2;
 
-			if (byte == 0xaf):
-				# imul
-				opcode = Opcode(opcodeByte);
-				operands = decodeModRegRm(bytes, rexPrefix);
-
-
-		else:
+			if (byte in opcodes.twoByteOpcodes):
+				opcodeDetails = opcodes.twoByteOpcodes[byte];
+		
+		if (opcodeDetails == None):
 			print("\tRead unknown byte");
 			print("\t\tLocation: \t" + getDisplayByteString(startByte));
 			print("\t\tValue: \t\t" + getDisplayByteString(byte));
 			print("\t\tBytes read so far: " + bytesToHexString(bytes.currentlyRead, bytesBetweenSpaces = 1));
 			break;
 
+		debugPrint("Opcode details = {");
+		for key, value in opcodeDetails.iteritems():
+			debugPrint("\t", str(key), "=", str(value));
+		debugPrint("}");
+
+		debugPrint("");
+
+		hasOpcodeExtension = opcodes.getOpcodeParam(opcodeDetails, "opcodeExtension");
+		shouldReadModRegRm = opcodes.getOpcodeParam(opcodeDetails, "readModRegRm");
+		rmIsSource = opcodes.getOpcodeParam(opcodeDetails, "rmIsSource")
+		readImmediateBytes = opcodes.getOpcodeParam(opcodeDetails, "readImmediateBytes")
+
+		if ("dataSize" in opcodeDetails):
+			dataSize = opcodeDetails["dataSize"];
+			if ((dataSize != 32) and (dataSize != 64)):
+				debugPrint("Unknown data size:", str(dataSize));
+			else:
+				debugPrint("Setting data size to", str(dataSize));
+				rexPrefix.setDataSize(dataSize);
+
+		if (isTop5Bits):
+			debugPrint("Reading top 5 bits opcode");
+
+			if (opcodeByteLength > 1):
+				todoPrint("Handle top-5-bit-opcode with multi-byte opcodes");
+
+			registerField = opcodeByte & registerMask;
+			opcodeByte = opcodeByte & top5BitsMask
+
+			registerOperand = operand.RegisterOperand(getRmRegister(registerField, rexPrefix));
+			operands.append(registerOperand);
+
+		if (hasOpcodeExtension):
+			debugPrint("Reading opcode extension");
+
+			modRegRmByte = bytes.readByte()[0];
+			mod, reg, rm = readModRegRmByte(modRegRmByte);
+			opcodeExtension = reg;
+
+		opcode = Opcode(opcodeByte, opcodeExtension);
+
+		if (shouldReadModRegRm):
+			debugPrint("Reading modredrm");
+
+			if (hasOpcodeExtension):
+				debugPrint("Already read opcode extension so going back");
+				bytes.goBack();
+
+			newOperands = decodeModRegRm(bytes, rexPrefix, rmIsSource = rmIsSource, regIsOpcodeExtension = hasOpcodeExtension, readImmediateBytes = readImmediateBytes);
+
+			for newOperand in newOperands:
+				operands.append(newOperand);
+
+		if ((readImmediateBytes > 0) and (not shouldReadModRegRm)):
+			immediateData = readImmediateSigned(bytes, readImmediateBytes);
+			immediateOperand = operand.ImmediateOperand(immediateData);
+			operands.append(immediateOperand);
+			operands.reverse();
 
 		if (opcode != None):
 			instruction = Instruction(opcode, operands);
