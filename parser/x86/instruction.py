@@ -1,15 +1,22 @@
-class Instruction(object):
+from common.instruction_base import InstructionBase;
+
+
+class Instruction(InstructionBase):
 	def __init__(self, opcode, operands):
+		super(InstructionBase, self).__init__();
 		self._opcode = opcode;
 		self._operands = operands;
 
-	@property
-	def opcode(self):
+
+	# @property
+	def getOpcode(self):
 		return self._opcode;
 
-	@property
-	def operands(self):
+
+	# @property
+	def getOperands(self):
 		return self._operands;
+
 
 	def __repr__(self):
 		return "Instruction()";
@@ -50,3 +57,8 @@ class Instruction(object):
 		s += ")";
 
 		return s;
+
+
+
+	# def getInstructionTypes(self):
+	# 	return INSTRUCTION_TYPES;

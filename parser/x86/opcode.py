@@ -1,8 +1,11 @@
+from common.opcode_base import OpcodeBase;
 import opcodes;
+import opcode_types;
 
 
-class Opcode(object):
+class Opcode(OpcodeBase):
 	def __init__(self, opcode, extension = -1):
+		super(OpcodeBase, self).__init__();
 		self._opcode = opcode;
 		self._extension = extension;
 		self._name = opcodes.toString(opcode, extension);
@@ -20,9 +23,13 @@ class Opcode(object):
 		return self._name;
 
 	def __repr__(self):
-		s = "Opcode(opcode = " + str(self._opcode);
+		s = "Opcode(opcode = " + hex(self._opcode);
 		if (self._extension != -1):
-			s += ", extension = " + str(self._extension);
+			s += ", extension = " + hex(self._extension);
 		s += ", name = " + self._name;
 		s += ")";
 		return s;
+
+
+	def getType(self):
+		return opcode_types.getOpcodeType(self);

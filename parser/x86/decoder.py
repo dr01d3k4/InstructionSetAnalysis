@@ -8,6 +8,8 @@ import opcodes;
 import operand;
 import math;
 from rex_prefix import RexPrefix, NoRexPrefix;
+import opcode_types;
+
 
 """
 http://www.codeproject.com/Articles/662301/x-Instruction-Encoding-Revealed-Bit-Twiddling-fo
@@ -391,7 +393,7 @@ def readRexPrefix(prefixByte, bytes):
 """
 [bytes] -> [Instruction]
 """
-def decodex86(bytes):
+def decode(bytes):
 	if (type(bytes) != "<class 'x86.byte_reader.ByteReader'>"):
 		bytes = ByteReader(bytes);
 
@@ -524,3 +526,7 @@ def decodex86(bytes):
 
 
 	return instructions;
+
+
+def getOpcodeTypes():
+	return opcode_types.OPCODE_TYPES;

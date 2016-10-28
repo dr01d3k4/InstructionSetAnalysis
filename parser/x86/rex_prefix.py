@@ -29,9 +29,9 @@ class RexPrefixBase(object):
 		return;
 
 
-
 class RexPrefix(RexPrefixBase):
 	def __init__(self, w, r, x, b):
+		super(RexPrefixBase, self).__init__();
 		self._w = w;
 		self._r = r;
 		self._x = x;
@@ -92,6 +92,7 @@ class RexPrefix(RexPrefixBase):
 
 class NoRexPrefix(RexPrefixBase):
 	def __init__(self, dataSize = 32):
+		super(RexPrefixBase, self).__init__();
 		self._dataSize = dataSize;
 
 	def getDataSize(self):

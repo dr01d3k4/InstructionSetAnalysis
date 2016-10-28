@@ -2,11 +2,12 @@ from __future__ import print_function;
 from util.binary_file import printHexDump;
 from elf64.reader import readElf64File;
 from util.byte_util import bytesToHexString, byteToHexStringSpaceAlign;
-from x86.decoder import decodex86;
+import x86.decoder as x86;
+from stats.calculate_stats import calculateStats;
 import math;
 
 
-def printInstructions(instructions, showInstructionDetails = False):
+def printInstructionsWithDebug(instructions, showInstructionDetails = False):
 	if (len(instructions) == 0):
 		print("No instructions");
 		return;
@@ -21,7 +22,7 @@ def printInstructions(instructions, showInstructionDetails = False):
 		if (instructionLength > maxInstructionLength):
 			maxInstructionLength = instructionLength;
 
-		opcodeLength = len(instruction.opcode.name);
+		opcodeLength = len(instruction.getOpcode().name);
 		if (opcodeLength > maxOpcodeLength):
 			maxOpcodeLength = opcodeLength;
 
@@ -68,12 +69,23 @@ def decodeObjectFile(fileLocation):
 	print("Text contents:", bytesToHexString(textContents));
 	print("Decoding");
 
-	instructions = decodex86(textContents);
+	# "withDebug" is because this is a tuple of (startByte, [bytesInInstruction], InstructionInstance)
+	instructionsWithDebug = x86.decode(textContents);
 
 	print("");
 	print("Decoded");
 	
-	printInstructions(instructions);
+	# printInstructionsWithDebug(instructionsWithDebug);
+
+	# Get just the instructions out the tuple
+	instructions = map(lambda x: x[2], instructionsWithDebug);
+
+	print("");
+	print("Calculating stats");
+
+	opcodeTypes = x86.getOpcodeTypes();
+
+	calculateStats("x86", instructions, opcodeTypes);
 
 	print("");
 	print("Done");
