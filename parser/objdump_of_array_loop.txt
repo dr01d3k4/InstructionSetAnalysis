@@ -1,3 +1,141 @@
+ben@ben-XPS-L701X:~/Documents/x86Decoder/parser$ objdump -d -M intel array_loop.o 
+
+array_loop.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <main>:
+   0: 55                    push   rbp
+   1: 48 89 e5              mov    rbp,rsp
+   4: 41 54                 push   r12
+   6: 53                    push   rbx
+   7: 48 83 ec 20           sub    rsp,0x20
+   b: 48 89 e6              mov    rsi,rsp
+   e: 49 89 f4              mov    r12,rsi
+  11: c7 45 dc 0a 00 00 00  mov    DWORD PTR [rbp-0x24],0xa
+  18: 8b 75 dc              mov    esi,DWORD PTR [rbp-0x24]
+  1b: 48 63 f6              movsxd rsi,esi
+  1e: 48 83 ee 01           sub    rsi,0x1
+  22: 48 89 75 e0           mov    QWORD PTR [rbp-0x20],rsi
+  26: 8b 75 dc              mov    esi,DWORD PTR [rbp-0x24]
+  29: 48 63 f6              movsxd rsi,esi
+  2c: 48 89 f1              mov    rcx,rsi
+  2f: bb 00 00 00 00        mov    ebx,0x0
+  34: 8b 4d dc              mov    ecx,DWORD PTR [rbp-0x24]
+  37: 48 63 c9              movsxd rcx,ecx
+  3a: 48 89 c8              mov    rax,rcx
+  3d: ba 00 00 00 00        mov    edx,0x0
+  42: 8b 45 dc              mov    eax,DWORD PTR [rbp-0x24]
+  45: 48 98                 cdqe   
+  47: 48 c1 e0 02           shl    rax,0x2
+  4b: 48 8d 50 03           lea    rdx,[rax+0x3]
+  4f: b8 10 00 00 00        mov    eax,0x10
+  54: 48 83 e8 01           sub    rax,0x1
+  58: 48 01 d0              add    rax,rdx
+  5b: bb 10 00 00 00        mov    ebx,0x10
+  60: ba 00 00 00 00        mov    edx,0x0
+  65: 48 f7 f3              div    rbx
+  68: 48 6b c0 10           imul   rax,rax,0x10
+  6c: 48 29 c4              sub    rsp,rax
+  6f: 48 89 e0              mov    rax,rsp
+  72: 48 83 c0 03           add    rax,0x3
+  76: 48 c1 e8 02           shr    rax,0x2
+  7a: 48 c1 e0 02           shl    rax,0x2
+  7e: 48 89 45 e8           mov    QWORD PTR [rbp-0x18],rax
+  82: c7 45 d8 00 00 00 00  mov    DWORD PTR [rbp-0x28],0x0
+  89: eb 17                 jmp    a2 <main+0xa2>
+  8b: 8b 45 d8              mov    eax,DWORD PTR [rbp-0x28]
+  8e: 8d 48 01              lea    ecx,[rax+0x1]
+  91: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+  95: 8b 55 d8              mov    edx,DWORD PTR [rbp-0x28]
+  98: 48 63 d2              movsxd rdx,edx
+  9b: 89 0c 90              mov    DWORD PTR [rax+rdx*4],ecx
+  9e: 83 45 d8 01           add    DWORD PTR [rbp-0x28],0x1
+  a2: 8b 45 d8              mov    eax,DWORD PTR [rbp-0x28]
+  a5: 3b 45 dc              cmp    eax,DWORD PTR [rbp-0x24]
+  a8: 7c e1                 jl     8b <main+0x8b>
+  aa: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+  ae: 8b 55 dc              mov    edx,DWORD PTR [rbp-0x24]
+  b1: 89 d6                 mov    esi,edx
+  b3: 48 89 c7              mov    rdi,rax
+  b6: e8 00 00 00 00        call   bb <main+0xbb>
+  bb: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+  bf: 8b 55 dc              mov    edx,DWORD PTR [rbp-0x24]
+  c2: 89 d6                 mov    esi,edx
+  c4: 48 89 c7              mov    rdi,rax
+  c7: e8 00 00 00 00        call   cc <main+0xcc>
+  cc: b8 00 00 00 00        mov    eax,0x0
+  d1: 4c 89 e4              mov    rsp,r12
+  d4: 48 8d 65 f0           lea    rsp,[rbp-0x10]
+  d8: 5b                    pop    rbx
+  d9: 41 5c                 pop    r12
+  db: 5d                    pop    rbp
+  dc: c3                    ret    
+
+00000000000000dd <squareArray>:
+  dd: 55                    push   rbp
+  de: 48 89 e5              mov    rbp,rsp
+  e1: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
+  e5: 89 75 e4              mov    DWORD PTR [rbp-0x1c],esi
+  e8: c7 45 fc 00 00 00 00  mov    DWORD PTR [rbp-0x4],0x0
+  ef: eb 1e                 jmp    10f <squareArray+0x32>
+  f1: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+  f5: 8b 10                 mov    edx,DWORD PTR [rax]
+  f7: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+  fb: 8b 00                 mov    eax,DWORD PTR [rax]
+  fd: 0f af d0              imul   edx,eax
+ 100: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+ 104: 89 10                 mov    DWORD PTR [rax],edx
+ 106: 48 83 45 e8 04        add    QWORD PTR [rbp-0x18],0x4
+ 10b: 83 45 fc 01           add    DWORD PTR [rbp-0x4],0x1
+ 10f: 8b 45 fc              mov    eax,DWORD PTR [rbp-0x4]
+ 112: 3b 45 e4              cmp    eax,DWORD PTR [rbp-0x1c]
+ 115: 7c da                 jl     f1 <squareArray+0x14>
+ 117: 5d                    pop    rbp
+ 118: c3                    ret    
+
+0000000000000119 <printArray>:
+ 119: 55                    push   rbp
+ 11a: 48 89 e5              mov    rbp,rsp
+ 11d: 48 83 ec 20           sub    rsp,0x20
+ 121: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
+ 125: 89 75 e4              mov    DWORD PTR [rbp-0x1c],esi
+ 128: c7 45 fc 00 00 00 00  mov    DWORD PTR [rbp-0x4],0x0
+ 12f: eb 2b                 jmp    15c <printArray+0x43>
+ 131: 8b 45 fc              mov    eax,DWORD PTR [rbp-0x4]
+ 134: 48 98                 cdqe   
+ 136: 48 8d 14 85 00 00 00  lea    rdx,[rax*4+0x0]
+ 13d: 00 
+ 13e: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+ 142: 48 01 d0              add    rax,rdx
+ 145: 8b 00                 mov    eax,DWORD PTR [rax]
+ 147: 89 c6                 mov    esi,eax
+ 149: bf 00 00 00 00        mov    edi,0x0
+ 14e: b8 00 00 00 00        mov    eax,0x0
+ 153: e8 00 00 00 00        call   158 <printArray+0x3f>
+ 158: 83 45 fc 01           add    DWORD PTR [rbp-0x4],0x1
+ 15c: 8b 45 fc              mov    eax,DWORD PTR [rbp-0x4]
+ 15f: 3b 45 e4              cmp    eax,DWORD PTR [rbp-0x1c]
+ 162: 7c cd                 jl     131 <printArray+0x18>
+ 164: c9                    leave  
+ 165: c3                    ret   
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
 ben@ben-XPS-L701X:~/Documents/CompSciProject/parser$ objdump -d array_loop.o 
 
 array_loop.o:     file format elf64-x86-64

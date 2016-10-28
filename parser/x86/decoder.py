@@ -198,8 +198,9 @@ def decodeScaleIndexBaseByte(scaleBits, indexBits, baseBits, rexPrefix):
 
 
 def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = False, readImmediateBytes = 0):
+	# , regIsOpcodeExtension = False, readImmediateBytes = 0):
 	debugPrint("Reading modregrm");
-	debugPrint("Rm is source:", str(rmIsSource));
+	# debugPrint("Rm is source:", str(rmIsSource));
 	debugPrint("Reg is opcode extension:", str(regIsOpcodeExtension));
 	debugPrint("Rex prefix:", repr(rexPrefix));
 
@@ -341,9 +342,9 @@ def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = F
 
 		operands.append(immediateOperand);
 
-		if (not rmIsSource):
-			debugPrint("Rm is not source, flipping operands");
-			operands.reverse();
+		# if (not rmIsSource):
+		# 	debugPrint("Rm is not source, flipping operands");
+		# 	operands.reverse();
 
 	return operands;
 
@@ -491,6 +492,7 @@ def decodex86(bytes):
 				bytes.goBack();
 
 			newOperands = decodeModRegRm(bytes, rexPrefix, rmIsSource = rmIsSource, regIsOpcodeExtension = hasOpcodeExtension, readImmediateBytes = readImmediateBytes);
+			# , regIsOpcodeExtension = hasOpcodeExtension, readImmediateBytes = readImmediateBytes);
 
 			for newOperand in newOperands:
 				operands.append(newOperand);
@@ -499,7 +501,7 @@ def decodex86(bytes):
 			immediateData = readImmediateSigned(bytes, readImmediateBytes);
 			immediateOperand = operand.ImmediateOperand(immediateData);
 			operands.append(immediateOperand);
-			operands.reverse();
+			# operands.reverse();
 
 		if (opcode != None):
 			instruction = Instruction(opcode, operands);

@@ -92,7 +92,7 @@ class BinaryFile(object):
 		self.reader.cleanup();
 
 
-def printHexDump(filename, bytesPerRow = 16, byteNumberLength = 4, primarySpace = 1, secondarySpace = 4):
+def printHexDump(filename, bytesPerRow = 16, byteNumberLength = 4, primarySpace = 1, secondarySpace = 4, hideDuplicateLines = True):
 	byteNumber = 0;
 	bytes = [ ];
 	prevByteArray = [ ];
@@ -107,7 +107,7 @@ def printHexDump(filename, bytesPerRow = 16, byteNumberLength = 4, primarySpace 
 			if (not bytes):
 				break;
 
-			if (bytes == prevByteArray):
+			if (hideDuplicateLines and (bytes == prevByteArray)):
 				print("*");
 				continue;
 

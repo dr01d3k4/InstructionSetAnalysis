@@ -2,24 +2,50 @@ from abc import ABCMeta;
 
 
 def immediateValueToString(value):
-	return "$" + hex(value);
+	return hex(value);
 
 
 def registerValueToString(register):
-	return "%" + str(register);
+	return str(register);
+
+
+def memoryLocationToString(location):
+	return "[" + location + "]";
+
+
+def immediateAdditionString(immediate):
+	sign = "+" if immediate >= 0 else "-";
+	return sign + " " + immediateValueToString(abs(immediate));
+
+
+def scaleIndexBaseToStringNoMemory(scale, index, base):
+	sib = "";
+
+	if (base != None):
+		sib += registerValueToString(base);
+		
+	if ((base != None) and (index != None)):
+		sib += " + ";
+
+	if (index != None):
+		sib += registerValueToString(index);
+
+	if (scale != 1):
+		sib += " * " + str(scale);
+
+	return sib;
+
 
 
 def scaleIndexBaseToString(scale, index, base):
-	sib = "(";
-	if (base != None):
-		sib += registerValueToString(base);
-	sib += ", ";
-	if (index != None):
-		sib += registerValueToString(index);
-	sib += ", ";
-	sib += str(scale);
-	sib += ")";
-	return sib;
+	return memoryLocationToString(scaleIndexBaseToStringNoMemory(scale, index, base));
+
+
+def scaleIndexBaseImmediateToString(scale, index, base, immediate):
+	sib = scaleIndexBaseToStringNoMemory(scale, index, base);
+	sib += " ";
+	sib += immediateAdditionString(immediate);
+	return memoryLocationToString(sib);
 
 
 
@@ -74,10 +100,9 @@ class RegisterDisplacementOperand(Operand):
 
 	def __str__(self):
 		if (self._displacement == 0):
-			return "(" + registerValueToString(self._register) + ")"
+			return memoryLocationToString(registerValueToString(self._register));
 		else:
-			return immediateValueToString(self._displacement)[1:] + "(" + registerValueToString(self._register) + ")";
-
+			return memoryLocationToString(registerValueToString(self._register) + " " + immediateAdditionString(self._displacement));
 
 
 class ScaleIndexBaseOperand(Operand):
@@ -115,7 +140,7 @@ class ScaleIndexBaseDisplacementOperand(Operand):
 				"displacement = " + repr(self._displacement) + ")";
 
 	def __str__(self):
-		return immediateValueToString(self._displacement)[1:] + scaleIndexBaseToString(self._scale, self._index, self._base);
+		return scaleIndexBaseImmediateToString(self._scale, self._index, self._base, self._displacement);
 
 
 class ImmediateDisplacementOperand(Operand):
@@ -128,4 +153,4 @@ class ImmediateDisplacementOperand(Operand):
 		return "ImmediateDisplacementOperand(value = " + repr(self._value) + ")";
 
 	def __str__(self):
-		return "(" + immediateValueToString(self._value) + ")";
+		return memoryLocationToString(immediateValueToString(self._value));

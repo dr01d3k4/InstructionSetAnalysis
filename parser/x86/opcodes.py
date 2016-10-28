@@ -8,7 +8,7 @@ Fields available:
 Field name			Default value		Effect
 - dataSize			[ do nothing ]		Call rexPrefix.setDataSize()
 - readModRegRm			False
-- rmIsSource			True
+# - rmIsSource			True
 - opcodeExtension		False
 - readImmediateBytes		0
 
@@ -48,8 +48,7 @@ oneByteOpcodes = {
 
 	# add r to rm
 	0x01: {
-		"readModRegRm": True,
-		"rmIsSource": False
+		"readModRegRm": True
 	},
 
 	# add/or/adc/sbb/and/sub/xor/cmp
@@ -57,32 +56,29 @@ oneByteOpcodes = {
 	0x83: {
 		"opcodeExtension": True,
 		"readModRegRm": True,
-		"rmIsSource": False,
 		"readImmediateBytes": 1
 	},
 
 	# mov r/m -> r
 	0x89: {
-		"rmIsSource": False,
 		"readModRegRm": True
 	},
 
 	# mov r -> r/m
 	0x8b: {
+		"rmIsSource": False,
 		"readModRegRm": True
 	},
 
-	# move imm32 -> rm32
+	# mov imm32 -> rm32
 	0xc7: {
 		"readModRegRm": True,
-		"opcodeExtension": True,
-		"rmIsSource": False
+		"opcodeExtension": True
 	},
 
 	# movsxd r64 -> r/m32 with rex.w
 	0x63: {
-		"readModRegRm": True,
-		"rmIsSource": False
+		"readModRegRm": True
 	},
 
 	# call near rel16/32
@@ -103,10 +99,10 @@ oneByteOpcodes = {
 	# return near
 	0xc3: { },
 
-	# leaveq
+	# leave
 	0xc9: { },
 
-	# cltq
+	# cdqe
 	0x98: { },
 
 	# rol/ror/rcl/rcr/shl/shr/sal/sar
@@ -114,13 +110,13 @@ oneByteOpcodes = {
 	0xc1: {
 		"readModRegRm": True,
 		"opcodeExtension": True,
-		"rmIsSource": False,
 		"readImmediateBytes": 1
 	},
 
 	# lea
 	0x8d: {
 		"readModRegRm": True,
+		"rmIsSource": False
 	},
 
 	# test/test/not/neg/mul/imul/div/idiv
@@ -132,19 +128,18 @@ oneByteOpcodes = {
 	# imul
 	0x6b: {
 		"readModRegRm": True,
-		"rmIsSource": True,
 		"readImmediateBytes": 1
 	},
 
 	# sub
 	0x29: {
-		"readModRegRm": True,
-		"rmIsSource": False
+		"readModRegRm": True
 	},
 
 	# cmp
 	0x3b: {
-		"readModRegRm": True
+		"readModRegRm": True,
+		"rmIsSource": False
 	}
 };
 
@@ -153,6 +148,7 @@ twoByteOpcodes = {
 	# imul
 	0xaf: {
 		"readModRegRm": True,
+		"rmIsSource": False
 	}
 };
 
@@ -178,11 +174,11 @@ def toString(opcode, extension = -1):
 	elif ((opcode == 0x89) or (opcode == 0x8b) or (opcode == 0xb8)):
 		return "mov";
 	elif (opcode == 0xc7):
-		return "movl";
+		return "mov";
 	elif (opcode == 0x63):
-		return "movslq";
+		return "movsxd";
 	elif (opcode == 0x83):
-		extensions = ["addl", "or", "adc", "sbb", "and", "sub", "xor", "cmp"];
+		extensions = ["add", "or", "adc", "sbb", "and", "sub", "xor", "cmp"];
 		return extensions[extension];
 	elif (opcode == 0x01):
 		return "add";
@@ -191,13 +187,13 @@ def toString(opcode, extension = -1):
 	elif (opcode == 0x58):
 		return "pop";
 	elif (opcode == 0xe8):
-		return "callq";
+		return "call";
 	elif (opcode == 0xc3):
-		return "retq";
+		return "ret";
 	elif (opcode == 0xc9):
-		return "leaveq";
+		return "leave";
 	elif (opcode == 0x98):
-		return "cltq";
+		return "cdqe";
 
 
 	elif (opcode == 0xc1):
