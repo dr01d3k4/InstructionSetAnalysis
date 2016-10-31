@@ -19,6 +19,6 @@ class InstructionBase(object):
 		pass;
 
 
-	# @abc.abstractmethod
-	# def getInstructionTypes(self):
-	# 	pass;
+	@abc.abstractmethod
+	def getOpcodeType(self):
+		pass;

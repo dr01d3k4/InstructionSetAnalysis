@@ -1,6 +1,37 @@
 from __future__ import print_function;
 
 
+def printOpcodesByType(opcodesByType, opcodeTypes):
+	s = "opcodesByType = {";
+
+	for index, typeName in enumerate(opcodeTypes):
+		opcodes = opcodesByType[index];
+
+		s += "\n\t" + typeName + " = {";
+
+		for opcode in opcodes:
+			s += "\n\t\t";
+			s += repr(opcode);
+			s += ",";
+
+		if (len(opcodes) > 0):
+			s = s[:-1];
+			s += "\n\t";
+		else:
+			s += " ";
+
+		s += "},";
+
+	if (len(opcodeTypes) > 0):
+		s = s[:-1];
+		s += "\n";
+	else:
+		s += " ";
+
+	s += "}";
+	print(s);
+
+
 def calculateStats(architectureName, instructions, opcodeTypes):
 	print("Calculating stats for instructions using architecture: " + architectureName);
 
@@ -8,14 +39,15 @@ def calculateStats(architectureName, instructions, opcodeTypes):
 	for index, typeName in enumerate(opcodeTypes):
 		print("\t", index, typeName);
 
+	opcodesByType = map(lambda _: [ ], opcodeTypes);
+	print(opcodesByType);
+
 	for instruction in instructions:
-		print("");
-		
 		opcode = instruction.getOpcode();
-		opcodeType = opcode.getOpcodeType();
+		opcodeType = instruction.getOpcodeType();
 
-		if (opcodeType == None):
-			print("Type for opcode", opcode, "is none");
-			return;
+		opcodesByType[opcodeType].append(opcode);
 
-		print("Type for opcode", opcode, "=", opcodeType, opcodeTypes[opcodeType]);
+	printOpcodesByType(opcodesByType, opcodeTypes);
+
+	

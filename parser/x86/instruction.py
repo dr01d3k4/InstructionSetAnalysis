@@ -18,6 +18,10 @@ class Instruction(InstructionBase):
 		return self._operands;
 
 
+	def getOpcodeType(self):
+		return self._opcode.opcodeType;
+
+
 	def __repr__(self):
 		return "Instruction()";
 
@@ -57,8 +61,3 @@ class Instruction(InstructionBase):
 		s += ")";
 
 		return s;
-
-
-
-	# def getInstructionTypes(self):
-	# 	return INSTRUCTION_TYPES;

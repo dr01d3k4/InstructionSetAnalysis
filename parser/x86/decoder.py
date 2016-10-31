@@ -444,11 +444,13 @@ def decode(bytes):
 
 		debugPrint("");
 
+
+		opcodeName = opcodes.getOpcodeParam(opcodeDetails, "name");
+		opcodeType = opcodes.getOpcodeParam(opcodeDetails, "opcodeType");
 		hasOpcodeExtension = opcodes.getOpcodeParam(opcodeDetails, "opcodeExtension");
 		shouldReadModRegRm = opcodes.getOpcodeParam(opcodeDetails, "readModRegRm");
 		rmIsSource = opcodes.getOpcodeParam(opcodeDetails, "rmIsSource");
 		readImmediateBytes = opcodes.getOpcodeParam(opcodeDetails, "readImmediateBytes");
-		opcodeType = opcodes.getOpcodeParam(opcodeDetails, "opcodeType");
 
 		if ("dataSize" in opcodeDetails):
 			dataSize = opcodeDetails["dataSize"];
@@ -477,7 +479,9 @@ def decode(bytes):
 			mod, reg, rm = readModRegRmByte(modRegRmByte);
 			opcodeExtension = reg;
 
-		opcode = Opcode(opcodeByte, opcodeExtension, opcodeType);
+			opcodeName = opcodeName[opcodeExtension];
+
+		opcode = Opcode(opcodeByte, opcodeExtension, opcodeName, opcodeType);
 
 		if (shouldReadModRegRm):
 			debugPrint("Reading modredrm");
