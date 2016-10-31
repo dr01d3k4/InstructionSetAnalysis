@@ -12,7 +12,7 @@ def calculateStats(architectureName, instructions, opcodeTypes):
 		print("");
 		
 		opcode = instruction.getOpcode();
-		opcodeType = opcode.getType();
+		opcodeType = opcode.getOpcodeType();
 
 		if (opcodeType == None):
 			print("Type for opcode", opcode, "is none");

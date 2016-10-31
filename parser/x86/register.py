@@ -11,6 +11,7 @@
 111 = EDI/DI (BH if 8)
 """
 
+
 class Register(object):
 	def __init__(self, name, bitRepresentation):
 		self._name = name;

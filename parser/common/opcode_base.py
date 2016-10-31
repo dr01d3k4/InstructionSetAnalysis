@@ -10,5 +10,5 @@ class OpcodeBase(object):
 
 
 	@abc.abstractmethod
-	def getType(self):
+	def getOpcodeType(self):
 		pass;

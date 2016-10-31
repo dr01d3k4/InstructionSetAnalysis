@@ -8,8 +8,6 @@ import opcodes;
 import operand;
 import math;
 from rex_prefix import RexPrefix, NoRexPrefix;
-import opcode_types;
-
 
 """
 http://www.codeproject.com/Articles/662301/x-Instruction-Encoding-Revealed-Bit-Twiddling-fo
@@ -269,8 +267,6 @@ def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = F
 			if (readImmediateBytes == 0):
 				regOperand = operand.RegisterOperand(regRegister);
 
-	
-
 		rmOperand = None;
 		if (rm == 0b100):
 			todoPrint("Check handling of SIB is correct in modregrm decoder");
@@ -343,10 +339,6 @@ def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = F
 		debugPrint("Operand:  ", repr(immediateOperand));
 
 		operands.append(immediateOperand);
-
-		# if (not rmIsSource):
-		# 	debugPrint("Rm is not source, flipping operands");
-		# 	operands.reverse();
 
 	return operands;
 
@@ -454,8 +446,9 @@ def decode(bytes):
 
 		hasOpcodeExtension = opcodes.getOpcodeParam(opcodeDetails, "opcodeExtension");
 		shouldReadModRegRm = opcodes.getOpcodeParam(opcodeDetails, "readModRegRm");
-		rmIsSource = opcodes.getOpcodeParam(opcodeDetails, "rmIsSource")
-		readImmediateBytes = opcodes.getOpcodeParam(opcodeDetails, "readImmediateBytes")
+		rmIsSource = opcodes.getOpcodeParam(opcodeDetails, "rmIsSource");
+		readImmediateBytes = opcodes.getOpcodeParam(opcodeDetails, "readImmediateBytes");
+		opcodeType = opcodes.getOpcodeParam(opcodeDetails, "opcodeType");
 
 		if ("dataSize" in opcodeDetails):
 			dataSize = opcodeDetails["dataSize"];
@@ -484,7 +477,7 @@ def decode(bytes):
 			mod, reg, rm = readModRegRmByte(modRegRmByte);
 			opcodeExtension = reg;
 
-		opcode = Opcode(opcodeByte, opcodeExtension);
+		opcode = Opcode(opcodeByte, opcodeExtension, opcodeType);
 
 		if (shouldReadModRegRm):
 			debugPrint("Reading modredrm");
@@ -494,7 +487,6 @@ def decode(bytes):
 				bytes.goBack();
 
 			newOperands = decodeModRegRm(bytes, rexPrefix, rmIsSource = rmIsSource, regIsOpcodeExtension = hasOpcodeExtension, readImmediateBytes = readImmediateBytes);
-			# , regIsOpcodeExtension = hasOpcodeExtension, readImmediateBytes = readImmediateBytes);
 
 			for newOperand in newOperands:
 				operands.append(newOperand);
@@ -503,7 +495,6 @@ def decode(bytes):
 			immediateData = readImmediateSigned(bytes, readImmediateBytes);
 			immediateOperand = operand.ImmediateOperand(immediateData);
 			operands.append(immediateOperand);
-			# operands.reverse();
 
 		if (opcode != None):
 			instruction = Instruction(opcode, operands);
@@ -529,4 +520,4 @@ def decode(bytes):
 
 
 def getOpcodeTypes():
-	return opcode_types.OPCODE_TYPES;
+	return opcodes.OPCODE_TYPES;

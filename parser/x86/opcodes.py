@@ -11,8 +11,37 @@ Field name			Default value		Effect
 # - rmIsSource			True
 - opcodeExtension		False
 - readImmediateBytes		0
-
+- opcodeType			UNKNOWN_TYPE
 """
+
+TRANSFER_TYPE = 0;
+ARITHMETIC_TYPE = 1;
+LOGIC_TYPE = 2;
+MISC_TYPE = 3;
+JUMP_TYPE = 4;
+JUMP_UNSIGNED_TYPE = 5;
+JUMP_SIGNED_TYPE = 6;
+UNKNOWN_TYPE = 7;
+
+
+OPCODE_TYPES = [
+	"transfer",
+	"arithmetic",
+	"logic",
+	"misc",
+	"jump",
+	"jump unsigned",
+	"jump signed",
+	"unknown type"
+];
+
+
+def opcodeTypeToString(opcodeType):
+	if ((opcodeType < 0) or (opcodeType >= len(OPCODE_TYPES))):
+		return "None";
+	else:
+		return OPCODE_TYPES[opcodeType];
+
 
 
 opcodeParameterDefaults = {
@@ -20,35 +49,43 @@ opcodeParameterDefaults = {
 	"readModRegRm": False,
 	"rmIsSource": True,
 	"opcodeExtension": False,
-	"readImmediateBytes": 0	
+	"readImmediateBytes": 0,
+	"opcodeType": UNKNOWN_TYPE
 };
 
 
 top5BitsOpcodes = {
 	# push
 	0x50: {
-		"dataSize": 64
+		"dataSize": 64,
+		"opcodeType": TRANSFER_TYPE
 	},
 
 	# pop
 	0x58: {
-		"dataSize": 64
+		"dataSize": 64,
+		"opcodeType": TRANSFER_TYPE
+
 	},
 
 	# mov imm32 -> r32
 	0xb8: {
 		"dataSize": 32,
-		"readImmediateBytes": 4
+		"readImmediateBytes": 4,
+		"opcodeType": TRANSFER_TYPE
 	}
 };
 
 oneByteOpcodes = {
 	# nop
-	0x00: { },
+	0x00: {
+		"opcodeType": MISC_TYPE
+	},
 
 	# add r to rm
 	0x01: {
-		"readModRegRm": True
+		"readModRegRm": True,
+		"opcodeType": ARITHMETIC_TYPE
 	},
 
 	# add/or/adc/sbb/and/sub/xor/cmp
@@ -56,90 +93,110 @@ oneByteOpcodes = {
 	0x83: {
 		"opcodeExtension": True,
 		"readModRegRm": True,
-		"readImmediateBytes": 1
+		"readImmediateBytes": 1,
+		"opcodeType": ARITHMETIC_TYPE
 	},
 
 	# mov r/m -> r
 	0x89: {
-		"readModRegRm": True
+		"readModRegRm": True,
+		"opcodeType": TRANSFER_TYPE
 	},
 
 	# mov r -> r/m
 	0x8b: {
 		"rmIsSource": False,
-		"readModRegRm": True
+		"readModRegRm": True,
+		"opcodeType": TRANSFER_TYPE
 	},
 
 	# mov imm32 -> rm32
 	0xc7: {
 		"readModRegRm": True,
-		"opcodeExtension": True
+		"opcodeExtension": True,
+		"opcodeType": TRANSFER_TYPE
 	},
 
 	# movsxd r64 -> r/m32 with rex.w
 	0x63: {
-		"readModRegRm": True
+		"readModRegRm": True,
+		"opcodeType": TRANSFER_TYPE
 	},
 
 	# call near rel16/32
 	0xe8: {
-		"readImmediateBytes": 4
+		"readImmediateBytes": 4,
+		"opcodeType": JUMP_TYPE
 	},
 
 	# jmp rel8
 	0xeb: {
-		"readImmediateBytes": 1
+		"readImmediateBytes": 1,
+		"opcodeType": JUMP_TYPE
 	},
 
 	# jmp rel8
 	0x7c: {
-		"readImmediateBytes": 1
+		"readImmediateBytes": 1,
+		"opcodeType": JUMP_TYPE
 	},
 
 	# return near
-	0xc3: { },
+	0xc3: {
+		"opcodeType": JUMP_TYPE
+	},
 
 	# leave
-	0xc9: { },
+	0xc9: {
+		"opcodeType": JUMP_TYPE
+	},
 
 	# cdqe
-	0x98: { },
+	0x98: {
+		"opcodeType": TRANSFER_TYPE
+	},
 
 	# rol/ror/rcl/rcr/shl/shr/sal/sar
 	# shift r/m by imm
 	0xc1: {
 		"readModRegRm": True,
 		"opcodeExtension": True,
-		"readImmediateBytes": 1
+		"readImmediateBytes": 1,
+		"opcodeType": ARITHMETIC_TYPE
 	},
 
 	# lea
 	0x8d: {
 		"readModRegRm": True,
-		"rmIsSource": False
+		"rmIsSource": False,
+		"opcodeType": MISC_TYPE
 	},
 
 	# test/test/not/neg/mul/imul/div/idiv
 	0xf7: {
 		"opcodeExtension": True,
-		"readModRegRm": True
+		"readModRegRm": True,
+		"opcodeType": ARITHMETIC_TYPE
 	},
 
 	# imul
 	0x6b: {
 		"readModRegRm": True,
-		"readImmediateBytes": 1
+		"readImmediateBytes": 1,
+		"opcodeType": ARITHMETIC_TYPE
 	},
 
 	# sub
 	0x29: {
-		"readModRegRm": True
+		"readModRegRm": True,
+		"opcodeType": ARITHMETIC_TYPE
 	},
 
 	# cmp
 	0x3b: {
 		"readModRegRm": True,
-		"rmIsSource": False
+		"rmIsSource": False,
+		"opcodeType": ARITHMETIC_TYPE
 	}
 };
 
@@ -148,7 +205,8 @@ twoByteOpcodes = {
 	# imul
 	0xaf: {
 		"readModRegRm": True,
-		"rmIsSource": False
+		"rmIsSource": False,
+		"opcodeType": ARITHMETIC_TYPE
 	}
 };
 
