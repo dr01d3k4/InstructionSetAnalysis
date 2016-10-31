@@ -75,23 +75,26 @@ def getTextSection(elf64File):
 def decodeMachineCode(architecture, machineCode):
 	# "withDebug" is because this is a tuple of (startByte, [bytesInInstruction], InstructionInstance)
 	instructionsWithDebug = architecture.decode(machineCode);
+	
 	# printInstructionsWithDebug(instructionsWithDebug);
+	# printInstructionsWithDebug(instructionsWithDebug, showInstructionDetails = True);
 
 	opcodeTypes = architecture.getOpcodeTypes();
+	operandTypes = architecture.getOperandTypes();
 	instructions = map(lambda x: x[2], instructionsWithDebug);
 
-	return opcodeTypes, instructions;
+	return opcodeTypes, operandTypes, instructions;
 
 
-def calculateStats(architecture, opcodeTypes, instructions):
-	return stats.calculateStats(architecture.getArchitectureName(), opcodeTypes, instructions);
+def calculateStats(architecture, opcodeTypes, operandTypes, instructions):
+	return stats.calculateStats(architecture.getArchitectureName(), opcodeTypes, operandTypes, instructions);
 
 
 def doWorkOnObjectFile(architecture, filename):
 	elf64File = readElf64File(filename);
 	textSection = getTextSection(elf64File);
-	opcodeTypes, instructions = decodeMachineCode(architecture, textSection);
-	stats = calculateStats(architecture, opcodeTypes, instructions);
+	opcodeTypes, operandTypes, instructions = decodeMachineCode(architecture, textSection);
+	stats = calculateStats(architecture, opcodeTypes, operandTypes, instructions);
 
 
 def main():

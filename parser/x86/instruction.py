@@ -8,18 +8,20 @@ class Instruction(InstructionBase):
 		self._operands = operands;
 
 
-	# @property
 	def getOpcode(self):
 		return self._opcode;
 
 
-	# @property
 	def getOperands(self):
 		return self._operands;
 
 
 	def getOpcodeType(self):
 		return self._opcode.opcodeType;
+
+
+	def getOperandTypes(self):
+		return map(lambda o: (o.getOperandType(), o), self._operands);
 
 
 	def __repr__(self):

@@ -22,3 +22,8 @@ class InstructionBase(object):
 	@abc.abstractmethod
 	def getOpcodeType(self):
 		pass;
+
+
+	@abc.abstractmethod
+	def getOperandTypes(self):
+		pass;

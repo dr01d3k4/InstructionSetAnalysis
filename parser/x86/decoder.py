@@ -3,9 +3,8 @@ from register import getRegRegister, getRmRegister, getBaseRegister, getIndexReg
 from util.byte_util import bytesToHexString, byteToHexString, byteToBinaryString, getDisplayByteString;
 from byte_reader import ByteReader;
 from instruction import Instruction;
-from opcode import Opcode;
-import opcodes;
-import operand;
+import opcode as opcodes;
+import operand
 import math;
 from rex_prefix import RexPrefix, NoRexPrefix;
 
@@ -304,14 +303,14 @@ def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = F
 						
 				else:
 					if (indexIsSP):
-						rmOperand = operand.RegisterDisplacementOperand(base);
+						rmOperand = operand.RegisterMemoryOperand(base);
 					else:
 						rmOperand = operand.ScaleIndexBaseOperand(scale, index, base);
 		else:
 			if (mod != 0b00):
 				rmOperand = operand.RegisterDisplacementOperand(rmRegister, modDisplacement);
 			else:
-				rmOperand = operand.RegisterDisplacementOperand(rmRegister, 0);
+				rmOperand = operand.RegisterMemoryOperand(rmRegister);
 
 		debugPrint("Reg operand:", repr(regOperand));
 		debugPrint("Rm operand: ", repr(rmOperand));
@@ -455,10 +454,10 @@ def decode(bytes):
 		opcodeName = opcodeDetails["name"];
 		opcodeType = opcodeDetails["opcodeType"];
 
-		hasOpcodeExtension = opcodes.getOpcodeParam(opcodeDetails, "opcodeExtension");
-		shouldReadModRegRm = opcodes.getOpcodeParam(opcodeDetails, "readModRegRm");
-		rmIsSource = opcodes.getOpcodeParam(opcodeDetails, "rmIsSource");
-		readImmediateBytes = opcodes.getOpcodeParam(opcodeDetails, "readImmediateBytes");
+		hasOpcodeExtension = opcodes.getOpcodeParamOrDefault(opcodeDetails, "opcodeExtension");
+		shouldReadModRegRm = opcodes.getOpcodeParamOrDefault(opcodeDetails, "readModRegRm");
+		rmIsSource = opcodes.getOpcodeParamOrDefault(opcodeDetails, "rmIsSource");
+		readImmediateBytes = opcodes.getOpcodeParamOrDefault(opcodeDetails, "readImmediateBytes");
 
 		if ("dataSize" in opcodeDetails):
 			dataSize = opcodeDetails["dataSize"];
@@ -489,7 +488,7 @@ def decode(bytes):
 
 			opcodeName = opcodeName[opcodeExtension];
 
-		opcode = Opcode(opcodeByte, opcodeExtension, opcodeName, opcodeType);
+		opcode = opcodes.Opcode(opcodeByte, opcodeExtension, opcodeName, opcodeType);
 
 		if (shouldReadModRegRm):
 			debugPrint("Reading modredrm");
@@ -531,9 +530,13 @@ def decode(bytes):
 	return instructions;
 
 
+def getArchitectureName():
+	return "x86";
+
+
 def getOpcodeTypes():
 	return opcodes.OPCODE_TYPES;
 
 
-def getArchitectureName():
-	return "x86";
+def getOperandTypes():
+	return operand.OPERAND_TYPES;
