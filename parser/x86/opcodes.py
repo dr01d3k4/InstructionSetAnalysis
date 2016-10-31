@@ -6,9 +6,8 @@ from util.byte_util import getDisplayByteString;
 Fields available:
 
 Field name			Default value		Effect
-- name				"None"
-- extensionNames		["None"...]
-- opcodeType			UNKNOWN_TYPE
+- name				
+- opcodeType
 - dataSize			[ do nothing ]		Call rexPrefix.setDataSize()
 - opcodeExtension		False
 - readModRegRm			False
@@ -23,7 +22,6 @@ MISC_TYPE = 3;
 JUMP_TYPE = 4;
 JUMP_UNSIGNED_TYPE = 5;
 JUMP_SIGNED_TYPE = 6;
-UNKNOWN_TYPE = 7;
 
 
 OPCODE_TYPES = [
@@ -33,8 +31,7 @@ OPCODE_TYPES = [
 	"misc",
 	"jump",
 	"jump unsigned",
-	"jump signed",
-	"unknown type"
+	"jump signed"
 ];
 
 
@@ -47,13 +44,11 @@ def opcodeTypeToString(opcodeType):
 
 
 opcodeParameterDefaults = {
-	"name": "None",
-	"opcodeType": UNKNOWN_TYPE,
 	"dataSize": 64,
 	"opcodeExtension": False,
 	"readModRegRm": False,
 	"rmIsSource": True,
-	"readImmediateBytes": 0,
+	"readImmediateBytes": 0
 };
 
 

@@ -1,9 +1,9 @@
 from __future__ import print_function;
 from util.binary_file import printHexDump;
-from elf64.reader import readElf64File;
 from util.byte_util import bytesToHexString, byteToHexStringSpaceAlign;
+import elf64.reader as elf64;
 import x86.decoder as x86;
-from stats.calculate_stats import calculateStats;
+import stats.calculate_stats as stats;
 import math;
 
 
@@ -47,54 +47,57 @@ def printInstructionsWithDebug(instructions, showInstructionDetails = False):
 				print("-" * 80);
 
 
-def decodeObjectFile(fileLocation):
-	print("Working");
-	print("");
-
-	elf64FileLocation = fileLocation;
-	elf64File, errorMessage = readElf64File(elf64FileLocation);
+def readElf64File(filename):
+	elf64File, errorMessage = elf64.readElf64File(filename);
 
 	if (elf64File == None):
 		print("File not loaded: %s" % errorMessage);
 		return None;
 
-	print("File loaded");
+	# print("File loaded");
 	# print(elf64File);
 
-	textContents = elf64File.getSectionContents(".text");
-	if (textContents == None):
-		print("Text contents not found in file");
+	return elf64File;
+
+
+def getTextSection(elf64File):
+	textSection = elf64File.getSectionContents(".text");
+
+	if (textSection == None):
+		print("Text section not found in file");
 		return None;
 
-	print("Text contents:", bytesToHexString(textContents));
-	print("Decoding");
+	# print("Text section:", bytesToHexString(textSection));
 
+	return textSection;
+
+
+def decodeMachineCode(architecture, machineCode):
 	# "withDebug" is because this is a tuple of (startByte, [bytesInInstruction], InstructionInstance)
-	instructionsWithDebug = x86.decode(textContents);
-
-	print("");
-	print("Decoded");
-	
+	instructionsWithDebug = architecture.decode(machineCode);
 	# printInstructionsWithDebug(instructionsWithDebug);
 
-	# Get just the instructions out the tuple
+	opcodeTypes = architecture.getOpcodeTypes();
 	instructions = map(lambda x: x[2], instructionsWithDebug);
 
-	print("");
-	print("Calculating stats");
+	return opcodeTypes, instructions;
 
-	opcodeTypes = x86.getOpcodeTypes();
 
-	calculateStats("x86", instructions, opcodeTypes);
+def calculateStats(architecture, opcodeTypes, instructions):
+	return stats.calculateStats(architecture.getArchitectureName(), opcodeTypes, instructions);
 
-	print("");
-	print("Done");
+
+def doWorkOnObjectFile(architecture, filename):
+	elf64File = readElf64File(filename);
+	textSection = getTextSection(elf64File);
+	opcodeTypes, instructions = decodeMachineCode(architecture, textSection);
+	stats = calculateStats(architecture, opcodeTypes, instructions);
 
 
 def main():
-	# decodeObjectFile("hello_world.o");
-	# decodeObjectFile("add_function.o");
-	decodeObjectFile("array_loop.o");
+	# doWorkOnObjectFile(x86, "hello_world.o");
+	# doWorkOnObjectFile(x86, "add_function.o");
+	doWorkOnObjectFile(x86, "array_loop.o");
 
 
 main();

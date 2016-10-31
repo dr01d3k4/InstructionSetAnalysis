@@ -444,9 +444,17 @@ def decode(bytes):
 
 		debugPrint("");
 
+		if ("name" not in opcodeDetails):
+			print("No name for opcode", opcodeByte);
+			break;
 
-		opcodeName = opcodes.getOpcodeParam(opcodeDetails, "name");
-		opcodeType = opcodes.getOpcodeParam(opcodeDetails, "opcodeType");
+		if ("opcodeType" not in opcodeDetails):
+			print("No type for opcode", opcodeByte);
+			break;
+
+		opcodeName = opcodeDetails["name"];
+		opcodeType = opcodeDetails["opcodeType"];
+
 		hasOpcodeExtension = opcodes.getOpcodeParam(opcodeDetails, "opcodeExtension");
 		shouldReadModRegRm = opcodes.getOpcodeParam(opcodeDetails, "readModRegRm");
 		rmIsSource = opcodes.getOpcodeParam(opcodeDetails, "rmIsSource");
@@ -525,3 +533,7 @@ def decode(bytes):
 
 def getOpcodeTypes():
 	return opcodes.OPCODE_TYPES;
+
+
+def getArchitectureName():
+	return "x86";

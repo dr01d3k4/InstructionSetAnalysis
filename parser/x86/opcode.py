@@ -2,7 +2,7 @@ import opcodes;
 
 
 class Opcode(object):
-	def __init__(self, opcode, extension = -1, name = "None", opcodeType = opcodes.UNKNOWN_TYPE):
+	def __init__(self, opcode, extension, name, opcodeType):
 		self._opcode = opcode;
 		self._extension = extension;
 		self._name = name;
