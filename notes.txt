@@ -136,3 +136,11 @@ http://www.codeproject.com/Articles/662301/x-Instruction-Encoding-Revealed-Bit-T
 
 Registers:
 https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture#General-Purpose_Registers_.28GPR.29_-_16-bit_naming_conventions
+
+
+
+
+
+
+
+http://people.csail.mit.edu/smcc/projects/single-file-programs/

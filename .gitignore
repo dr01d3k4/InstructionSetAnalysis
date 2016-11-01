@@ -1,4 +1,5 @@
 *.pdf
+gcc.c
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -17,8 +17,8 @@ OPCODE_TYPES = [
 	"logic",
 	"misc",
 	"jump",
-	"jump unsigned",
-	"jump signed"
+	# "jump unsigned",
+	# "jump signed"
 ];
 
 

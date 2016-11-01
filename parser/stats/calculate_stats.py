@@ -3,6 +3,30 @@ from __future__ import print_function;
 
 WIDTH_FORMATTER = "{:{width}}";
 
+# getPercentage = lambda t: (lambda c: (100.0 / t) * c if t != 0 else 0);
+getPercentage = lambda t: (lambda c: (100.0 / t) * c) if (t != 0) else (lambda _: 0);
+percentageFormat = lambda p: "{:6.2f}%".format(p)
+
+
+def transpose(matrix):
+	return zip(*matrix);
+
+
+def multimap(func, data):
+	return map(lambda a: map(lambda v: func(v), a), data);
+
+
+def compose(f, g):
+	return lambda x: f(g(x));
+
+
+def getRowTotals(matrix):
+	return map(sum, matrix);
+
+
+def getColumnTotals(matrix):
+	return map(sum, transpose(matrix));
+
 
 def printOpcodesByType(opcodeTypes, opcodesByType):
 	s = "opcodesByType = {";
@@ -57,7 +81,10 @@ def printByType(types, values, displayingFunction = lambda x: x):
 
 
 def printTable(rows, columns, values, displayingFunction = lambda x: x, showTotalRow = False, showTotalColumn = False):
-	data = map(lambda a: map(lambda v: str(displayingFunction(v)), a), values);
+	# data = map(lambda a: map(lambda v: str(displayingFunction(v)), a), values);
+	# multimap = multimap(lambda v: str(displayingFunction(v)), values);
+	display = compose(str, displayingFunction);
+	data = multimap(display, values);
 
 	dataToDisplay = [[""] + columns];
 
@@ -65,22 +92,22 @@ def printTable(rows, columns, values, displayingFunction = lambda x: x, showTota
 		dataToDisplay.append([rowName] + row);
 
 	if (showTotalRow):
-		totalRow = ["Total"] + map(str, map(sum, zip(*values)));
+		totalRow = ["Total"] + map(display, getColumnTotals(values));
 
 		if (showTotalColumn):
-			totalRow.append(str(sum(map(sum, values))));
+			totalRow.append(display(sum(map(sum, values))));
 
 		dataToDisplay.append(totalRow);
 
 	if (showTotalColumn):
 		dataToDisplay[0].append("Total");
 
-		totals = map(sum, values);
+		totals = getRowTotals(values);
 
 		for index, value in enumerate(totals):
-			dataToDisplay[index + 1].append(str(value));
+			dataToDisplay[index + 1].append(display(value));
 
-	colWidths = map(lambda a: max(map(len, a)), zip(*dataToDisplay));
+	colWidths = map(lambda a: max(map(len, a)), transpose(dataToDisplay));
 
 	HOR_SEP = "|";
 	VER_SEP = "-";
@@ -135,9 +162,6 @@ def calculateStats(architectureName, opcodeTypes, operandTypes, instructions):
 			totalOperands += 1;
 
 
-	getPercentage = (lambda t: lambda c: (100.0 / t) * c);
-	percentageFormat = lambda p: "{:5.2f}%".format(p)
-
 	opcodeTypeCounts = map(len, opcodesByType);
 	opcodePercentages = map(getPercentage(totalOpcodes), opcodeTypeCounts);
 
@@ -153,6 +177,27 @@ def calculateStats(architectureName, opcodeTypes, operandTypes, instructions):
 			operandTypesGrouped[operandType] += 1;
 
 		operandTypesByOpcodeTypeGrouped.append(operandTypesGrouped);
+
+	operandTypesByOpcodeTypeGroupedTotalPercentage = multimap(getPercentage(totalOperands), operandTypesByOpcodeTypeGrouped);
+
+	operandTypesByOpcodeTypeGroupedRowTotals = getRowTotals(operandTypesByOpcodeTypeGrouped); # map(sum, operandTypesByOpcodeTypeGrouped);
+	operandTypesByOpcodeTypeGroupedColumnTotals = getColumnTotals(operandTypesByOpcodeTypeGrouped); # map(sum, transpose(operandTypesByOpcodeTypeGrouped));
+
+	operandTypesByOpcodeTypeGroupedOperandTypePercentage = [
+		[
+			getPercentage(total)(value)
+			for value, total in zip(row, operandTypesByOpcodeTypeGroupedColumnTotals)
+		]
+		for row in operandTypesByOpcodeTypeGrouped
+	];
+
+	operandTypesByOpcodeTypeGroupedOpcodeTypePercentage = [
+		[
+			getPercentage(total)(value)
+			for value in row
+		]
+		for row, total in zip(operandTypesByOpcodeTypeGrouped, operandTypesByOpcodeTypeGroupedRowTotals)
+	];
 
 
 	print("");
@@ -173,8 +218,19 @@ def calculateStats(architectureName, opcodeTypes, operandTypes, instructions):
 
 	print("");
 	print("Operand types by opcode types");
-
 	printTable(opcodeTypes, operandTypes, operandTypesByOpcodeTypeGrouped, showTotalRow = True, showTotalColumn = True);
+
+	print("");
+	print("Operand types by opcode types as percentage of total operands");
+	printTable(opcodeTypes, operandTypes, operandTypesByOpcodeTypeGroupedTotalPercentage, percentageFormat, showTotalRow = True, showTotalColumn = True);
+	
+	print("");
+	print("Operand types by opcode types as percentage of operand type");
+	printTable(opcodeTypes, operandTypes, operandTypesByOpcodeTypeGroupedOperandTypePercentage, percentageFormat, showTotalRow = True, showTotalColumn = False);
+
+	print("");
+	print("Operand types by opcode types as percentage of opcode type");
+	printTable(opcodeTypes, operandTypes, operandTypesByOpcodeTypeGroupedOpcodeTypePercentage, percentageFormat, showTotalRow = False, showTotalColumn = True);
 
 	# for k in operandTypesByOpcodeType:
 	# 	print("\t", k);
