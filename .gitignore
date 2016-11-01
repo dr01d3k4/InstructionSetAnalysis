@@ -1,6 +1,7 @@
 *.pdf
 gcc.c
 gcc.o
+objdump_of_gcc.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

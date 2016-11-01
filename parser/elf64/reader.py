@@ -173,7 +173,9 @@ def createSectionHeadersDict(sectionHeaders, sectionNames):
 	for sectionHeader in sectionHeaders:
 		sh_name = collapseBytesToInteger(sectionHeader.sh_name);
 		name = readNullTerminatedString(sectionNames, sh_name);
-		sectionHeadersDict[name] = sectionHeader;
+
+		if (name == ".text"):
+			sectionHeadersDict[name] = sectionHeader;
 
 	return sectionHeadersDict;
 

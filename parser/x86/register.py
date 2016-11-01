@@ -80,6 +80,9 @@ Registers = [
 	]
 ];
 
+instructionPointer32 = Register("EIP", "101");
+instructionPointer64 = Register("RIP", "101");
+
 
 def getRegister(registerId, rexPrefix, adjustingBit = False):
 	if ((registerId < 0) or (registerId >= 8)):
@@ -123,3 +126,10 @@ def getBaseRegister(registerId, rexPrefix):
 
 def getIndexRegister(registerId, rexPrefix):
 	return getRegister(registerId, rexPrefix, rexPrefix.getX());
+
+
+def getInstructionPointerRegister(is64 = True):
+	if (is64):
+		return instructionPointer64;
+	else:
+		return instructionPointer32

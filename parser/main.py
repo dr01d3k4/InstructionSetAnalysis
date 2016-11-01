@@ -5,9 +5,25 @@ import elf64.reader as elf64;
 import x86.decoder as x86;
 import stats.calculate_stats as stats;
 import math;
+import gc;
+import resource;
 
 
-def printInstructionsWithDebug(instructions, showInstructionDetails = False):
+# http://stackoverflow.com/questions/32167386/force-garbage-collection-in-python-to-free-memory
+showMemoryUsage = False;
+
+def printMemoryUsage():
+	if (showMemoryUsage):
+		print('Memory usage: % 2.2f MB' % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0 / 1024.0));
+
+
+def printInstructionsWithDebug(instructions, showInstructionDetails = False, startPrintingAt = -1):
+	if (startPrintingAt < 0):
+		return;
+
+	if (startPrintingAt > 0):
+		instructions = instructions[startPrintingAt:];
+
 	if (len(instructions) == 0):
 		print("No instructions");
 		return;
@@ -26,8 +42,11 @@ def printInstructionsWithDebug(instructions, showInstructionDetails = False):
 		if (opcodeLength > maxOpcodeLength):
 			maxOpcodeLength = opcodeLength;
 
+	instructionNumber = max(startPrintingAt, 0);
 	for startByte, instructionBytes, instruction in instructions:
 		s = "";
+		s += "{:4}".format(instructionNumber);
+		s += " | ";
 		s += byteToHexStringSpaceAlign(startByte, length = startByteLength);
 		s += ": ";
 
@@ -45,6 +64,8 @@ def printInstructionsWithDebug(instructions, showInstructionDetails = False):
 			print(repr(instruction));
 			if (startByte != lastInstructionStartByte):
 				print("-" * 80);
+
+		instructionNumber += 1;
 
 
 def readElf64File(filename):
@@ -72,11 +93,11 @@ def getTextSection(elf64File):
 	return textSection;
 
 
-def decodeMachineCode(architecture, machineCode):
+def decodeMachineCode(architecture, machineCode, startPrintingFrom = -1, startDebugFrom = -1):
 	# "withDebug" is because this is a tuple of (startByte, [bytesInInstruction], InstructionInstance)
-	instructionsWithDebug = architecture.decode(machineCode);
-	
-	# printInstructionsWithDebug(instructionsWithDebug);
+	instructionsWithDebug = architecture.decode(machineCode, startDebugAt = startDebugFrom);
+
+	printInstructionsWithDebug(instructionsWithDebug, startPrintingAt = startPrintingFrom);
 	# printInstructionsWithDebug(instructionsWithDebug, showInstructionDetails = True);
 
 	opcodeTypes = architecture.getOpcodeTypes();
@@ -90,17 +111,31 @@ def calculateStats(architecture, opcodeTypes, operandTypes, instructions):
 	return stats.calculateStats(architecture.getArchitectureName(), opcodeTypes, operandTypes, instructions);
 
 
-def doWorkOnObjectFile(architecture, filename):
+def doWorkOnObjectFile(architecture, filename, startPrintingFrom = -1, startDebugFrom = -1):
+	printMemoryUsage();
 	elf64File = readElf64File(filename);
+	printMemoryUsage();
 	textSection = getTextSection(elf64File);
-	opcodeTypes, operandTypes, instructions = decodeMachineCode(architecture, textSection);
+	printMemoryUsage();
+	elf64File.setSectionContents(".text", None);
+	elf64File = None;
+	printMemoryUsage();
+	gc.collect();
+	printMemoryUsage();
+	opcodeTypes, operandTypes, instructions = decodeMachineCode(architecture, textSection, startPrintingFrom, startDebugFrom);
+	printMemoryUsage();
 	stats = calculateStats(architecture, opcodeTypes, operandTypes, instructions);
 
 
 def main():
-	# doWorkOnObjectFile(x86, "hello_world.o");
-	# doWorkOnObjectFile(x86, "add_function.o");
-	doWorkOnObjectFile(x86, "array_loop.o");
+	printingStart = -1; # 5078;
+	debugStart = -1;
+
+	# doWorkOnObjectFile(x86, "hello_world.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(x86, "add_function.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(x86, "array_loop.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	doWorkOnObjectFile(x86, "gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	printMemoryUsage();
 
 
 main();

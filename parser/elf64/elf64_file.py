@@ -39,6 +39,10 @@ class Elf64File(object):
 		else:
 			return None;
 
+	def setSectionContents(self, sectionName, value):
+		if (sectionName in self._sectionContents):
+			self._sectionContents[sectionName] = value;
+
 
 	def __repr__(self):
 		s = "Elf64File(\n";

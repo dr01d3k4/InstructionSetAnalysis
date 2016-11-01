@@ -31,6 +31,9 @@ class Instruction(InstructionBase):
 	def toString(self, maxOpcodeLength = 0):
 		s = self._opcode.name;
 
+		if (self._opcode == 0xc7):
+			print(s);
+
 		if (len(self._operands) > 0):
 			while (len(s) < maxOpcodeLength):
 				s += " ";

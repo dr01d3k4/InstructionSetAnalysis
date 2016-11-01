@@ -1,5 +1,5 @@
 from __future__ import print_function;
-from register import getRegRegister, getRmRegister, getBaseRegister, getIndexRegister;
+from register import getRegRegister, getRmRegister, getBaseRegister, getIndexRegister, getInstructionPointerRegister;
 from util.byte_util import bytesToHexString, byteToHexString, byteToBinaryString, getDisplayByteString;
 from byte_reader import ByteReader;
 from instruction import Instruction;
@@ -105,7 +105,7 @@ scaleMask = modMask;
 indexMask = regMask;
 baseMask  = rmMask;
 
-shouldPrintDebug = False;
+shouldPrintDebug = True;
 shouldPrintTodo = True;
 
 
@@ -176,6 +176,7 @@ def readScaleIndexBaseByte(byte):
 
 
 def decodeScaleIndexBaseByte(scaleBits, indexBits, baseBits, rexPrefix):
+	debugPrint("Decoding SIB");
 	debugPrint("Scale bits:", getDisplayByteString(scaleBits));
 	debugPrint("Index bits:" , getDisplayByteString(indexBits));
 	debugPrint("Base bits: ", getDisplayByteString(baseBits));
@@ -196,10 +197,10 @@ def decodeScaleIndexBaseByte(scaleBits, indexBits, baseBits, rexPrefix):
 	return scale, index, base;
 
 
-def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = False, readImmediateBytes = 0):
-	# , regIsOpcodeExtension = False, readImmediateBytes = 0):
-	debugPrint("Reading modregrm");
-	# debugPrint("Rm is source:", str(rmIsSource));
+def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = False, segmentOverride = operand.NO_SEGMENT_OVERRIDE):
+	# Page 508 in intel manual
+
+	debugPrint("Decoding modregrm");
 	debugPrint("Reg is opcode extension:", str(regIsOpcodeExtension));
 	debugPrint("Rex prefix:", repr(rexPrefix));
 
@@ -222,59 +223,67 @@ def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = F
 
 	operands = [ ];
 
+	rmOperand = None;
+	regOperand = None;
+
 	if (mod == 0b11):
-		if (regIsOpcodeExtension):
-			operands.append(operand.RegisterOperand(rmRegister));
-		else:
-			if (rmIsSource):
-				operands.append(operand.RegisterOperand(rmRegister));
-				operands.append(operand.RegisterOperand(regRegister));
-			else:
-				operands.append(operand.RegisterOperand(regRegister));
-				operands.append(operand.RegisterOperand(rmRegister));
+		rmOperand = operand.RegisterOperand(rmRegister);
+
+		if (not regIsOpcodeExtension):
+			regOperand = operand.RegisterOperand(regRegister);
 
 	else:
-		# http://wiki.osdev.org/X86-64_Instruction_Encoding#32.2F64-bit_addressing
-		# http://wiki.osdev.org/X86-64_Instruction_Encoding#32.2F64-bit_addressing_2
+		# Read SIB if rm is 0b100
+		sibBits = 0;
+		scaleBits = 0;
+		indexBits = 0;
+		baseBits = 0;
+		hasReadSib = False;
 
-		modDisplacement = 0;
-		if (mod == 0b01):
-			modDisplacement = readImmediate8Signed(bytes);
-		elif (mod == 0b10):
-			modDisplacement = readImmediate32Signed(bytes);
-
-		if (mod != 0b00):
-			debugPrint("Mod displacement:", getDisplayByteString(modDisplacement));
-
-		rmDisplacement = 0;
-		regOperand = None;
-		shouldReadRmDisplacement = False;
-		if (rm == 0b101):
-			if (mod == 0b00):
-				shouldReadRmDisplacement = True;
-			if (regIsOpcodeExtension):
-				shouldReadRmDisplacement = True;
-			if (readImmediateBytes > 0):
-				todoPrint("Read immediate bytes overriding read rm displacement hack");
-				shouldReadRmDisplacement = False;
-
-		if (shouldReadRmDisplacement):
-			rmDisplacement = readImmediate32Signed(bytes);
-			debugPrint("Rm displacement: ", getDisplayByteString(rmDisplacement));
-			regOperand = operand.ImmediateOperand(rmDisplacement);
-		else:
-			if (readImmediateBytes == 0):
-				regOperand = operand.RegisterOperand(regRegister);
-
-		rmOperand = None;
 		if (rm == 0b100):
-			todoPrint("Check handling of SIB is correct in modregrm decoder");
-
 			sibBits = readScaleIndexBaseByte(bytes.readByte()[0]);
 			scaleBits = sibBits[0];
 			indexBits = sibBits[1];
 			baseBits = sibBits[2];
 
+			hasReadSib = True;
+
+		# Read displacement after SIB
+		# If mod is 00 and rm is 0b101, then the whole operand is just disp32
+		# If mod is 01 or 10, read 8/32 bit displacement
+		displacement = 0;
+		hasReadDisplacement = False;
+
+		if ((mod == 0b00) and (rm == 0b101)):
+			# rmRegister = None;
+			rmRegister = getInstructionPointerRegister();
+
+			displacement = readImmediate32Signed(bytes);
+			hasReadDisplacement = True;
+
+		elif (mod == 0b01):
+			displacement = readImmediate8Signed(bytes);
+			hasReadDisplacement = True;
+
+		elif (mod == 0b10):
+			displacement = readImmediate32Signed(bytes);
+			hasReadDisplacement = True;
+
+		if (hasReadDisplacement):
+			debugPrint("Read displacement: " + getDisplayByteString(displacement));
+
+		if (not hasReadSib):
+			if (not hasReadDisplacement):
+				if (rmRegister == None):
+					print("Rm register is none?");
+				else:
+					rmOperand = operand.RegisterMemoryOperand(rmRegister, segmentOverride);
+			else:
+				if (rmRegister == None):
+					rmOperand = operand.ImmediateOperand(displacement);
+				else:
+					rmOperand = operand.RegisterDisplacementOperand(rmRegister, displacement, segmentOverride);
+		else:
 			sib = decodeScaleIndexBaseByte(scaleBits, indexBits, baseBits, rexPrefix);
 			scale = sib[0];
 			index = sib[1];
@@ -286,58 +295,180 @@ def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = F
 
 			indexIsSP = ((indexBits == 0b100) and (not rexPrefix.getX()));
 
+
 			if (mod != 0b00):
 				if (indexIsSP):
-					rmOperand = operand.RegisterDisplacementOperand(base, modDisplacement);
+					rmOperand = operand.RegisterDisplacementOperand(base, displacement, segmentOverride);
 				else:
-					rmOperand = operand.ScaleIndexBaseDisplacementOperand(scale, index, base, modDisplacement);
+					rmOperand = operand.ScaleIndexBaseDisplacementOperand(scale, index, base, displacement, segmentOverride);
 			else:
 				if (baseBits == 0b101):
 					baseDisplacement = readImmediate32Signed(bytes);
-					debugPrint("Base displacement: ", getDisplayByteString(rmDisplacement));
+					debugPrint("Base displacement: ", getDisplayByteString(baseDisplacement));
 				
 					if (indexIsSP):
-						rmOperand = operand.ImmediateDisplacementOperand(baseDisplacement);
+						rmOperand = operand.ImmediateDisplacementOperand(baseDisplacement, segmentOverride);
 					else:
-						rmOperand = operand.ScaleIndexBaseDisplacementOperand(scale, index, None, baseDisplacement);
+						rmOperand = operand.ScaleIndexBaseDisplacementOperand(scale, index, None, baseDisplacement, segmentOverride);
 						
 				else:
 					if (indexIsSP):
-						rmOperand = operand.RegisterMemoryOperand(base);
+						rmOperand = operand.RegisterMemoryOperand(base, segmentOverride);
 					else:
-						rmOperand = operand.ScaleIndexBaseOperand(scale, index, base);
-		else:
-			if (mod != 0b00):
-				rmOperand = operand.RegisterDisplacementOperand(rmRegister, modDisplacement);
-			else:
-				rmOperand = operand.RegisterMemoryOperand(rmRegister);
+						rmOperand = operand.ScaleIndexBaseOperand(scale, index, base, segmentOverride);
 
-		debugPrint("Reg operand:", repr(regOperand));
-		debugPrint("Rm operand: ", repr(rmOperand));
+		if (not regIsOpcodeExtension):
+			regOperand = operand.RegisterOperand(regRegister);
 
-		if (rmIsSource):
-			if (rmOperand != None):
-				operands.append(rmOperand);
+	if (rmIsSource):
+		if (rmOperand != None):
+			operands.append(rmOperand);
 
-			if (regOperand != None):
-				operands.append(regOperand);
+		if (regOperand != None):
+			operands.append(regOperand);
 
-		else:
-			if (regOperand != None):
-				operands.append(regOperand);
+	else:
+		if (regOperand != None):
+			operands.append(regOperand);
+		
+		if (rmOperand != None):
+			operands.append(rmOperand);
+
+
+
+	# if (mod == 0b11):
+	# 	if (regIsOpcodeExtension):
+	# 		operands.append(operand.RegisterOperand(rmRegister));
+	# 	else:
+	# 		if (rmIsSource):
+	# 			operands.append(operand.RegisterOperand(rmRegister));
+	# 			operands.append(operand.RegisterOperand(regRegister));
+	# 		else:
+	# 			operands.append(operand.RegisterOperand(regRegister));
+	# 			operands.append(operand.RegisterOperand(rmRegister));
+
+	# else:
+	# 	# http://wiki.osdev.org/X86-64_Instruction_Encoding#32.2F64-bit_addressing
+	# 	# http://wiki.osdev.org/X86-64_Instruction_Encoding#32.2F64-bit_addressing_2
+
+	# 	if (mod == 0b00) and (rm == 0b101):
+	# 		rmRegister = getInstructionPointerRegister();
+
+	# 	if (rm == 0b100):
+	# 		sibBits = readScaleIndexBaseByte(bytes.readByte()[0]);
+	# 		scaleBits = sibBits[0];
+	# 		indexBits = sibBits[1];
+	# 		baseBits = sibBits[2];
+
+	# 	displacement = 0;
+	# 	readDisplacement = False;
+
+	# 	if ((mod == 0b00) and (rm == 0b101)):
+	# 		displacement = readImmediate32Signed(bytes);
+	# 		readDisplacement = True;
+	# 	elif (mod == 0b01):
+	# 		displacement = readImmediate8Signed(bytes);
+	# 		readDisplacement = True;
+	# 	elif (mod == 0b10):
+	# 		displacement = readImmediate32Signed(bytes);
+	# 		readDisplacement = True;
+
+	# 	# modDisplacement = 0;
+	# 	# if (mod == 0b01):
+	# 	# 	modDisplacement = readImmediate8Signed(bytes);
+	# 	# elif (mod == 0b10):
+	# 	# 	modDisplacement = readImmediate32Signed(bytes);
+
+	# 	# if (mod != 0b00):
+	# 	# 	debugPrint("Mod displacement:", getDisplayByteString(modDisplacement));
+
+	# 	# rmDisplacement = 0;
+	# 	# regOperand = None;
+	# 	# shouldReadRmDisplacement = False;
+	# 	# if (rm == 0b101):
+	# 	# 	if (mod == 0b00):
+	# 	# 		shouldReadRmDisplacement = True;
+	# 	# 	if (regIsOpcodeExtension):
+	# 	# 		shouldReadRmDisplacement = True;
+	# 	# 	if (readImmediateBytes > 0):
+	# 	# 		todoPrint("Read immediate bytes overriding read rm displacement hack");
+	# 	# 		shouldReadRmDisplacement = False;
+
+	# 	# if (shouldReadRmDisplacement):
+	# 	# 	rmDisplacement = readImmediate32Signed(bytes);
+	# 	# 	debugPrint("Rm displacement: ", getDisplayByteString(rmDisplacement));
+	# 	# 	regOperand = operand.ImmediateOperand(rmDisplacement);
+	# 	# else:
+	# 	# 	if (readImmediateBytes == 0):
+	# 	# 		regOperand = operand.RegisterOperand(regRegister);
+
+	# 	rmOperand = None;
+	# 	if (rm == 0b100):
+	# 		todoPrint("Check handling of SIB is correct in modregrm decoder");
+
+	# 		sib = decodeScaleIndexBaseByte(scaleBits, indexBits, baseBits, rexPrefix);
+	# 		scale = sib[0];
+	# 		index = sib[1];
+	# 		base = sib[2];
+
+	# 		debugPrint("SIB bits:", sibBits);
+	# 		debugPrint("SIB:", sib);
+	# 		debugPrint("");
+
+	# 		indexIsSP = ((indexBits == 0b100) and (not rexPrefix.getX()));
+
+	# 		if (mod != 0b00):
+	# 			if (indexIsSP):
+	# 				rmOperand = operand.RegisterDisplacementOperand(base, modDisplacement);
+	# 			else:
+	# 				rmOperand = operand.ScaleIndexBaseDisplacementOperand(scale, index, base, modDisplacement);
+	# 		else:
+	# 			if (baseBits == 0b101):
+	# 				baseDisplacement = readImmediate32Signed(bytes);
+	# 				debugPrint("Base displacement: ", getDisplayByteString(rmDisplacement));
+				
+	# 				if (indexIsSP):
+	# 					rmOperand = operand.ImmediateDisplacementOperand(baseDisplacement);
+	# 				else:
+	# 					rmOperand = operand.ScaleIndexBaseDisplacementOperand(scale, index, None, baseDisplacement);
+						
+	# 			else:
+	# 				if (indexIsSP):
+	# 					rmOperand = operand.RegisterMemoryOperand(base);
+	# 				else:
+	# 					rmOperand = operand.ScaleIndexBaseOperand(scale, index, base);
+	# 	else:
+	# 		if (mod != 0b00):
+	# 			rmOperand = operand.RegisterDisplacementOperand(rmRegister, modDisplacement);
+	# 		else:
+	# 			rmOperand = operand.RegisterMemoryOperand(rmRegister);
+
+	# 	debugPrint("Reg operand:", repr(regOperand));
+	# 	debugPrint("Rm operand: ", repr(rmOperand));
+
+	# 	if (rmIsSource):
+	# 		if (rmOperand != None):
+	# 			operands.append(rmOperand);
+
+	# 		if (regOperand != None):
+	# 			operands.append(regOperand);
+
+	# 	else:
+	# 		if (regOperand != None):
+	# 			operands.append(regOperand);
 			
-			if (rmOperand != None):
-				operands.append(rmOperand);
+	# 		if (rmOperand != None):
+	# 			operands.append(rmOperand);
 
-	if (readImmediateBytes > 0):
-		debugPrint("Reading " + str(readImmediateBytes) + " bytes of immediate");
-		immediate = readImmediateSigned(bytes, readImmediateBytes);
-		immediateOperand = operand.ImmediateOperand(immediate);
+	# if (readImmediateBytes > 0):
+	# 	debugPrint("In modregrm, reading " + str(readImmediateBytes) + " bytes of immediate");
+	# 	immediate = readImmediateSigned(bytes, readImmediateBytes);
+	# 	immediateOperand = operand.ImmediateOperand(immediate);
 
-		debugPrint("Immediate:", getDisplayByteString(immediate));
-		debugPrint("Operand:  ", repr(immediateOperand));
+	# 	debugPrint("Immediate:", getDisplayByteString(immediate));
+	# 	debugPrint("Operand:  ", repr(immediateOperand));
 
-		operands.append(immediateOperand);
+	# 	operands.append(immediateOperand);
 
 	return operands;
 
@@ -384,7 +515,9 @@ def readRexPrefix(prefixByte, bytes):
 """
 [bytes] -> [Instruction]
 """
-def decode(bytes):
+def decode(bytes, startDebugAt = -1):
+	global shouldPrintDebug;
+
 	if (type(bytes) != "<class 'x86.byte_reader.ByteReader'>"):
 		bytes = ByteReader(bytes);
 
@@ -392,8 +525,16 @@ def decode(bytes):
 	instructions = [ ];
 	bytesRead = [ ];
 
+	if (startDebugAt == 0):
+		shouldPrintDebug = True;
+	else:
+		shouldPrintDebug = False;
+
 	while (True):
 		bytes.resetCurrentlyRead();
+
+		if ((not shouldPrintDebug) and (startDebugAt > 0) and (len(instructions) >= startDebugAt)):
+			shouldPrintDebug = True;
 
 		opcode = None;
 		operands = [ ];
@@ -402,8 +543,19 @@ def decode(bytes):
 		if (byte == None):
 			break;
 
-		debugPrint("");
-		debugPrint("Reading instruction starting at " + getDisplayByteString(startByte));
+		debugPrint("Reading instruction #" + str(len(instructions)) + " starting at " + getDisplayByteString(startByte));
+
+		segmentOverride = operand.NO_SEGMENT_OVERRIDE;
+
+		if (byte == 0x64):
+			debugPrint("Read FS segment override");
+			todoPrint("Handle more segment override prefixes");
+			segmentOverride = operand.FS_SEGMENT_OVERRIDE;
+			byte, _ = bytes.readByte();
+
+		if (byte == 0x66):
+			print("Read operand size override prefix");
+			byte, _ = bytes.readByte();
 
 		rexPrefix, byte = readRexPrefix(byte, bytes);
 
@@ -431,11 +583,13 @@ def decode(bytes):
 		
 		if (opcodeDetails == None):
 			print("\tRead unknown byte");
+			print("\t\tIndex: \t" + getDisplayByteString(len(instructions)));
 			print("\t\tLocation: \t" + getDisplayByteString(startByte));
 			print("\t\tValue: \t\t" + getDisplayByteString(byte));
 			print("\t\tBytes read so far: " + bytesToHexString(bytes.currentlyRead, bytesBetweenSpaces = 1));
 			break;
 
+		debugPrint("Opcode byte: " + getDisplayByteString(opcodeByte));
 		debugPrint("Opcode details = {");
 		for key, value in opcodeDetails.iteritems():
 			debugPrint("\t", str(key), "=", str(value));
@@ -458,17 +612,21 @@ def decode(bytes):
 		shouldReadModRegRm = opcodes.getOpcodeParamOrDefault(opcodeDetails, "readModRegRm");
 		rmIsSource = opcodes.getOpcodeParamOrDefault(opcodeDetails, "rmIsSource");
 		readImmediateBytes = opcodes.getOpcodeParamOrDefault(opcodeDetails, "readImmediateBytes");
+		autoInsertRegister = opcodes.getOpcodeParamOrDefault(opcodeDetails, "autoInsertRegister");
+
+		if (hasOpcodeExtension and not shouldReadModRegRm):
+			print(hex(opcodeByte), opcodeName, " has opcode extension but not reading modregrm");
 
 		if ("dataSize" in opcodeDetails):
 			dataSize = opcodeDetails["dataSize"];
-			if ((dataSize != 32) and (dataSize != 64)):
+			if ((dataSize != 8) and (dataSize != 16) and (dataSize != 32) and (dataSize != 64)):
 				debugPrint("Unknown data size:", str(dataSize));
 			else:
 				debugPrint("Setting data size to", str(dataSize));
 				rexPrefix.setDataSize(dataSize);
 
 		if (isTop5Bits):
-			debugPrint("Reading top 5 bits opcode");
+			debugPrint("Should read top 5 bits opcode");
 
 			if (opcodeByteLength > 1):
 				todoPrint("Handle top-5-bit-opcode with multi-byte opcodes");
@@ -480,29 +638,40 @@ def decode(bytes):
 			operands.append(registerOperand);
 
 		if (hasOpcodeExtension):
-			debugPrint("Reading opcode extension");
+			debugPrint("Should read opcode extension");
 
 			modRegRmByte = bytes.readByte()[0];
 			mod, reg, rm = readModRegRmByte(modRegRmByte);
-			opcodeExtension = reg;
 
-			opcodeName = opcodeName[opcodeExtension];
+			opcodeExtension = reg;
+			debugPrint("Opcode extension: " + getDisplayByteString(opcodeExtension));
+
+			if (str(type(opcodeName)) == "<type 'list'>"):
+				opcodeName = opcodeName[opcodeExtension];
+
+			if (str(type(opcodeType)) == "<type 'list'>"):
+				opcodeType = opcodeType[opcodeExtension];
 
 		opcode = opcodes.Opcode(opcodeByte, opcodeExtension, opcodeName, opcodeType);
 
 		if (shouldReadModRegRm):
-			debugPrint("Reading modredrm");
+			debugPrint("Should read modredrm");
 
 			if (hasOpcodeExtension):
 				debugPrint("Already read opcode extension so going back");
 				bytes.goBack();
 
-			newOperands = decodeModRegRm(bytes, rexPrefix, rmIsSource = rmIsSource, regIsOpcodeExtension = hasOpcodeExtension, readImmediateBytes = readImmediateBytes);
+			newOperands = decodeModRegRm(bytes, rexPrefix, rmIsSource = rmIsSource, regIsOpcodeExtension = hasOpcodeExtension, segmentOverride = segmentOverride);
 
 			for newOperand in newOperands:
 				operands.append(newOperand);
 
-		if ((readImmediateBytes > 0) and (not shouldReadModRegRm)):
+		if (autoInsertRegister):
+			operands.append(operand.RegisterOperand(getRmRegister(int(autoInsertRegister, 2), rexPrefix)));
+
+		# if ((readImmediateBytes > 0) and (not shouldReadModRegRm)):
+		if (readImmediateBytes > 0):
+			debugPrint("Should read " + str(readImmediateBytes) + " read immediate bytes");
 			immediateData = readImmediateSigned(bytes, readImmediateBytes);
 			immediateOperand = operand.ImmediateOperand(immediateData);
 			operands.append(immediateOperand);
@@ -521,11 +690,14 @@ def decode(bytes):
 			debugPrint("-" * 80);
 		else:
 			print("Opcode is None");
+			print("\t\tIndex: \t" + getDisplayByteString(len(instructions)));
 			print("\t\tLocation: \t" + getDisplayByteString(startByte));
 			print("\t\tValue: \t\t" + getDisplayByteString(byte));
 			print("\t\tBytes read so far: " + bytesToHexString(bytes.currentlyRead, bytesBetweenSpaces = 1));
+			print("");
 			break;
 
+		debugPrint("");
 
 	return instructions;
 

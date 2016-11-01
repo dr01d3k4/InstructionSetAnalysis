@@ -1,5 +1,28 @@
 import abc;
 
+
+NO_SEGMENT_OVERRIDE = -1;
+CS_SEGMENT_OVERRIDE = 0;
+SS_SEGMENT_OVERRIDE = 1;
+DS_SEGMENT_OVERRIDE = 2;
+ES_SEGMENT_OVERRIDE = 3;
+FS_SEGMENT_OVERRIDE = 4;
+GS_SEGMENT_OVERRIDE = 5;
+
+def segmentOverrideToString(segment):
+	if (segment == -1):
+		return "None";
+	else:
+		segments = ["cs", "ss", "ds", "es", "fs", "gs"];
+		return segments[segment];
+
+def segmentOverrideToDisplayString(segment):
+	if (segment == -1):
+		return "";
+	else:
+		return segmentOverrideToString(segment) + ":";
+
+
 IMMEDIATE_TYPE = 0;
 REGISTER_TYPE = 1;
 REGISTER_MEMORY_TYPE = 2;
@@ -82,7 +105,7 @@ def scaleIndexBaseToStringNoMemory(scale, index, base):
 	if (index != None):
 		sib += registerValueToString(index);
 
-	if (scale != 1):
+		# if (scale != 1):
 		sib += " * " + str(scale);
 
 	return sib;
@@ -150,48 +173,56 @@ class ImmediateOperand(Operand):
 
 
 class RegisterMemoryOperand(Operand):
-	def __init__(self, register):
+	def __init__(self, register, segmentOverride = NO_SEGMENT_OVERRIDE):
 		super(Operand, self).__init__();
 
 		self._register = register;
+		self._segmentOverride = segmentOverride;
 
 	def getOperandType(self):
 		return REGISTER_MEMORY_TYPE;
 
 	def __repr__(self):
-		return "RegisterMemoryOperand(register = " + repr(self._register) + ")";
+		# s = "RegisterMemoryOperand(register = " + repr(self._register);
+		# if (self._segmentOverride != NO_SEGMENT_OVERRIDE):
+		# 	s += ", segmentOverride = " + segmentOverrideToString(self._segmentOverride);
+		# s += ")";
+		# return s;
+		return "RegisterMemoryOperand(register = " + repr(self._register) + ", segmentOverride = " + segmentOverrideToString(self._segmentOverride) + ")";
 
 	def __str__(self):
-		return memoryLocationToString(registerValueToString(self._register));
+		return segmentOverrideToDisplayString(self._segmentOverride) + memoryLocationToString(registerValueToString(self._register));
 
 
 class RegisterDisplacementOperand(Operand):
-	def __init__(self, register, displacement):
+	def __init__(self, register, displacement, segmentOverride = NO_SEGMENT_OVERRIDE):
 		super(Operand, self).__init__();
 
 		self._register = register;
 		self._displacement = displacement;
+		self._segmentOverride = segmentOverride;
 
 	def getOperandType(self):
 		return REGISTER_DISPLACEMENT_TYPE;
 
 	def __repr__(self):
-		return "RegisterDisplacementOperand(register = " + repr(self._register) + ", displacement = " + hex(self._displacement) + ")";
+		return "RegisterDisplacementOperand(register = " + repr(self._register) + ", displacement = " + hex(self._displacement) + ", segmentOverride = " + segmentOverrideToString(self._segmentOverride) + ")";
 
 	def __str__(self):
-		if (self._displacement == 0):
-			return memoryLocationToString(registerValueToString(self._register));
-		else:
-			return memoryLocationToString(registerValueToString(self._register) + " " + immediateAdditionString(self._displacement));
+		# if (self._displacement == 0):
+		# 	return memoryLocationToString(registerValueToString(self._register));
+		# else:
+		return segmentOverrideToDisplayString(self._segmentOverride) + memoryLocationToString(registerValueToString(self._register) + " " + immediateAdditionString(self._displacement));
 
 
 class ScaleIndexBaseOperand(Operand):
-	def __init__(self, scale, index, base):
+	def __init__(self, scale, index, base, segmentOverride = NO_SEGMENT_OVERRIDE):
 		super(Operand, self).__init__();
 
 		self._scale = scale;
 		self._index = index;
 		self._base = base;
+		self._segmentOverride = segmentOverride;
 
 	def getOperandType(self):
 		return getSibOperandType(self._base != None, self._index != None, False);
@@ -200,20 +231,22 @@ class ScaleIndexBaseOperand(Operand):
 		return "ScaleIndexBaseOperand(" \
 				"scale = " + str(self._scale) + ", " + \
 				"index = " + repr(self._index) + ", " + \
-				"base = " + repr(self._base) + ")";
+				"base = " + repr(self._base) + ", " + \
+				"segmentOverride = " + segmentOverrideToString(self._segmentOverride) + ")";
 
 	def __str__(self):
-		return scaleIndexBaseToString(self._scale, self._index, self._base);
+		return segmentOverrideToDisplayString(self._segmentOverride) + scaleIndexBaseToString(self._scale, self._index, self._base);
 
 
 class ScaleIndexBaseDisplacementOperand(Operand):
-	def __init__(self, scale, index, base, displacement):
+	def __init__(self, scale, index, base, displacement, segmentOverride = NO_SEGMENT_OVERRIDE):
 		super(Operand, self).__init__();
 
 		self._scale = scale;
 		self._index = index;
 		self._base = base;
 		self._displacement = displacement;
+		self._segmentOverride = segmentOverride;
 
 	def getOperandType(self):
 		return getSibOperandType(self._base != None, self._index != None, True);
@@ -223,23 +256,25 @@ class ScaleIndexBaseDisplacementOperand(Operand):
 				"scale = " + str(self._scale) + ", " + \
 				"index = " + repr(self._index) + ", " + \
 				"base = " + repr(self._base) + ", " + \
-				"displacement = " + hex(self._displacement) + ")";
+				"displacement = " + hex(self._displacement) + ", " + \
+				"segmentOverride = " + segmentOverrideToString(self._segmentOverride) + ")";
 
 	def __str__(self):
-		return scaleIndexBaseImmediateToString(self._scale, self._index, self._base, self._displacement);
+		return segmentOverrideToDisplayString(self._segmentOverride) + scaleIndexBaseImmediateToString(self._scale, self._index, self._base, self._displacement);
 
 
 class ImmediateDisplacementOperand(Operand):
-	def __init__(self, value):
+	def __init__(self, value, segmentOverride = NO_SEGMENT_OVERRIDE):
 		super(Operand, self).__init__();
 
 		self._value = value;
+		self._segmentOverride = segmentOverride;
 
 	def getOperandType(self):
 		return IMMEDIATE_MEMORY_TYPE;
 
 	def __repr__(self):
-		return "ImmediateDisplacementOperand(value = " + hex(self._value) + ")";
+		return "ImmediateDisplacementOperand(value = " + hex(self._value) + ", segmentOverride = " + segmentOverrideToString(self._segmentOverride) + ")";
 
 	def __str__(self):
-		return memoryLocationToString(immediateValueToString(self._value));
+		return segmentOverrideToDisplayString(self._segmentOverride) + memoryLocationToString(immediateValueToString(self._value));
