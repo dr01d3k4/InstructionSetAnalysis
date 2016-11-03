@@ -19,6 +19,17 @@ def printMemoryUsage():
 
 def printInstructionsWithDebug(instructions, showInstructionDetails = False, startPrintingAt = -1):
 	if (startPrintingAt < 0):
+		for _, _, instruction in instructions:
+			hasOperandToPrint = False;
+
+			for operandType in instruction.getOperandTypes():
+				if (operandType[0] >= 5):
+					hasOperandToPrint = True;
+					break;
+
+			if (hasOperandToPrint):
+				print(instruction.toString());
+
 		return;
 
 	if (startPrintingAt > 0):
@@ -44,6 +55,16 @@ def printInstructionsWithDebug(instructions, showInstructionDetails = False, sta
 
 	instructionNumber = max(startPrintingAt, 0);
 	for startByte, instructionBytes, instruction in instructions:
+		# hasOperandToPrint = False;
+		# for operandType in instruction.getOperandTypes():
+		# 	if (operandType[0] >= 5):
+		# 		hasOperandToPrint = True;
+		# 		break;
+
+		# if (not hasOperandToPrint):
+		#	instructionNumber += 1;
+		#	continue;
+
 		s = "";
 		s += "{:4}".format(instructionNumber);
 		s += " | ";
@@ -124,11 +145,11 @@ def doWorkOnObjectFile(architecture, filename, startPrintingFrom = -1, startDebu
 	printMemoryUsage();
 	opcodeTypes, operandTypes, instructions = decodeMachineCode(architecture, textSection, startPrintingFrom, startDebugFrom);
 	printMemoryUsage();
-	stats = calculateStats(architecture, opcodeTypes, operandTypes, instructions);
+	# stats = calculateStats(architecture, opcodeTypes, operandTypes, instructions);
 
 
 def main():
-	printingStart = -1; # 5078;
+	printingStart = 18140;
 	debugStart = -1;
 
 	# doWorkOnObjectFile(x86, "hello_world.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);

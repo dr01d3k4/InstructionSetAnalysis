@@ -334,142 +334,6 @@ def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = F
 		if (rmOperand != None):
 			operands.append(rmOperand);
 
-
-
-	# if (mod == 0b11):
-	# 	if (regIsOpcodeExtension):
-	# 		operands.append(operand.RegisterOperand(rmRegister));
-	# 	else:
-	# 		if (rmIsSource):
-	# 			operands.append(operand.RegisterOperand(rmRegister));
-	# 			operands.append(operand.RegisterOperand(regRegister));
-	# 		else:
-	# 			operands.append(operand.RegisterOperand(regRegister));
-	# 			operands.append(operand.RegisterOperand(rmRegister));
-
-	# else:
-	# 	# http://wiki.osdev.org/X86-64_Instruction_Encoding#32.2F64-bit_addressing
-	# 	# http://wiki.osdev.org/X86-64_Instruction_Encoding#32.2F64-bit_addressing_2
-
-	# 	if (mod == 0b00) and (rm == 0b101):
-	# 		rmRegister = getInstructionPointerRegister();
-
-	# 	if (rm == 0b100):
-	# 		sibBits = readScaleIndexBaseByte(bytes.readByte()[0]);
-	# 		scaleBits = sibBits[0];
-	# 		indexBits = sibBits[1];
-	# 		baseBits = sibBits[2];
-
-	# 	displacement = 0;
-	# 	readDisplacement = False;
-
-	# 	if ((mod == 0b00) and (rm == 0b101)):
-	# 		displacement = readImmediate32Signed(bytes);
-	# 		readDisplacement = True;
-	# 	elif (mod == 0b01):
-	# 		displacement = readImmediate8Signed(bytes);
-	# 		readDisplacement = True;
-	# 	elif (mod == 0b10):
-	# 		displacement = readImmediate32Signed(bytes);
-	# 		readDisplacement = True;
-
-	# 	# modDisplacement = 0;
-	# 	# if (mod == 0b01):
-	# 	# 	modDisplacement = readImmediate8Signed(bytes);
-	# 	# elif (mod == 0b10):
-	# 	# 	modDisplacement = readImmediate32Signed(bytes);
-
-	# 	# if (mod != 0b00):
-	# 	# 	debugPrint("Mod displacement:", getDisplayByteString(modDisplacement));
-
-	# 	# rmDisplacement = 0;
-	# 	# regOperand = None;
-	# 	# shouldReadRmDisplacement = False;
-	# 	# if (rm == 0b101):
-	# 	# 	if (mod == 0b00):
-	# 	# 		shouldReadRmDisplacement = True;
-	# 	# 	if (regIsOpcodeExtension):
-	# 	# 		shouldReadRmDisplacement = True;
-	# 	# 	if (readImmediateBytes > 0):
-	# 	# 		todoPrint("Read immediate bytes overriding read rm displacement hack");
-	# 	# 		shouldReadRmDisplacement = False;
-
-	# 	# if (shouldReadRmDisplacement):
-	# 	# 	rmDisplacement = readImmediate32Signed(bytes);
-	# 	# 	debugPrint("Rm displacement: ", getDisplayByteString(rmDisplacement));
-	# 	# 	regOperand = operand.ImmediateOperand(rmDisplacement);
-	# 	# else:
-	# 	# 	if (readImmediateBytes == 0):
-	# 	# 		regOperand = operand.RegisterOperand(regRegister);
-
-	# 	rmOperand = None;
-	# 	if (rm == 0b100):
-	# 		todoPrint("Check handling of SIB is correct in modregrm decoder");
-
-	# 		sib = decodeScaleIndexBaseByte(scaleBits, indexBits, baseBits, rexPrefix);
-	# 		scale = sib[0];
-	# 		index = sib[1];
-	# 		base = sib[2];
-
-	# 		debugPrint("SIB bits:", sibBits);
-	# 		debugPrint("SIB:", sib);
-	# 		debugPrint("");
-
-	# 		indexIsSP = ((indexBits == 0b100) and (not rexPrefix.getX()));
-
-	# 		if (mod != 0b00):
-	# 			if (indexIsSP):
-	# 				rmOperand = operand.RegisterDisplacementOperand(base, modDisplacement);
-	# 			else:
-	# 				rmOperand = operand.ScaleIndexBaseDisplacementOperand(scale, index, base, modDisplacement);
-	# 		else:
-	# 			if (baseBits == 0b101):
-	# 				baseDisplacement = readImmediate32Signed(bytes);
-	# 				debugPrint("Base displacement: ", getDisplayByteString(rmDisplacement));
-				
-	# 				if (indexIsSP):
-	# 					rmOperand = operand.ImmediateDisplacementOperand(baseDisplacement);
-	# 				else:
-	# 					rmOperand = operand.ScaleIndexBaseDisplacementOperand(scale, index, None, baseDisplacement);
-						
-	# 			else:
-	# 				if (indexIsSP):
-	# 					rmOperand = operand.RegisterMemoryOperand(base);
-	# 				else:
-	# 					rmOperand = operand.ScaleIndexBaseOperand(scale, index, base);
-	# 	else:
-	# 		if (mod != 0b00):
-	# 			rmOperand = operand.RegisterDisplacementOperand(rmRegister, modDisplacement);
-	# 		else:
-	# 			rmOperand = operand.RegisterMemoryOperand(rmRegister);
-
-	# 	debugPrint("Reg operand:", repr(regOperand));
-	# 	debugPrint("Rm operand: ", repr(rmOperand));
-
-	# 	if (rmIsSource):
-	# 		if (rmOperand != None):
-	# 			operands.append(rmOperand);
-
-	# 		if (regOperand != None):
-	# 			operands.append(regOperand);
-
-	# 	else:
-	# 		if (regOperand != None):
-	# 			operands.append(regOperand);
-			
-	# 		if (rmOperand != None):
-	# 			operands.append(rmOperand);
-
-	# if (readImmediateBytes > 0):
-	# 	debugPrint("In modregrm, reading " + str(readImmediateBytes) + " bytes of immediate");
-	# 	immediate = readImmediateSigned(bytes, readImmediateBytes);
-	# 	immediateOperand = operand.ImmediateOperand(immediate);
-
-	# 	debugPrint("Immediate:", getDisplayByteString(immediate));
-	# 	debugPrint("Operand:  ", repr(immediateOperand));
-
-	# 	operands.append(immediateOperand);
-
 	return operands;
 
 
@@ -545,19 +409,41 @@ def decode(bytes, startDebugAt = -1):
 
 		debugPrint("Reading instruction #" + str(len(instructions)) + " starting at " + getDisplayByteString(startByte));
 
+		LOCK_PREFIX = 0xf0;
+		REPNE_PREFIX = 0xf2;
+		REP_PREFIX = 0xf3;
+		group1Prefix = -1;
+
+		if (byte == LOCK_PREFIX):
+			group1Prefix = LOCK_PREFIX;
+			byte, _ = bytes.readByte();
+
+		if (byte == REPNE_PREFIX):
+			group1Prefix = REPNE_PREFIX;
+			byte, _ = bytes.readByte();
+
+		if (byte == REP_PREFIX):
+			group1Prefix = REP_PREFIX;
+			byte, _ = bytes.readByte();
+
+
 		segmentOverride = operand.NO_SEGMENT_OVERRIDE;
 
 		if (byte == 0x64):
 			debugPrint("Read FS segment override");
-			todoPrint("Handle more segment override prefixes");
+			todoPrint(str(len(instructions)) + " Handle more segment override prefixes");
 			segmentOverride = operand.FS_SEGMENT_OVERRIDE;
 			byte, _ = bytes.readByte();
 
+		operandSizePrefix = -1;
 		if (byte == 0x66):
-			print("Read operand size override prefix");
+			operandSizePrefix = 0x66;
+			print(len(instructions), "Read operand size override prefix");
 			byte, _ = bytes.readByte();
 
+		originalRexPrefix = None;
 		rexPrefix, byte = readRexPrefix(byte, bytes);
+		originalRexPrefix = rexPrefix;
 
 		opcodeDetails = None;
 		isTop5Bits = False;
@@ -613,6 +499,11 @@ def decode(bytes, startDebugAt = -1):
 		rmIsSource = opcodes.getOpcodeParamOrDefault(opcodeDetails, "rmIsSource");
 		readImmediateBytes = opcodes.getOpcodeParamOrDefault(opcodeDetails, "readImmediateBytes");
 		autoInsertRegister = opcodes.getOpcodeParamOrDefault(opcodeDetails, "autoInsertRegister");
+		immediateCanBe64WithRexW = opcodes.getOpcodeParamOrDefault(opcodeDetails, "immediateCanBe64WithRexW");
+
+		autoOperands = opcodes.getOpcodeParamOrDefault(opcodeDetails, "autoOperand");
+		for autoOperand in autoOperands:
+			operands.append(autoOperand);
 
 		if (hasOpcodeExtension and not shouldReadModRegRm):
 			print(hex(opcodeByte), opcodeName, " has opcode extension but not reading modregrm");
@@ -623,7 +514,7 @@ def decode(bytes, startDebugAt = -1):
 				debugPrint("Unknown data size:", str(dataSize));
 			else:
 				debugPrint("Setting data size to", str(dataSize));
-				rexPrefix.setDataSize(dataSize);
+				rexPrefix = rexPrefix.setDataSize(dataSize);
 
 		if (isTop5Bits):
 			debugPrint("Should read top 5 bits opcode");
@@ -652,6 +543,13 @@ def decode(bytes, startDebugAt = -1):
 			if (str(type(opcodeType)) == "<type 'list'>"):
 				opcodeType = opcodeType[opcodeExtension];
 
+		if (opcodeName == ""):
+			print(len(instructions), "Opcode name is empty");
+
+		if (group1Prefix == REPNE_PREFIX):
+			opcodeName = "repnz " + opcodeName;
+			opcodeByte = opcodeByte | (REPNE_PREFIX << 8);
+
 		opcode = opcodes.Opcode(opcodeByte, opcodeExtension, opcodeName, opcodeType);
 
 		if (shouldReadModRegRm):
@@ -669,18 +567,28 @@ def decode(bytes, startDebugAt = -1):
 		if (autoInsertRegister):
 			operands.append(operand.RegisterOperand(getRmRegister(int(autoInsertRegister, 2), rexPrefix)));
 
-		# if ((readImmediateBytes > 0) and (not shouldReadModRegRm)):
 		if (readImmediateBytes > 0):
+			if (immediateCanBe64WithRexW):
+				if (originalRexPrefix.getW()):
+					readImmediateBytes = 8;
+
+			if (operandSizePrefix >= 0):
+				print(len(instructions), "Todo: Handle operand/address size overide");
+				readImmediateBytes = 2;
+
 			debugPrint("Should read " + str(readImmediateBytes) + " read immediate bytes");
 			immediateData = readImmediateSigned(bytes, readImmediateBytes);
 			immediateOperand = operand.ImmediateOperand(immediateData);
 			operands.append(immediateOperand);
 
+
 		if (opcode != None):
 			instruction = Instruction(opcode, operands);
 			instructionBytes = bytes.currentlyRead;
 
-			instructions.append((startByte, instructionBytes, instruction));
+			instructionTuple = (startByte, instructionBytes, instruction);
+
+			instructions.append(instructionTuple);
 
 			debugPrint("");
 			debugPrint("Read instruction:");
@@ -698,6 +606,9 @@ def decode(bytes, startDebugAt = -1):
 			break;
 
 		debugPrint("");
+
+		# if (len(instructions) > 1750):
+		# 	break;
 
 	return instructions;
 

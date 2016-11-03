@@ -11,12 +11,19 @@
 111 = EDI/DI (BH if 8)
 """
 
-
 class Register(object):
 	def __init__(self, name, bitRepresentation):
 		self._name = name;
 		self._bitRepresentation = bitRepresentation;
+		
+	@property
+	def name(self):
+		return self._name;
 
+	@property
+	def bitRepresentation(self):
+		return self._bitRepresentation;
+		
 	def __repr__(self):
 		return "Register(" + \
 			self._name + ", " + \
@@ -132,4 +139,14 @@ def getInstructionPointerRegister(is64 = True):
 	if (is64):
 		return instructionPointer64;
 	else:
-		return instructionPointer32
+		return instructionPointer32;
+
+
+"""
+Returns the 64 bit form of a register for when it's used for memory addresing.
+"""
+def toMemoryAddressingRegister(register):
+	if (register == None):
+		return None;
+	else:
+		return Registers[3][int(register.bitRepresentation, 2)];

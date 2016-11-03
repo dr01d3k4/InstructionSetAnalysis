@@ -64,7 +64,7 @@ class RexPrefix(RexPrefixBase):
 		return size;
 
 	def setDataSize(self, dataSize):
-		self._w = (dataSize == 64);
+		return RexPrefix(dataSize == 64, self._r, self._x, self._b);
 
 	def getW(self):
 		return True if self._w else False;
@@ -99,7 +99,8 @@ class NoRexPrefix(RexPrefixBase):
 		return self._dataSize;
 
 	def setDataSize(self, dataSize):
-		self._dataSize = dataSize;
+		# self._dataSize = dataSize;
+		return NoRexPrefix(dataSize);
 
 	def getW(self):
 		return False;

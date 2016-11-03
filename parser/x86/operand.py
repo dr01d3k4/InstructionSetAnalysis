@@ -1,4 +1,5 @@
 import abc;
+from register import toMemoryAddressingRegister;
 
 
 NO_SEGMENT_OVERRIDE = -1;
@@ -176,18 +177,14 @@ class RegisterMemoryOperand(Operand):
 	def __init__(self, register, segmentOverride = NO_SEGMENT_OVERRIDE):
 		super(Operand, self).__init__();
 
-		self._register = register;
+		self._register = toMemoryAddressingRegister(register);
 		self._segmentOverride = segmentOverride;
+
 
 	def getOperandType(self):
 		return REGISTER_MEMORY_TYPE;
 
 	def __repr__(self):
-		# s = "RegisterMemoryOperand(register = " + repr(self._register);
-		# if (self._segmentOverride != NO_SEGMENT_OVERRIDE):
-		# 	s += ", segmentOverride = " + segmentOverrideToString(self._segmentOverride);
-		# s += ")";
-		# return s;
 		return "RegisterMemoryOperand(register = " + repr(self._register) + ", segmentOverride = " + segmentOverrideToString(self._segmentOverride) + ")";
 
 	def __str__(self):
@@ -198,7 +195,7 @@ class RegisterDisplacementOperand(Operand):
 	def __init__(self, register, displacement, segmentOverride = NO_SEGMENT_OVERRIDE):
 		super(Operand, self).__init__();
 
-		self._register = register;
+		self._register = toMemoryAddressingRegister(register);
 		self._displacement = displacement;
 		self._segmentOverride = segmentOverride;
 
@@ -209,9 +206,6 @@ class RegisterDisplacementOperand(Operand):
 		return "RegisterDisplacementOperand(register = " + repr(self._register) + ", displacement = " + hex(self._displacement) + ", segmentOverride = " + segmentOverrideToString(self._segmentOverride) + ")";
 
 	def __str__(self):
-		# if (self._displacement == 0):
-		# 	return memoryLocationToString(registerValueToString(self._register));
-		# else:
 		return segmentOverrideToDisplayString(self._segmentOverride) + memoryLocationToString(registerValueToString(self._register) + " " + immediateAdditionString(self._displacement));
 
 
@@ -220,8 +214,8 @@ class ScaleIndexBaseOperand(Operand):
 		super(Operand, self).__init__();
 
 		self._scale = scale;
-		self._index = index;
-		self._base = base;
+		self._index = toMemoryAddressingRegister(index);
+		self._base = toMemoryAddressingRegister(base);
 		self._segmentOverride = segmentOverride;
 
 	def getOperandType(self):
@@ -243,8 +237,8 @@ class ScaleIndexBaseDisplacementOperand(Operand):
 		super(Operand, self).__init__();
 
 		self._scale = scale;
-		self._index = index;
-		self._base = base;
+		self._index = toMemoryAddressingRegister(index);
+		self._base = toMemoryAddressingRegister(base);
 		self._displacement = displacement;
 		self._segmentOverride = segmentOverride;
 

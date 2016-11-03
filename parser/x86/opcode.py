@@ -1,5 +1,7 @@
 from __future__ import print_function;
 from util.byte_util import getDisplayByteString;
+import operand;
+import register;
 
 
 TRANSFER_TYPE = 0;
@@ -41,6 +43,8 @@ Field name			Default value		Effect
 - rmIsSource			True
 - readImmediateBytes		0
 - autoInsertRegister		False			E.g. 3d cmp wants ax/eax/rax auto added
+- autoOperand			[ ]			Opcode defines its own operands
+- immediateCanBe64WithRexW	False			If true and rexW is true, read a 64 bit immediate instead
 """
 
 
@@ -50,7 +54,9 @@ opcodeParameterDefaults = {
 	"readModRegRm": False,
 	"rmIsSource": True,
 	"readImmediateBytes": 0,
-	"autoInsertRegister": False
+	"autoInsertRegister": False,
+	"autoOperand": [ ],
+	"immediateCanBe64WithRexW": False
 };
 
 
@@ -59,6 +65,25 @@ def jumpDetails(name, immediateSize = 1):
 		"name": name,
 		"opcodeType": JUMP_TYPE,
 		"readImmediateBytes": immediateSize
+	};
+
+
+def setByteOnConditionDetails(name):
+	return {
+		"name": name,
+		"opcodeType": TRANSFER_TYPE,
+		"dataSize": 8,
+		"opcodeExtension": "True",
+		"readModRegRm": True
+	};
+
+
+def conditionalMoveDetails(name):
+	return {
+		"name": name,
+		"opcodeType": TRANSFER_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
 	};
 
 
@@ -83,7 +108,8 @@ top5BitsOpcodes = {
 		"name": "mov",
 		"opcodeType": TRANSFER_TYPE,
 		"dataSize": 32,
-		"readImmediateBytes": 4
+		"readImmediateBytes": 4,
+		"immediateCanBe64WithRexW": True
 	}
 };
 
@@ -94,6 +120,14 @@ oneByteOpcodes = {
 		"name": "add",
 		"opcodeType": ARITHMETIC_TYPE,
 		"readModRegRm": True
+	},
+
+	# add ax/eax/rax and imm32
+	0x05: {
+		"name": "add",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readImmediateBytes": 4,
+		"autoInsertRegister": "000"	
 	},
 
 	# or rm8 or r8
@@ -111,6 +145,24 @@ oneByteOpcodes = {
 		"name": "or",
 		"opcodeType": LOGIC_TYPE,
 		"readModRegRm": True
+	},
+
+	# or rm8 or r8
+	0x0a:
+	{
+		"name": "or",
+		"opcodeType": LOGIC_TYPE,
+		"dataSize": 8,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# and rm16/32/64 or r16/32/64
+	0x21:
+	{
+		"name": "and",
+		"opcodeType": LOGIC_TYPE,
+		"readModRegRm": True,
 	},
 
 	# and ax/eax/rax and imm16/32
@@ -150,6 +202,15 @@ oneByteOpcodes = {
 		"readModRegRm": True
 	},
 
+	# cmp rm8 with r8
+	0x3a: {
+		"name": "cmp",
+		"opcodeType": ARITHMETIC_TYPE,
+		"dataSize": 8,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
 	# cmp rm16/32/64 with r16/32/64
 	0x3b: {
 		"name": "cmp",
@@ -173,6 +234,14 @@ oneByteOpcodes = {
 		"opcodeType": ARITHMETIC_TYPE,
 		"readImmediateBytes": 4,
 		"autoInsertRegister": "000"
+	},
+
+	# cmp r8 with rm8
+	0x38: {
+		"name": "cmp",
+		"opcodeType": ARITHMETIC_TYPE,
+		"dataSize": 8,
+		"readModRegRm": True,
 	},
 
 	# movsxd r64 -> rm32 with rex.w
@@ -217,6 +286,9 @@ oneByteOpcodes = {
 
 	# jl rel8
 	0x7c: jumpDetails("jl"),
+
+	# jge rel8 
+	0x7d: jumpDetails("jge"),
 
 	# jle rel8 
 	0x7e: jumpDetails("jle"),
@@ -313,6 +385,21 @@ oneByteOpcodes = {
 		"opcodeType": MISC_TYPE
 	},
 
+	# cdq
+	0x99: {
+		"name": "cdq",
+		"opcodeType": TRANSFER_TYPE
+	},
+
+	0xae: {
+		"name": "scas",
+		"opcodeType": MISC_TYPE,
+		"autoOperand": [
+			operand.RegisterOperand(register.Registers[0][0]),
+			operand.RegisterMemoryOperand(register.Registers[3][7], operand.ES_SEGMENT_OVERRIDE)
+		]
+	},
+
 	# rol/ror/rcl/rcr/shl/shr/sal/sar
 	# shift/rotate rm8 by imm8
 	0xc0: {
@@ -405,9 +492,9 @@ oneByteOpcodes = {
 		"readModRegRm": True
 	},
 
-	# inc/dec/call/callf/jmp/jmpf/push
+	# inc/dec/call/callf/jmp/jmpf/push/""
 	0xff: {
-		"name": ["inc", "dec", "call", "callf", "jmp", "jmpf", "push"],
+		"name": ["inc", "dec", "call", "callf", "jmp", "jmpf", "push", ""],
 		"opcodeType": JUMP_TYPE,
 		"opcodeExtension": True,
 		"readModRegRm": True
@@ -416,13 +503,17 @@ oneByteOpcodes = {
 
 
 twoByteOpcodes = {
+	# cmovb rm16/32/64 -> r16/32/64
+	0x42: conditionalMoveDetails("cmovb"),
+
+	# cmovbe rm16/32/64 -> r16/32/64
+	0x46: conditionalMoveDetails("cmovbe"),
+
 	# cmovs rm16/32/64 -> r16/32/64
-	0x48: {
-		"name": "cmovs",
-		"opcodeType": TRANSFER_TYPE,
-		"readModRegRm": True,
-		"rmIsSource": False
-	},
+	0x48: conditionalMoveDetails("cmovs"),
+
+	# jb rel32
+	0x82: jumpDetails("jb", 4),
 
 	# jae rel32
 	0x83: jumpDetails("jae", 4),
@@ -442,29 +533,29 @@ twoByteOpcodes = {
 	# ja rel32
 	0x88: jumpDetails("js", 4),
 
+	# jl rel32
+	0x8c: jumpDetails("jl", 4),
+
+	# jge rel32
+	0x8d: jumpDetails("jge", 4),
+
 	# jle rel32
 	0x8e: jumpDetails("jle", 4),
+
+	# jns rel32
+	0x89: jumpDetails("jns", 4),
 
 	# jle rel32
 	0x8f: jumpDetails("jg", 4),
 
 	# sete /0 rm8
-	0x94: {
-		"name": "sete",
-		"opcodeType": TRANSFER_TYPE,
-		"dataSize": 8,
-		"opcodeExtension": "True",
-		"readModRegRm": True
-	},
+	0x94: setByteOnConditionDetails("sete"),
 
 	# setne /0 rm8
-	0x95: {
-		"name": "setne",
-		"opcodeType": TRANSFER_TYPE,
-		"dataSize": 8,
-		"opcodeExtension": "True",
-		"readModRegRm": True
-	},
+	0x95: setByteOnConditionDetails("setne"),
+
+	# seta /0 rm8
+	0x97: setByteOnConditionDetails("seta"),
 
 	# imul r16/32/64 <- r16/32/64 * rm16/32/64
 	0xaf: {
