@@ -43,7 +43,8 @@ Field name			Default value		Effect
 - rmIsSource			True
 - readImmediateBytes		0
 - autoInsertRegister		False			E.g. 3d cmp wants ax/eax/rax auto added
-- autoOperand			[ ]			Opcode defines its own operands
+- autoOperands			[ ]			Opcode defines its own operands
+- autoImmediateOperands		[ ]			Same as above but immediates
 - immediateCanBe64WithRexW	False			If true and rexW is true, read a 64 bit immediate instead
 """
 
@@ -55,7 +56,8 @@ opcodeParameterDefaults = {
 	"rmIsSource": True,
 	"readImmediateBytes": 0,
 	"autoInsertRegister": False,
-	"autoOperand": [ ],
+	"autoOperands": [ ],
+	"autoImmediateOperands": [ ],
 	"immediateCanBe64WithRexW": False
 };
 
@@ -157,13 +159,32 @@ oneByteOpcodes = {
 		"rmIsSource": False
 	},
 
-	# and rm16/32/64 or r16/32/64
+	# or r16/32/64 or rm16/32/64
+	0x0b:
+	{
+		"name": "or",
+		"opcodeType": LOGIC_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# and rm16/32/64 and r16/32/64
 	0x21:
 	{
 		"name": "and",
 		"opcodeType": LOGIC_TYPE,
-		"readModRegRm": True,
+		"readModRegRm": True
 	},
+
+	# and r16/32/64 and rm16/32/64
+	0x23:
+	{
+		"name": "and",
+		"opcodeType": LOGIC_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
 
 	# and ax/eax/rax and imm16/32
 	0x25: {
@@ -178,6 +199,22 @@ oneByteOpcodes = {
 		"name": "sub",
 		"opcodeType": ARITHMETIC_TYPE,
 		"readModRegRm": True
+	},
+
+	# sub rm16/32/64 from r16/32/64
+	0x2b: {
+		"name": "sub",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# sub imm16/32/64 from ax
+	0x2d: {
+		"name": "sub",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readImmediateBytes": 4,
+		"autoInsertRegister": "000"
 	},
 
 	# xor rm16/32/64 xor r16/32/64
@@ -257,7 +294,17 @@ oneByteOpcodes = {
 		"name": "imul",
 		"opcodeType": ARITHMETIC_TYPE,
 		"readModRegRm": True,
+		"rmIsSource": False,
 		"readImmediateBytes": 1
+	},
+
+	# imul r16/32/64 <- rm16/32/64 * imm16/32
+	0x69: {
+		"name": "imul",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False,
+		"readImmediateBytes": 4
 	},
 
 	# jb rel8
@@ -394,7 +441,7 @@ oneByteOpcodes = {
 	0xae: {
 		"name": "scas",
 		"opcodeType": MISC_TYPE,
-		"autoOperand": [
+		"autoOperands": [
 			operand.RegisterOperand(register.Registers[0][0]),
 			operand.RegisterMemoryOperand(register.Registers[3][7], operand.ES_SEGMENT_OVERRIDE)
 		]
@@ -452,6 +499,17 @@ oneByteOpcodes = {
 	},
 
 	# rol/ror/rcl/rcr/shl/shr/sal/sar
+	# shift/rotate rm16 by 1
+	0xd1: {
+		"name": ["rol", "ror", "rcl", "rcr", "shl", "shr", "sal", "sar"],
+		"opcodeType": [ARITHMETIC_TYPE, ARITHMETIC_TYPE, ARITHMETIC_TYPE, ARITHMETIC_TYPE, LOGIC_TYPE, LOGIC_TYPE, ARITHMETIC_TYPE, ARITHMETIC_TYPE],
+		"dataSize": 16,
+		"opcodeExtension": True,
+		"readModRegRm": True,
+		"autoImmediateOperands": [1]
+	},
+
+	# rol/ror/rcl/rcr/shl/shr/sal/sar
 	# shift/rotate cl by rm16/32/64
 	0xd3: {
 		"name": ["rol", "ror", "rcl", "rcr", "shl", "shr", "sal", "sar"],
@@ -503,6 +561,21 @@ oneByteOpcodes = {
 
 
 twoByteOpcodes = {
+	# movsd m64 -> xmm1
+	0x10: {
+		"name": "movsd",
+		"opcodeType": TRANSFER_TYPE,
+		"opcodeExtension": True,
+		"readModRegRm": True
+	},
+
+	# movaps xmm1 -> xmm2/m128
+	0x29: {
+		"name": "movaps",
+		"opcodeType": TRANSFER_TYPE,
+		"readModRegRm": True
+	},
+
 	# cmovb rm16/32/64 -> r16/32/64
 	0x42: conditionalMoveDetails("cmovb"),
 
@@ -511,6 +584,9 @@ twoByteOpcodes = {
 
 	# cmovs rm16/32/64 -> r16/32/64
 	0x48: conditionalMoveDetails("cmovs"),
+
+	# cmovs rm16/32/64 -> r16/32/64
+	0x4e: conditionalMoveDetails("cmovle"),
 
 	# jb rel32
 	0x82: jumpDetails("jb", 4),

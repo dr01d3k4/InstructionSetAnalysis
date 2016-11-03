@@ -19,16 +19,16 @@ def printMemoryUsage():
 
 def printInstructionsWithDebug(instructions, showInstructionDetails = False, startPrintingAt = -1):
 	if (startPrintingAt < 0):
-		for _, _, instruction in instructions:
-			hasOperandToPrint = False;
+		# for _, _, instruction in instructions:
+		# 	hasOperandToPrint = False;
 
-			for operandType in instruction.getOperandTypes():
-				if (operandType[0] >= 5):
-					hasOperandToPrint = True;
-					break;
+		# 	for operandType in instruction.getOperandTypes():
+		# 		if (operandType[0] >= 5):
+		# 			hasOperandToPrint = True;
+		# 			break;
 
-			if (hasOperandToPrint):
-				print(instruction.toString());
+		# 	if (hasOperandToPrint):
+		# 		print(instruction.toString());
 
 		return;
 
@@ -149,7 +149,7 @@ def doWorkOnObjectFile(architecture, filename, startPrintingFrom = -1, startDebu
 
 
 def main():
-	printingStart = 18140;
+	printingStart = 32310;
 	debugStart = -1;
 
 	# doWorkOnObjectFile(x86, "hello_world.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);

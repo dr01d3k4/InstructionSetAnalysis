@@ -468,11 +468,16 @@ def decode(bytes, startDebugAt = -1):
 				opcodeDetails = opcodes.twoByteOpcodes[byte];
 		
 		if (opcodeDetails == None):
+			dashLength = 120;
+			print("");
+			print("-" * dashLength);
 			print("\tRead unknown byte");
 			print("\t\tIndex: \t" + getDisplayByteString(len(instructions)));
 			print("\t\tLocation: \t" + getDisplayByteString(startByte));
 			print("\t\tValue: \t\t" + getDisplayByteString(byte));
 			print("\t\tBytes read so far: " + bytesToHexString(bytes.currentlyRead, bytesBetweenSpaces = 1));
+			print("-" * dashLength);
+			print("");
 			break;
 
 		debugPrint("Opcode byte: " + getDisplayByteString(opcodeByte));
@@ -501,9 +506,11 @@ def decode(bytes, startDebugAt = -1):
 		autoInsertRegister = opcodes.getOpcodeParamOrDefault(opcodeDetails, "autoInsertRegister");
 		immediateCanBe64WithRexW = opcodes.getOpcodeParamOrDefault(opcodeDetails, "immediateCanBe64WithRexW");
 
-		autoOperands = opcodes.getOpcodeParamOrDefault(opcodeDetails, "autoOperand");
+		autoOperands = opcodes.getOpcodeParamOrDefault(opcodeDetails, "autoOperands");
 		for autoOperand in autoOperands:
 			operands.append(autoOperand);
+
+		autoImmediateOperands = opcodes.getOpcodeParamOrDefault(opcodeDetails, "autoImmediateOperands");
 
 		if (hasOpcodeExtension and not shouldReadModRegRm):
 			print(hex(opcodeByte), opcodeName, " has opcode extension but not reading modregrm");
@@ -547,8 +554,10 @@ def decode(bytes, startDebugAt = -1):
 			print(len(instructions), "Opcode name is empty");
 
 		if (group1Prefix == REPNE_PREFIX):
-			opcodeName = "repnz " + opcodeName;
-			opcodeByte = opcodeByte | (REPNE_PREFIX << 8);
+			# movsd
+			if (opcodeByte != 0x0f10):
+				opcodeName = "repnz " + opcodeName;
+			opcodeByte = opcodeByte | (REPNE_PREFIX << (8 * opcodeByteLength));
 
 		opcode = opcodes.Opcode(opcodeByte, opcodeExtension, opcodeName, opcodeType);
 
@@ -573,7 +582,7 @@ def decode(bytes, startDebugAt = -1):
 					readImmediateBytes = 8;
 
 			if (operandSizePrefix >= 0):
-				print(len(instructions), "Todo: Handle operand/address size overide");
+				todoPrint(str(len(instructions)) + " Handle operand/address size overide");
 				readImmediateBytes = 2;
 
 			debugPrint("Should read " + str(readImmediateBytes) + " read immediate bytes");
@@ -581,6 +590,8 @@ def decode(bytes, startDebugAt = -1):
 			immediateOperand = operand.ImmediateOperand(immediateData);
 			operands.append(immediateOperand);
 
+		for autoImmediateOperand in autoImmediateOperands:
+			operands.append(operand.ImmediateOperand(autoImmediateOperand));
 
 		if (opcode != None):
 			instruction = Instruction(opcode, operands);
@@ -589,6 +600,9 @@ def decode(bytes, startDebugAt = -1):
 			instructionTuple = (startByte, instructionBytes, instruction);
 
 			instructions.append(instructionTuple);
+
+			# if (group1Prefix != -1):
+			# 	print(instructionTuple);
 
 			debugPrint("");
 			debugPrint("Read instruction:");
