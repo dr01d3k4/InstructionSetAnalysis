@@ -165,7 +165,7 @@ After opcode caching: 22.2s
 
 
 def main():
-	printingStart = 960586;
+	printingStart = 1141732;
 	debugStart = -1;
 
 	# doWorkOnObjectFile(x86, "hello_world.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);

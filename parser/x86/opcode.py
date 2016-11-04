@@ -281,6 +281,15 @@ oneByteOpcodes = {
 		"readModRegRm": True,
 		"rmIsSource": False,
 	},
+	
+	# xor al xor imm8
+	0x34: {
+		"name": "xor",
+		"opcodeType": LOGIC_TYPE,
+		"dataSize": 8,
+		"readImmediateBytes": 1,
+		"autoInsertRegister": "000"
+	},
 
 	# xor ax xor imm32
 	0x35: {
@@ -622,6 +631,16 @@ oneByteOpcodes = {
 		"name": "jmp",
 		"opcodeType": JUMP_TYPE,
 		"readImmediateBytes": 1
+	},
+
+	# test/test/not/neg/mul/imul/div/idiv
+	# rm8
+	0xf6: {
+		"name": ["test", "test", "not", "neg", "mul", "imul", "div", "idiv"],
+		"opcodeType": ARITHMETIC_TYPE,
+		"dataSize": 8,
+		"opcodeExtension": True,
+		"readModRegRm": True
 	},
 
 	# test/test/not/neg/mul/imul/div/idiv

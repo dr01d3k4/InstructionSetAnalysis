@@ -455,7 +455,7 @@ def decode(bytes, startDebugAt = -1):
 
 		if (byte == 0x64):
 			# debugPrint("Read FS segment override");
-			todoPrint(str(len(instructions)) + " Handle more segment override prefixes");
+			# todoPrint(str(len(instructions)) + " Handle more segment override prefixes");
 			segmentOverride = operand.FS_SEGMENT_OVERRIDE;
 
 			prefixBytes = (prefixBytes << (8 * prefixBytesLength)) | 0x64;
@@ -466,7 +466,7 @@ def decode(bytes, startDebugAt = -1):
 		operandSizePrefix = -1;
 		if (byte == 0x66):
 			operandSizePrefix = 0x66;
-			todoPrint(len(instructions), "Read operand size override prefix");
+			# todoPrint(len(instructions), "Read operand size override prefix");
 			prefixBytes = (prefixBytes << (8 * prefixBytesLength)) | 0x66;
 			prefixBytesLength += 1;
 			byte, _ = bytes.readByte();
@@ -560,8 +560,8 @@ def decode(bytes, startDebugAt = -1):
 		if (isTop5Bits):
 			# debugPrint("Should read top 5 bits opcode");
 
-			if (opcodeByteLength > 1):
-				todoPrint("Handle top-5-bit-opcode with multi-byte opcodes");
+			# if (opcodeByteLength > 1):
+			# 	todoPrint("Handle top-5-bit-opcode with multi-byte opcodes");
 
 			registerField = opcodeByte & registerMask;
 			opcodeByte = opcodeByte & top5BitsMask
@@ -622,7 +622,7 @@ def decode(bytes, startDebugAt = -1):
 					readImmediateBytes = 8;
 
 			if ((operandSizePrefix >= 0) and (readImmediateBytes != 1)):
-				todoPrint(str(len(instructions)) + " Handle operand/address size overide");
+				# todoPrint(str(len(instructions)) + " Handle operand/address size overide");
 				readImmediateBytes = 2;
 
 			# debugPrint("Should read " + str(readImmediateBytes) + " read immediate bytes");
