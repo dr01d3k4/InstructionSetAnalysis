@@ -105,6 +105,14 @@ top5BitsOpcodes = {
 
 	},
 
+	# mov imm8 -> r8
+	0xb0: {
+		"name": "mov",
+		"opcodeType": TRANSFER_TYPE,
+		"dataSize": 8,
+		"readImmediateBytes": 1
+	},
+
 	# mov imm16/32/64 -> r16/32/64
 	0xb8: {
 		"name": "mov",
@@ -168,6 +176,32 @@ oneByteOpcodes = {
 		"rmIsSource": False
 	},
 
+	# or al or imm8
+	0x0c: {
+		"name": "or",
+		"opcodeType": LOGIC_TYPE,
+		"dataSize": 8,
+		"readImmediateBytes": 1,
+		"autoInsertRegister": "000"	
+	},
+
+	# or ax/eax/rax or imm16/32
+	0x0d: {
+		"name": "or",
+		"opcodeType": LOGIC_TYPE,
+		"readImmediateBytes": 4,
+		"autoInsertRegister": "000"	
+	},
+
+	# and rm8 and r8
+	0x20:
+	{
+		"name": "and",
+		"opcodeType": LOGIC_TYPE,
+		"dataSize": 8,
+		"readModRegRm": True
+	},
+
 	# and rm16/32/64 and r16/32/64
 	0x21:
 	{
@@ -185,6 +219,14 @@ oneByteOpcodes = {
 		"rmIsSource": False
 	},
 
+	# and al and imm8
+	0x24: {
+		"name": "and",
+		"opcodeType": LOGIC_TYPE,
+		"dataSize": 8,
+		"readImmediateBytes": 1,
+		"autoInsertRegister": "000"	
+	},
 
 	# and ax/eax/rax and imm16/32
 	0x25: {
@@ -217,6 +259,14 @@ oneByteOpcodes = {
 		"autoInsertRegister": "000"
 	},
 
+	# xor rm8 xor r8
+	0x30: {
+		"name": "xor",
+		"opcodeType": LOGIC_TYPE,
+		"dataSize": 8,
+		"readModRegRm": True
+	},
+
 	# xor rm16/32/64 xor r16/32/64
 	0x31: {
 		"name": "xor",
@@ -230,6 +280,14 @@ oneByteOpcodes = {
 		"opcodeType": LOGIC_TYPE,
 		"readModRegRm": True,
 		"rmIsSource": False,
+	},
+
+	# xor ax xor imm32
+	0x35: {
+		"name": "xor",
+		"opcodeType": LOGIC_TYPE,
+		"readImmediateBytes": 4,
+		"autoInsertRegister": "000"
 	},
 
 	# cmp r16/32/64 with rm16/32/64
@@ -330,6 +388,9 @@ oneByteOpcodes = {
 
 	# js rel8
 	0x79: jumpDetails("jns"),
+
+	# jp rel8
+	0x7a: jumpDetails("jp"),
 
 	# jl rel8
 	0x7c: jumpDetails("jl"),
@@ -438,6 +499,17 @@ oneByteOpcodes = {
 		"opcodeType": TRANSFER_TYPE
 	},
 
+	# movs m16/32/64 -> m16/32/64
+	0xa5: {
+		"name": "movs",
+		"opcodeType": MISC_TYPE,
+		"autoOperands": [
+			operand.RegisterMemoryOperand(register.Registers[3][7], operand.ES_SEGMENT_OVERRIDE),
+			operand.RegisterMemoryOperand(register.Registers[3][6], operand.DS_SEGMENT_OVERRIDE)
+		]
+	},
+
+	# scas
 	0xae: {
 		"name": "scas",
 		"opcodeType": MISC_TYPE,
@@ -496,6 +568,17 @@ oneByteOpcodes = {
 	0xc9: {
 		"name": "leave",
 		"opcodeType": JUMP_TYPE
+	},
+
+	# rol/ror/rcl/rcr/shl/shr/sal/sar
+	# shift/rotate rm16 by 1
+	0xd0: {
+		"name": ["rol", "ror", "rcl", "rcr", "shl", "shr", "sal", "sar"],
+		"opcodeType": [ARITHMETIC_TYPE, ARITHMETIC_TYPE, ARITHMETIC_TYPE, ARITHMETIC_TYPE, LOGIC_TYPE, LOGIC_TYPE, ARITHMETIC_TYPE, ARITHMETIC_TYPE],
+		"dataSize": 8,
+		"opcodeExtension": True,
+		"readModRegRm": True,
+		"autoImmediateOperands": [1]
 	},
 
 	# rol/ror/rcl/rcr/shl/shr/sal/sar
@@ -565,8 +648,30 @@ twoByteOpcodes = {
 	0x10: {
 		"name": "movsd",
 		"opcodeType": TRANSFER_TYPE,
-		"opcodeExtension": True,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# movsd xmm2 -> xmm1/m64
+	0x11: {
+		"name": "movsd",
+		"opcodeType": TRANSFER_TYPE,
 		"readModRegRm": True
+	},
+
+	# unpcklps xmm2/m128 -> xmm1
+	0x14: {
+		"name": "unpcklps",
+		"opcodeType": TRANSFER_TYPE,
+		"readModRegRm": True
+	},
+
+	# movapd xmm2/m128 -> xmm1
+	0x28: {
+		"name": "movapd",
+		"opcodeType": TRANSFER_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
 	},
 
 	# movaps xmm1 -> xmm2/m128
@@ -576,17 +681,107 @@ twoByteOpcodes = {
 		"readModRegRm": True
 	},
 
+	# cvtsi2sd (r32/m32)/rm64 -> xmm1
+	0x2a: {
+		"name": "cvtsi2d",
+		"opcodeType": TRANSFER_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# cvttsd2si xmm1/m64 -> r32/64
+	0x2c: {
+		"name": "cvttsd2si",
+		"opcodeType": TRANSFER_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# ucomisd xmm1, xmm2/m64
+	0x2e: {
+		"name": "ucomisd",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
 	# cmovb rm16/32/64 -> r16/32/64
 	0x42: conditionalMoveDetails("cmovb"),
 
+	# cmovae rm16/32/64 -> r16/32/64
+	0x43: conditionalMoveDetails("cmovae"),
+
 	# cmovbe rm16/32/64 -> r16/32/64
 	0x46: conditionalMoveDetails("cmovbe"),
+	
+	# cmova rm16/32/64 -> r16/32/64
+	0x47: conditionalMoveDetails("cmova"),
 
 	# cmovs rm16/32/64 -> r16/32/64
 	0x48: conditionalMoveDetails("cmovs"),
 
-	# cmovs rm16/32/64 -> r16/32/64
+	# cmovns rm16/32/64 -> r16/32/64
+	0x49: conditionalMoveDetails("cmovns"),
+
+	# cmovl rm16/32/64 -> r16/32/64
+	0x4c: conditionalMoveDetails("cmovl"),
+
+	# cmovge rm16/32/64 -> r16/32/64
+	0x4d: conditionalMoveDetails("cmovge"),
+
+	# cmole rm16/32/64 -> r16/32/64
 	0x4e: conditionalMoveDetails("cmovle"),
+
+	# cmovg rm16/32/64 -> r16/32/64
+	0x4f: conditionalMoveDetails("cmovg"),
+
+	# cvtps2pd xmm2/m64 -> xmm1
+	0x5a: {
+		"name": "cvtps2pd",
+		"opcodeType": TRANSFER_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# xorpd xmm1, xm22/m128
+	0x57: {
+		"name": "xorpd",
+		"opcodeType": LOGIC_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# addps xmm2/m128 to xmm1
+	0x58: {
+		"name": "addps",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# mulsd xmm2/m64 to xmm1
+	0x59: {
+		"name": "mulsd",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# subsd xmm2/m64 to xmm1
+	0x5c: {
+		"name": "subsd",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# divsd xmm2/m64 to xmm1
+	0x5e: {
+		"name": "divsd",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
 
 	# jb rel32
 	0x82: jumpDetails("jb", 4),
@@ -624,14 +819,35 @@ twoByteOpcodes = {
 	# jle rel32
 	0x8f: jumpDetails("jg", 4),
 
+	# setb /0 rm8
+	0x92: setByteOnConditionDetails("setb"),
+
+	# setae /0 rm8
+	0x93: setByteOnConditionDetails("setae"),
+
 	# sete /0 rm8
 	0x94: setByteOnConditionDetails("sete"),
 
 	# setne /0 rm8
 	0x95: setByteOnConditionDetails("setne"),
 
+	# setbe /0 rm8
+	0x96: setByteOnConditionDetails("setbe"),
+
 	# seta /0 rm8
 	0x97: setByteOnConditionDetails("seta"),
+	
+	# setl /0 rm8
+	0x9c: setByteOnConditionDetails("setl"),
+
+	# setge /0 rm8
+	0x9d: setByteOnConditionDetails("setge"),
+
+	# setle /0 rm8
+	0x9e: setByteOnConditionDetails("setle"),
+
+	# setg /0 rm8
+	0x9f: setByteOnConditionDetails("setg"),
 
 	# imul r16/32/64 <- r16/32/64 * rm16/32/64
 	0xaf: {
@@ -649,6 +865,22 @@ twoByteOpcodes = {
 		"rmIsSource": False
 	},
 
+	# movzx rm16 -> r32/64
+	0xb7: {
+		"name": "movzx",
+		"opcodeType": TRANSFER_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# bsr rm16/32/63 -> r16/32/64
+	0xbd: {
+		"name": "bsr",
+		"opcodeType": MISC_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
 	# movsx rm8 -> r16/32/64
 	0xbe: {
 		"name": "movsx",
@@ -657,13 +889,13 @@ twoByteOpcodes = {
 		"rmIsSource": False
 	},
 
-	# movzx rm16 -> r32/64
-	0xb7: {
-		"name": "movzx",
+	# movsx rm16 -> r32/64
+	0xbf: {
+		"name": "movsx",
 		"opcodeType": TRANSFER_TYPE,
 		"readModRegRm": True,
 		"rmIsSource": False
-	},
+	}
 };
 
 
@@ -716,3 +948,36 @@ class Opcode(object):
 		s += ", type = " + opcodeTypeToString(self._opcodeType);
 		s += ")";
 		return s;
+
+
+OpcodesCache = { };
+
+def getOpcode(opcodeByte, extension, name, opcodeType):
+	# Haven't found opcode yet
+	opcode = None;
+
+	# Byte already in cache
+	if (opcodeByte in OpcodesCache):
+		# Get opcode out
+		opcode = OpcodesCache[opcodeByte];
+
+		# Opcode has extension (so the value in cache is a list)
+		if (extension != -1):
+			# Get the real opcode or None if this specific one not yet created
+			opcode = opcode[extension];
+
+	# Haven't seen opcode yet
+	# i.e. not in cache, or a not-seen extension of opcode that has been seen
+	if (opcode == None):
+		# Create opcode
+		opcode = Opcode(opcodeByte, extension, name, opcodeType);
+
+		# Put in cache
+		if (extension == -1):
+			OpcodesCache[opcodeByte] = opcode;
+		else:
+			OpcodesCache[opcodeByte] = [None] * 8;
+			OpcodesCache[opcodeByte][extension] = opcode;
+
+	return opcode;
+

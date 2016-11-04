@@ -32,12 +32,17 @@ def printInstructionsWithDebug(instructions, showInstructionDetails = False, sta
 
 		return;
 
+	print("Starting at:", startPrintingAt);
+	print("Last instruction:", len(instructions));
+	print("Total printing:", len(instructions) - startPrintingAt);
+
 	if (startPrintingAt > 0):
 		instructions = instructions[startPrintingAt:];
 
 	if (len(instructions) == 0):
 		print("No instructions");
 		return;
+
 
 	lastInstructionStartByte = instructions[-1][0];
 	startByteLength = len(byteToHexStringSpaceAlign(lastInstructionStartByte));
@@ -118,7 +123,7 @@ def decodeMachineCode(architecture, machineCode, startPrintingFrom = -1, startDe
 	# "withDebug" is because this is a tuple of (startByte, [bytesInInstruction], InstructionInstance)
 	instructionsWithDebug = architecture.decode(machineCode, startDebugAt = startDebugFrom);
 
-	printInstructionsWithDebug(instructionsWithDebug, startPrintingAt = startPrintingFrom);
+	printInstructionsWithDebug(instructionsWithDebug, startPrintingAt = startPrintingFrom, showInstructionDetails = False);
 	# printInstructionsWithDebug(instructionsWithDebug, showInstructionDetails = True);
 
 	opcodeTypes = architecture.getOpcodeTypes();
@@ -144,12 +149,23 @@ def doWorkOnObjectFile(architecture, filename, startPrintingFrom = -1, startDebu
 	gc.collect();
 	printMemoryUsage();
 	opcodeTypes, operandTypes, instructions = decodeMachineCode(architecture, textSection, startPrintingFrom, startDebugFrom);
+	textSection = None;
+	gc.collect();
 	printMemoryUsage();
 	# stats = calculateStats(architecture, opcodeTypes, operandTypes, instructions);
 
 
+"""
+500000 instructions
+Before optimizations: 53.1s
+After REX optimizations: 51.6s
+After commenting out debug print calls: 24.6s
+After opcode caching: 22.2s
+"""
+
+
 def main():
-	printingStart = 32310;
+	printingStart = 960586;
 	debugStart = -1;
 
 	# doWorkOnObjectFile(x86, "hello_world.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);

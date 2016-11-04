@@ -2,8 +2,9 @@ from common.instruction_base import InstructionBase;
 
 
 class Instruction(InstructionBase):
-	def __init__(self, opcode, operands):
+	def __init__(self, prefixBytes, opcode, operands):
 		super(InstructionBase, self).__init__();
+		self._prefixBytes = prefixBytes;
 		self._opcode = opcode;
 		self._operands = operands;
 
@@ -22,10 +23,6 @@ class Instruction(InstructionBase):
 
 	def getOperandTypes(self):
 		return map(lambda o: (o.getOperandType(), o), self._operands);
-
-
-	def __repr__(self):
-		return "Instruction()";
 
 
 	def toString(self, maxOpcodeLength = 0):
@@ -54,6 +51,8 @@ class Instruction(InstructionBase):
 
 	def __repr__(self):
 		s = "Instruction(\n";
+		if (self._prefixBytes != 0):
+			s += "\tprefixBytes = " + hex(self._prefixBytes) + "\n";
 		s += "\topcode = " + repr(self._opcode) + "\n";
 		s += "\toperands = [";
 		if (len(self._operands) > 0):
