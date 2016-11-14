@@ -1,7 +1,7 @@
 from __future__ import print_function;
 from register import getRegRegister, getRmRegister, getBaseRegister, getIndexRegister, getInstructionPointerRegister;
 from util.byte_util import bytesToHexString, byteToHexString, byteToBinaryString, getDisplayByteString;
-from byte_reader import ByteReader;
+from util.byte_reader import ByteReader;
 from instruction import Instruction;
 import opcode as opcodes;
 import operand
@@ -352,42 +352,6 @@ def readRexPrefix(prefixByte, bytes):
 
 		rexNumber = prefixByte & 0x0F;
 		rexPrefix = getRexPrefixFromNumber(rexNumber);
-		# rexPrefixArray = [False, False, False, False];
-
-		# # wBit = False;
-		# # rBit = False;
-		# # xBit = False;
-		# # bBit = False;
-
-		# REX_W = 0;
-		# REX_R = 1;
-		# REX_X = 2;
-		# REX_B = 3;
-
-		# # debugPrint("\tReading REX prefix: " + getDisplayByteString(prefixByte));
-
-		# if (prefixByte & 0x08):
-		# 	# debugPrint("\t\tRead REX.W prefix");
-		# 	rexPrefixArray[REX_W] = True;
-		# 	# wBit = True;
-
-		# if (prefixByte & 0x04 != 0):
-		# 	# debugPrint("\tRead REX.R prefix");
-		# 	rexPrefixArray[REX_R] = True;
-		# 	# rBit = True;
-
-		# if (prefixByte & 0x02 != 0):
-		# 	# debugPrint("\tRead REX.X prefix");
-		# 	rexPrefixArray[REX_X] = True;
-		# 	# xBit = True;
-
-		# if (prefixByte & 0x01 != 0):
-		# 	# debugPrint("\tRead REX.B prefix");
-		# 	rexPrefixArray[REX_B] = True;
-		# 	# bBit = True;
-
-		# rexPrefix = RexPrefix(*rexPrefixArray);
-		# rexPrefix = getRexPrefix(wBit, rBit, xBit, bBit);
 
 	return rexPrefix, byte, prefixByteToReturn;
 
@@ -664,19 +628,7 @@ def decode(bytes, startDebugAt = -1):
 
 		# debugPrint("");
 
-		# if (len(instructions) > 500000):
-		# 	break;
+		if (len(instructions) > 10000):
+			break;
 
 	return instructions;
-
-
-def getArchitectureName():
-	return "x86";
-
-
-def getOpcodeTypes():
-	return opcodes.OPCODE_TYPES;
-
-
-def getOperandTypes():
-	return operand.OPERAND_TYPES;

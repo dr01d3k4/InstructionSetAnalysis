@@ -2,35 +2,14 @@ from __future__ import print_function;
 from util.binary_file import printHexDump;
 from util.byte_util import bytesToHexString, byteToHexStringSpaceAlign;
 import elf64.reader as elf64;
-import x86.decoder as x86;
-import compiler.gcc as gcc;
+from architecture.architecture import getArchitecture;
+from compiler.compiler import getCompiler;
 import stats.calculate_stats as stats;
-import math;
 import gc;
-import resource;
-
-
-# http://stackoverflow.com/questions/32167386/force-garbage-collection-in-python-to-free-memory
-showMemoryUsage = False;
-
-def printMemoryUsage():
-	if (showMemoryUsage):
-		print('Memory usage: % 2.2f MB' % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0 / 1024.0));
 
 
 def printInstructionsWithDebug(instructions, showInstructionDetails = False, startPrintingAt = -1):
 	if (startPrintingAt < 0):
-		# for _, _, instruction in instructions:
-		# 	hasOperandToPrint = False;
-
-		# 	for operandType in instruction.getOperandTypes():
-		# 		if (operandType[0] >= 5):
-		# 			hasOperandToPrint = True;
-		# 			break;
-
-		# 	if (hasOperandToPrint):
-		# 		print(instruction.toString());
-
 		return;
 
 	print("Starting at:", startPrintingAt);
@@ -61,16 +40,6 @@ def printInstructionsWithDebug(instructions, showInstructionDetails = False, sta
 
 	instructionNumber = max(startPrintingAt, 0);
 	for startByte, instructionBytes, instruction in instructions:
-		# hasOperandToPrint = False;
-		# for operandType in instruction.getOperandTypes():
-		# 	if (operandType[0] >= 5):
-		# 		hasOperandToPrint = True;
-		# 		break;
-
-		# if (not hasOperandToPrint):
-		#	instructionNumber += 1;
-		#	continue;
-
 		s = "";
 		s += "{:4}".format(instructionNumber);
 		s += " | ";
@@ -102,9 +71,6 @@ def readElf64File(filename):
 		print("File not loaded: %s" % errorMessage);
 		return None;
 
-	# print("File loaded");
-	# print(elf64File);
-
 	return elf64File;
 
 
@@ -115,45 +81,37 @@ def getTextSection(elf64File):
 		print("Text section not found in file");
 		return None;
 
-	# print("Text section:", bytesToHexString(textSection));
-
 	return textSection;
 
 
 def decodeMachineCode(architecture, machineCode, startPrintingFrom = -1, startDebugFrom = -1):
 	# "withDebug" is because this is a tuple of (startByte, [bytesInInstruction], InstructionInstance)
 	instructionsWithDebug = architecture.decode(machineCode, startDebugAt = startDebugFrom);
-
-	printInstructionsWithDebug(instructionsWithDebug, startPrintingAt = startPrintingFrom, showInstructionDetails = False);
-	# printInstructionsWithDebug(instructionsWithDebug, showInstructionDetails = True);
-
-	opcodeTypes = architecture.getOpcodeTypes();
-	operandTypes = architecture.getOperandTypes();
 	instructions = map(lambda x: x[2], instructionsWithDebug);
 
-	return opcodeTypes, operandTypes, instructions;
+	printInstructionsWithDebug(instructionsWithDebug, startPrintingAt = startPrintingFrom, showInstructionDetails = False);
+
+	return instructions;
 
 
-def calculateStats(architecture, opcodeTypes, operandTypes, instructions):
-	return stats.calculateStats(architecture.getArchitectureName(), opcodeTypes, operandTypes, instructions);
+def calculateStats(compiler, architecture, instructions):
+	return stats.calculateStats(compiler, architecture, instructions);
 
 
-def doWorkOnObjectFile(architecture, compiler, filename, startPrintingFrom = -1, startDebugFrom = -1):
-	printMemoryUsage();
+def doWorkOnObjectFile(compiler, architecture, filename, startPrintingFrom = -1, startDebugFrom = -1):
 	elf64File = readElf64File(filename);
-	printMemoryUsage();
 	textSection = getTextSection(elf64File);
-	printMemoryUsage();
+
 	elf64File.setSectionContents(".text", None);
 	elf64File = None;
-	printMemoryUsage();
 	gc.collect();
-	printMemoryUsage();
-	opcodeTypes, operandTypes, instructions = decodeMachineCode(architecture, textSection, startPrintingFrom, startDebugFrom);
+
+	instructions = decodeMachineCode(architecture, textSection, startPrintingFrom, startDebugFrom);
 	textSection = None;
 	gc.collect();
-	printMemoryUsage();
-	stats = calculateStats(architecture, opcodeTypes, operandTypes, instructions);
+	
+	stats = calculateStats(compiler, architecture, instructions);
+	gc.collect();
 
 
 """
@@ -166,14 +124,17 @@ After opcode caching: 22.2s
 
 
 def main():
-	printingStart = -1; # 1275199;
+	x86 = getArchitecture("x86");
+	gcc = getCompiler("gcc");
+
+	printingStart = 9990; # -1; # 1275199;
 	debugStart = -1;
 
 	# doWorkOnObjectFile(x86, "hello_world.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 	# doWorkOnObjectFile(x86, "add_function.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 	# doWorkOnObjectFile(x86, "array_loop.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	doWorkOnObjectFile(x86, gcc, "gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	printMemoryUsage();
+	
+	doWorkOnObjectFile(gcc, x86, "gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 
 
 main();

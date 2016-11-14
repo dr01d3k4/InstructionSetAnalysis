@@ -126,9 +126,15 @@ def printTable(rows, columns, values, displayingFunction = lambda x: x, showTota
 	print(s);
 
 
-def calculateStats(architectureName, opcodeTypes, operandTypes, instructions):
+def calculateStats(compiler, architecture, instructions):
 	print("");
-	print("Calculating stats for instructions using architecture: " + architectureName);
+	print("Calculating stats for instructions");
+	print("Architecture:", architecture.getName());
+	print("Compiler:", compiler.getName());
+	print("");
+
+	opcodeTypes = architecture.getOpcodeTypes();
+	operandTypes = architecture.getOperandTypes();
 
 	print("Opcode types");
 	for index, typeName in enumerate(opcodeTypes):

@@ -1,4 +1,6 @@
 *.pdf
+pdf/
+haskell/
 gcc.c
 gcc.o
 objdump_of_gcc.txt

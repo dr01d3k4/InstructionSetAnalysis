@@ -1,4 +1,4 @@
-from common.instruction_base import InstructionBase;
+from architecture.instruction_base import InstructionBase;
 
 
 class Instruction(InstructionBase):
