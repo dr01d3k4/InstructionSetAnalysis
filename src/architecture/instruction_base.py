@@ -27,3 +27,8 @@ class InstructionBase(object):
 	@abc.abstractmethod
 	def getOperandTypes(self):
 		pass;
+
+
+	@abc.abstractmethod
+	def getDataDirection(self):
+		pass;

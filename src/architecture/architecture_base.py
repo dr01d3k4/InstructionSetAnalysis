@@ -25,5 +25,20 @@ class ArchitectureBase(object):
 
 
 	@abc.abstractmethod
+	def getCountOfUniqueOpcodesForTypes(self):
+		pass;
+
+
+	@abc.abstractmethod
+	def getUniqueOpcodeCount(self):
+		pass;
+
+
+	@abc.abstractmethod
 	def getOperandTypes(self):
+		pass;
+
+
+	@abc.abstractmethod
+	def getDataDirections(self):
 		pass;

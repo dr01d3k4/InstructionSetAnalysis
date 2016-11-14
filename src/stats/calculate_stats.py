@@ -28,35 +28,35 @@ def getColumnTotals(matrix):
 	return map(sum, transpose(matrix));
 
 
-def printOpcodesByType(opcodeTypes, opcodesByType):
-	s = "opcodesByType = {";
+# def printOpcodesByType(opcodeTypes, opcodesByType):
+# 	s = "opcodesByType = {";
 
-	for index, typeName in enumerate(opcodeTypes):
-		opcodes = opcodesByType[index];
+# 	for index, typeName in enumerate(opcodeTypes):
+# 		opcodes = opcodesByType[index];
 
-		s += "\n\t" + typeName + " = {";
+# 		s += "\n\t" + typeName + " = {";
 
-		for opcode in opcodes:
-			s += "\n\t\t";
-			s += repr(opcode);
-			s += ",";
+# 		for opcode in opcodes:
+# 			s += "\n\t\t";
+# 			s += repr(opcode);
+# 			s += ",";
 
-		if (len(opcodes) > 0):
-			s = s[:-1];
-			s += "\n\t";
-		else:
-			s += " ";
+# 		if (len(opcodes) > 0):
+# 			s = s[:-1];
+# 			s += "\n\t";
+# 		else:
+# 			s += " ";
 
-		s += "},";
+# 		s += "},";
 
-	if (len(opcodeTypes) > 0):
-		s = s[:-1];
-		s += "\n";
-	else:
-		s += " ";
+# 	if (len(opcodeTypes) > 0):
+# 		s = s[:-1];
+# 		s += "\n";
+# 	else:
+# 		s += " ";
 
-	s += "}";
-	print(s);
+# 	s += "}";
+# 	print(s);
 
 
 def printByType(types, values, displayingFunction = lambda x: x):
@@ -80,15 +80,43 @@ def printByType(types, values, displayingFunction = lambda x: x):
 		print(s);
 
 
-def printTable(rows, columns, values, displayingFunction = lambda x: x, showTotalRow = False, showTotalColumn = False):
+def dictionaryDiplayingFunction(indentLevel = 0, newLines = True):
+	indent = "\t" * indentLevel;
+
+	lineStart = "\n" + indent + "\t" if newLines else "";
+	keyValueSep = "\t = " if newLines else " = ";
+	lineEnd = "," if newLines else ", ";
+
+	def inner(d):
+		s = "{";
+
+		if (len(d) > 0):
+			for key, value in d.iteritems():
+				s += lineStart;
+				s += str(key);
+				s += keyValueSep;
+				s += str(value);
+				s += lineEnd;
+
+			if (newLines):
+				s += "\n" + indent;
+			s += "}";
+		else:
+			s += " }";
+		return s;
+
+	return inner;
+
+
+def printTable(rowNames, columnNames, values, displayingFunction = lambda x: x, showTotalRow = False, showTotalColumn = False):
 	# data = map(lambda a: map(lambda v: str(displayingFunction(v)), a), values);
 	# multimap = multimap(lambda v: str(displayingFunction(v)), values);
 	display = compose(str, displayingFunction);
 	data = multimap(display, values);
 
-	dataToDisplay = [[""] + columns];
+	dataToDisplay = [[""] + columnNames];
 
-	for rowName, row in zip(rows, data):
+	for rowName, row in zip(rowNames, data):
 		dataToDisplay.append([rowName] + row);
 
 	if (showTotalRow):
@@ -135,32 +163,60 @@ def calculateStats(compiler, architecture, instructions):
 
 	opcodeTypes = architecture.getOpcodeTypes();
 	operandTypes = architecture.getOperandTypes();
+	dataDirections = architecture.getDataDirections();
+	totalActualOpcodes = architecture.getUniqueOpcodeCount();
+	totalActualOpcodesByType = architecture.getCountOfUniqueOpcodesForTypes();
 
 	print("Opcode types");
 	for index, typeName in enumerate(opcodeTypes):
 		print("\t", index, typeName);
 
 	print("");
+	print("Total unique opcodes", totalActualOpcodes);
+	print("Total actual opcodes by type");
+	for index, (typeName, opcodeCount) in enumerate(zip(opcodeTypes, totalActualOpcodesByType)):
+		print("\t", index, typeName, "\t", opcodeCount);
 
+	print("");
 	print("Operand types");
 	for index, typeName in enumerate(operandTypes):
 		print("\t", index, typeName);
 
+	print("");
+	print("Data directions");
+	for index, direction in enumerate(dataDirections):
+		print("\t", index, direction);
+
 	emptyTotals = lambda t: map(lambda _: [ ], t);
+	emptyTotalsDict = lambda t: map(lambda _: { }, t);
 
 	opcodesByType = emptyTotals(opcodeTypes);
 	operandsByType = emptyTotals(operandTypes);
 	operandTypesByOpcodeType = emptyTotals(opcodeTypes);
 
+	uniqueOpcodesByType = emptyTotalsDict(opcodeTypes);
+	dataDirectionsByType = map(lambda _: [0] * len(dataDirections), opcodeTypes);
+
 	totalOpcodes = 0;
 	totalOperands = 0;
+
+	totalUniqueOpcodes = 0;
 
 	for instruction in instructions:
 		opcode = instruction.getOpcode();
 		opcodeType = instruction.getOpcodeType();
+		dataDirection = instruction.getDataDirection();
 
 		opcodesByType[opcodeType].append(opcode);
 		totalOpcodes += 1;
+
+		dataDirectionsByType[opcodeType][dataDirection] += 1;
+
+		if (opcode in uniqueOpcodesByType[opcodeType]):
+			uniqueOpcodesByType[opcodeType][opcode] += 1;
+		else:
+			uniqueOpcodesByType[opcodeType][opcode] = 0;
+			totalUniqueOpcodes += 1;
 
 		for operandType, operand in instruction.getOperandTypes():
 			operandsByType[operandType].append(operand);
@@ -170,6 +226,8 @@ def calculateStats(compiler, architecture, instructions):
 
 	opcodeTypeCounts = map(len, opcodesByType);
 	opcodePercentages = map(getPercentage(totalOpcodes), opcodeTypeCounts);
+
+	uniqueOpcodesComparedToActual = zip(totalActualOpcodesByType, map(len, uniqueOpcodesByType));
 
 	operandTypeCounts = map(len, operandsByType);
 	operandPercentages = map(getPercentage(totalOperands), operandTypeCounts);
@@ -215,6 +273,16 @@ def calculateStats(compiler, architecture, instructions):
 	printByType(opcodeTypes, opcodePercentages, percentageFormat);
 
 	print("");
+	print("Total unique opcodes", totalUniqueOpcodes);
+	print("Counts");
+	printByType(opcodeTypes, uniqueOpcodesByType, dictionaryDiplayingFunction(3, newLines = False));
+
+	print("");
+	print("Total unique opcodes compared to actual opcodes");
+	printByType(opcodeTypes, uniqueOpcodesComparedToActual);
+
+
+	print("");
 	print("Total operands:", totalOperands);
 	print("Counts");
 	printByType(operandTypes, operandTypeCounts);
@@ -237,6 +305,11 @@ def calculateStats(compiler, architecture, instructions):
 	print("");
 	print("Operand types by opcode types as percentage of opcode type");
 	printTable(opcodeTypes, operandTypes, operandTypesByOpcodeTypeGroupedOpcodeTypePercentage, percentageFormat, showTotalRow = False, showTotalColumn = True);
+
+
+	print("");
+	print("Data direction by opcode type");
+	printTable(opcodeTypes, dataDirections, dataDirectionsByType, showTotalRow = True, showTotalColumn = True);
 
 	# for k in operandTypesByOpcodeType:
 	# 	print("\t", k);

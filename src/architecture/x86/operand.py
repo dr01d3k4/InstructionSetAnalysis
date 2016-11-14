@@ -47,6 +47,11 @@ OPERAND_TYPES = [
 ];
 
 
+USES_IMM = 0;
+USES_REG = 1;
+USES_MEM = 2;
+
+
 def getSibOperandType(hasBase, hasIndex, hasDisplacement):
 	sibType = -1;
 
@@ -131,7 +136,11 @@ class Operand(object):
 		pass;
 
 	@abc.abstractmethod
-	def getOperandType():
+	def getOperandType(self):
+		pass;
+
+	@abc.abstractmethod
+	def getImmRegMemUsage(self):
 		pass;
 
 	def __repr__(self):
@@ -150,6 +159,9 @@ class RegisterOperand(Operand):
 	def getOperandType(self):
 		return REGISTER_TYPE;
 
+	def getImmRegMemUsage(self):
+		return USES_REG;
+
 	def __repr__(self):
 		return "RegisterOperand(register = " + repr(self._register) + ")";
 
@@ -165,6 +177,9 @@ class ImmediateOperand(Operand):
 
 	def getOperandType(self):
 		return IMMEDIATE_TYPE;
+
+	def getImmRegMemUsage(self):
+		return USES_IMM;
 
 	def __repr__(self):
 		return "ImmediateOperand(value = " + hex(self._value) + ")";
@@ -184,6 +199,9 @@ class RegisterMemoryOperand(Operand):
 	def getOperandType(self):
 		return REGISTER_MEMORY_TYPE;
 
+	def getImmRegMemUsage(self):
+		return USES_MEM;
+
 	def __repr__(self):
 		return "RegisterMemoryOperand(register = " + repr(self._register) + ", segmentOverride = " + segmentOverrideToString(self._segmentOverride) + ")";
 
@@ -201,6 +219,9 @@ class RegisterDisplacementOperand(Operand):
 
 	def getOperandType(self):
 		return REGISTER_DISPLACEMENT_TYPE;
+
+	def getImmRegMemUsage(self):
+		return USES_MEM;
 
 	def __repr__(self):
 		return "RegisterDisplacementOperand(register = " + repr(self._register) + ", displacement = " + hex(self._displacement) + ", segmentOverride = " + segmentOverrideToString(self._segmentOverride) + ")";
@@ -220,6 +241,9 @@ class ScaleIndexBaseOperand(Operand):
 
 	def getOperandType(self):
 		return getSibOperandType(self._base != None, self._index != None, False);
+
+	def getImmRegMemUsage(self):
+		return USES_MEM;
 
 	def __repr__(self):
 		return "ScaleIndexBaseOperand(" \
@@ -245,6 +269,9 @@ class ScaleIndexBaseDisplacementOperand(Operand):
 	def getOperandType(self):
 		return getSibOperandType(self._base != None, self._index != None, True);
 
+	def getImmRegMemUsage(self):
+		return USES_MEM;
+
 	def __repr__(self):
 		return "ScaleIndexBaseDisplacementOperand(" \
 				"scale = " + str(self._scale) + ", " + \
@@ -266,6 +293,9 @@ class ImmediateDisplacementOperand(Operand):
 
 	def getOperandType(self):
 		return IMMEDIATE_MEMORY_TYPE;
+
+	def getImmRegMemUsage(self):
+		return USES_MEM;
 
 	def __repr__(self):
 		return "ImmediateDisplacementOperand(value = " + hex(self._value) + ", segmentOverride = " + segmentOverrideToString(self._segmentOverride) + ")";

@@ -2,6 +2,7 @@ from architecture.architecture_base import ArchitectureBase;
 import decoder;
 import opcode;
 import operand;
+import instruction;
 
 
 class x86(ArchitectureBase):
@@ -21,5 +22,19 @@ class x86(ArchitectureBase):
 		return opcode.OPCODE_TYPES;
 
 
+	def getCountOfUniqueOpcodesForTypes(self):
+		print("TODO: Count opcodes for x86");
+		return opcode.UNIQUE_OPCODE_TYPE_COUNT;
+
+
+	def getUniqueOpcodeCount(self):
+		print("TODO: Count opcodes for x86");
+		return opcode.UNIQUE_OPCODE_COUNT;
+
+
 	def getOperandTypes(self):
 		return operand.OPERAND_TYPES;
+
+
+	def getDataDirections(self):
+		return instruction.DATA_DIRECTIONS;

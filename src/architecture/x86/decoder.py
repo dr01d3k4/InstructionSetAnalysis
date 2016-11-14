@@ -362,7 +362,8 @@ def readRexPrefix(prefixByte, bytes):
 def decode(bytes, startDebugAt = -1):
 	global shouldPrintDebug;
 
-	if (type(bytes) != "<class 'x86.byte_reader.ByteReader'>"):
+	# if (type(bytes) != "<class 'x86.byte_reader.ByteReader'>"):
+	if (type(bytes) is not ByteReader):
 		bytes = ByteReader(bytes);
 
 	byte = 0;
@@ -542,10 +543,12 @@ def decode(bytes, startDebugAt = -1):
 			opcodeExtension = reg;
 			# debugPrint("Opcode extension: " + getDisplayByteString(opcodeExtension));
 
-			if (str(type(opcodeName)) == "<type 'list'>"):
+			#  if (str(type(opcodeName)) == "<type 'list'>"):
+			if (type(opcodeName) is list):
 				opcodeName = opcodeName[opcodeExtension];
 
-			if (str(type(opcodeType)) == "<type 'list'>"):
+			# if (str(type(opcodeType)) == "<type 'list'>"):
+			if (type(opcodeType) is list):
 				opcodeType = opcodeType[opcodeExtension];
 
 		if (opcodeName == ""):
@@ -628,7 +631,7 @@ def decode(bytes, startDebugAt = -1):
 
 		# debugPrint("");
 
-		if (len(instructions) > 10000):
-			break;
+		# if (len(instructions) > 10000):
+		# 	break;
 
 	return instructions;

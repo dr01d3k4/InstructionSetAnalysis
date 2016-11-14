@@ -24,6 +24,11 @@ OPCODE_TYPES = [
 ];
 
 
+UNIQUE_OPCODE_TYPE_COUNT = [100] * len(OPCODE_TYPES);
+
+UNIQUE_OPCODE_COUNT = sum(UNIQUE_OPCODE_TYPE_COUNT);
+
+
 def opcodeTypeToString(opcodeType):
 	if ((opcodeType < 0) or (opcodeType >= len(OPCODE_TYPES))):
 		return "None";
@@ -975,6 +980,21 @@ class Opcode(object):
 		s += ", type = " + opcodeTypeToString(self._opcodeType);
 		s += ")";
 		return s;
+
+	def __hash__(self):
+		return hash((self._opcode, self._extension));
+
+	def __eq__(self, other):
+		if (other == None):
+			return False;
+		return ((self._opcode, self._extension) == (other._opcode, other._extension));
+
+
+	   #  def __hash__(self):
+    #     return hash((self.name, self.location))
+
+    # def __eq__(self, other):
+    #     return (self.name, self.location) == (other.name, other.location)
 
 
 OpcodesCache = { };
