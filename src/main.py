@@ -130,11 +130,11 @@ def main():
 	printingStart = 9990; # -1; # 1275199;
 	debugStart = -1;
 
-	# doWorkOnObjectFile(x86, "hello_world.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	# doWorkOnObjectFile(x86, "add_function.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	# doWorkOnObjectFile(x86, "array_loop.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	
-	doWorkOnObjectFile(gcc, x86, "gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(x86, "object_files/hello_world.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(x86, "object_files/add_function.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(x86, "object_files/array_loop.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+
+	doWorkOnObjectFile(gcc, x86, "object_files/gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 
 
 main();
