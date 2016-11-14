@@ -146,7 +146,7 @@ https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture#General-Purpose_Regi
 http://people.csail.mit.edu/smcc/projects/single-file-programs/
 
 Ask about different prefixes, do they effect project
-movaps and xmmm - what is this, do we handle it differently
+movaps and xmm - what is this, do we handle it differently
 As more opcodes get added:
 	- Transfer stays about 60%
 	- Arithmetic goes down

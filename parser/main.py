@@ -3,6 +3,7 @@ from util.binary_file import printHexDump;
 from util.byte_util import bytesToHexString, byteToHexStringSpaceAlign;
 import elf64.reader as elf64;
 import x86.decoder as x86;
+import compiler.gcc as gcc;
 import stats.calculate_stats as stats;
 import math;
 import gc;
@@ -137,7 +138,7 @@ def calculateStats(architecture, opcodeTypes, operandTypes, instructions):
 	return stats.calculateStats(architecture.getArchitectureName(), opcodeTypes, operandTypes, instructions);
 
 
-def doWorkOnObjectFile(architecture, filename, startPrintingFrom = -1, startDebugFrom = -1):
+def doWorkOnObjectFile(architecture, compiler, filename, startPrintingFrom = -1, startDebugFrom = -1):
 	printMemoryUsage();
 	elf64File = readElf64File(filename);
 	printMemoryUsage();
@@ -152,7 +153,7 @@ def doWorkOnObjectFile(architecture, filename, startPrintingFrom = -1, startDebu
 	textSection = None;
 	gc.collect();
 	printMemoryUsage();
-	# stats = calculateStats(architecture, opcodeTypes, operandTypes, instructions);
+	stats = calculateStats(architecture, opcodeTypes, operandTypes, instructions);
 
 
 """
@@ -165,13 +166,13 @@ After opcode caching: 22.2s
 
 
 def main():
-	printingStart = 1141732;
+	printingStart = -1; # 1275199;
 	debugStart = -1;
 
 	# doWorkOnObjectFile(x86, "hello_world.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 	# doWorkOnObjectFile(x86, "add_function.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 	# doWorkOnObjectFile(x86, "array_loop.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	doWorkOnObjectFile(x86, "gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	doWorkOnObjectFile(x86, gcc, "gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 	printMemoryUsage();
 
 

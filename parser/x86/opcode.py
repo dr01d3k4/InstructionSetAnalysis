@@ -685,6 +685,14 @@ twoByteOpcodes = {
 		"readModRegRm": True
 	},
 
+	# prefetch, hint_nop
+	0x18: {
+		"name": ["prefetchnta", "prefetcht0", "prefetcht1", "prefetcht2", "hint_nop", "hint_nop", "hint_nop", "hint_nop"],
+		"opcodeType": [TRANSFER_TYPE, TRANSFER_TYPE, TRANSFER_TYPE, TRANSFER_TYPE, MISC_TYPE, MISC_TYPE, MISC_TYPE, MISC_TYPE],
+		"opcodeExtension": True,
+		"readModRegRm": True
+	},
+
 	# movapd xmm2/m128 -> xmm1
 	0x28: {
 		"name": "movapd",
