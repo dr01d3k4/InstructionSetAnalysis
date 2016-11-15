@@ -126,7 +126,7 @@ def main():
 	x86 = getArchitecture("x86");
 	gcc = getCompiler("gcc");
 
-	printingStart = -1; # 9990; # -1; # 1275199;
+	printingStart = -1; # 9900; # -1; # 1275199;
 	debugStart = -1;
 
 	# doWorkOnObjectFile(x86, "object_files/hello_world.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);

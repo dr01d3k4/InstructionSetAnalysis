@@ -151,3 +151,8 @@ As more opcodes get added:
 	- Transfer stays about 60%
 	- Arithmetic goes down
 	- Jump goes up
+
+
+
+
+For counting total opcodes in x86, could write a script to analyse http://ref.x86asm.net/coder32.html and get them?

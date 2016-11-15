@@ -631,7 +631,7 @@ def decode(bytes, startDebugAt = -1):
 
 		# debugPrint("");
 
-		# if (len(instructions) > 10000):
+		# if (len(instructions) > 50): # 10000):
 		# 	break;
 
 	return instructions;

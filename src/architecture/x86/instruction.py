@@ -1,3 +1,4 @@
+from __future__ import print_function;
 from architecture.instruction_base import InstructionBase;
 import operand;
 
@@ -55,22 +56,13 @@ class Instruction(InstructionBase):
 		operandCount = len(self._operands);
 		operandUsages = map(lambda o: o.getImmRegMemUsage(), self._operands);
 
-		source = -1;
-		target = -1;
+		# source = -1;
+		# target = -1;
 		direction = NO_DIR;
 
-		if (operandCount >= 1):
+		if (operandCount == 1):
 			source = operandUsages[0];
 
-		if (operandCount >= 2):
-			target = operandUsages[1];
-		
-		if (operandCount >= 3):
-			print("Instruction has more than 3 or more operands");
-			print(self);
-
-
-		if (target == -1):
 			if (source == operand.USES_IMM):
 				direction = IMM_DIR;
 			elif (source == operand.USES_REG):
@@ -78,23 +70,34 @@ class Instruction(InstructionBase):
 			elif (source == operand.USES_MEM):
 				direction = MEM_DIR;
 
-		elif (target == operand.USES_IMM):
-			if (source == operand.USES_REG):
-				direction = IMM_TO_REG_DIR;
-			elif (source == operand.USES_MEM):
-				direction = IMM_TO_MEM_DIR;
+		elif (operandCount >= 2):
+			source = operandUsages[-1];
+			target = operandUsages[-2];
 
-		elif (target == operand.USES_REG):
-			if (source == operand.USES_REG):
-				direction = REG_TO_REG_DIR;
-			elif (source == operand.USES_MEM):
-				direction = REG_TO_MEM_DIR;
+			if (source == operand.USES_IMM):
+				if (target == operand.USES_REG):
+					direction = IMM_TO_REG_DIR;
+				elif (target == operand.USES_MEM):
+					direction = IMM_TO_MEM_DIR;
 
-		elif (target == operand.USES_MEM):
-			if (source == operand.USES_REG):
-				direction = MEM_TO_REG_DIR;
+			elif (source == operand.USES_REG):
+				if (target == operand.USES_REG):
+					direction = REG_TO_REG_DIR;
+				elif (target == operand.USES_MEM):
+					direction = REG_TO_MEM_DIR;
+
 			elif (source == operand.USES_MEM):
-				direction = MEM_TO_MEM_DIR
+				if (target == operand.USES_REG):
+					direction = MEM_TO_REG_DIR;
+				elif (target == operand.USES_MEM):
+					direction = MEM_TO_MEM_DIR;
+
+		# if (operandCount >= 3):
+		# 	pass;
+			# print("Instruction has more than 3 or more operands");
+			# print(self);
+
+		# print(self, "\t\t", DATA_DIRECTIONS[direction]);
 
 		return direction;
 
