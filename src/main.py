@@ -83,9 +83,9 @@ def getTextSection(elf64File):
 	return textSection;
 
 
-def decodeMachineCode(architecture, machineCode, startPrintingFrom = -1, startDebugFrom = -1):
+def decodeMachineCode(architecture, machineCode, startPrintingFrom = -1, startDebugFrom = -1, firstByteOffset = 0):
 	# "withDebug" is because this is a tuple of (startByte, [bytesInInstruction], InstructionInstance)
-	instructionsWithDebug = architecture.decode(machineCode, startDebugAt = startDebugFrom);
+	instructionsWithDebug = architecture.decode(machineCode, startDebugAt = startDebugFrom, firstByteOffset = firstByteOffset);
 	instructions = map(lambda x: x[2], instructionsWithDebug);
 
 	printInstructionsWithDebug(instructionsWithDebug, startPrintingAt = startPrintingFrom, showInstructionDetails = False);
@@ -97,7 +97,7 @@ def calculateStats(compiler, architecture, instructions):
 	return stats.calculateStats(compiler, architecture, instructions);
 
 
-def doWorkOnObjectFile(compiler, architecture, filename, startPrintingFrom = -1, startDebugFrom = -1):
+def doWorkOnObjectFile(compiler, architecture, filename, startPrintingFrom = -1, startDebugFrom = -1, firstByteOffset = 0):
 	elf64File = readElf64File(filename);
 	textSection = getTextSection(elf64File);
 
@@ -105,14 +105,15 @@ def doWorkOnObjectFile(compiler, architecture, filename, startPrintingFrom = -1,
 	elf64File = None;
 	gc.collect();
 
-	instructions = decodeMachineCode(architecture, textSection, startPrintingFrom, startDebugFrom);
+	instructions = decodeMachineCode(architecture, textSection, startPrintingFrom, startDebugFrom, firstByteOffset);
+	# print("Total instruction count", len(instructions));
 	textSection = None;
 	gc.collect();
 	
 	stats = calculateStats(compiler, architecture, instructions);
 	gc.collect();
 
-
+# 0x8b8b75
 """
 500000 instructions
 Before optimizations: 53.1s
@@ -126,14 +127,16 @@ def main():
 	x86 = getArchitecture("x86");
 	gcc = getCompiler("gcc");
 
-	printingStart = -1; # 9900; # -1; # 1275199;
+	printingStart = -1; # 1275290; # 1340; # 9900; # -1; # 1275199;
 	debugStart = -1;
+	firstByteOffset = 0x4028b0;
 
 	# doWorkOnObjectFile(x86, "object_files/hello_world.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 	# doWorkOnObjectFile(x86, "object_files/add_function.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 	# doWorkOnObjectFile(x86, "object_files/array_loop.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 
-	doWorkOnObjectFile(gcc, x86, "object_files/gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(gcc, x86, "object_files/gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	doWorkOnObjectFile(gcc, x86, "object_files/gcc_linked.out", startPrintingFrom = printingStart, startDebugFrom = debugStart, firstByteOffset = firstByteOffset);
 
 
 main();

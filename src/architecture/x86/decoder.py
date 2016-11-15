@@ -105,6 +105,28 @@ scaleMask = modMask;
 indexMask = regMask;
 baseMask  = rmMask;
 
+# Group 1
+LOCK_PREFIX = 0xf0;
+REPNE_PREFIX = 0xf2;
+REP_PREFIX = 0xf3;
+
+# Group 2
+CS_SEGMENT_OVERRIDE = 0x2e;
+SS_SEGMENT_OVERRIDE = 0x36;
+DS_SEGMENT_OVERRIDE = 0x3e;
+ES_SEGMENT_OVERRIDE = 0x26;
+FS_SEGMENT_OVERRIDE = 0x64;
+GS_SEGMENT_OVERRIDE = 0x65;
+# Same as CS and DS segments?
+BRANCH_NOT_TAKEN = 0x2e;
+BRANCH_TAKEN = 0x3e;
+
+# Group 3
+OPERAND_SIZE_OVERRIDE = 0x66;
+
+# Group 4
+ADDRESS_SIZE_OVERRIDE = 0x67;
+
 shouldPrintDebug = False;
 shouldPrintTodo = False;
 
@@ -356,10 +378,74 @@ def readRexPrefix(prefixByte, bytes):
 	return rexPrefix, byte, prefixByteToReturn;
 
 
+def addPrefixByte(prefixBytes, prefixBytesLength, byte):
+	return ((prefixBytes << (8 * prefixBytesLength)) | byte), prefixBytesLength + 1;
+
+
+def readPrefixBytes(bytes):
+	byte = bytes.getCurrentByte();
+
+	group1Prefix = -1;
+	group2Prefix = -1;
+	group3Prefix = -1;
+	group4Prefix = -1;
+
+	prefixBytes = 0x0;
+	prefixBytesLength = 0;
+
+
+	while (True):
+		# Group 1
+		if ((byte == LOCK_PREFIX) or (byte == REPNE_PREFIX) or (byte == REP_PREFIX)):
+			if (group1Prefix == -1):
+				group1Prefix = byte;
+
+			prefixBytes, prefixBytesLength = addPrefixByte(prefixBytes, prefixBytesLength, byte);
+			byte, _ = bytes.readByte();
+			continue;
+
+		# Group 2
+		if ((byte == CS_SEGMENT_OVERRIDE)
+			or (byte == SS_SEGMENT_OVERRIDE)
+			or (byte == DS_SEGMENT_OVERRIDE)
+			or (byte == ES_SEGMENT_OVERRIDE)
+			or (byte == FS_SEGMENT_OVERRIDE)
+			or (byte == GS_SEGMENT_OVERRIDE)):
+
+			if (group2Prefix == -1):
+				group2Prefix = byte;
+
+			prefixBytes, prefixBytesLength = addPrefixByte(prefixBytes, prefixBytesLength, byte);
+			byte, _ = bytes.readByte();
+			continue;
+
+		# Group 3
+		if (byte == OPERAND_SIZE_OVERRIDE):
+			if (group3Prefix == -1):
+				group3Prefix = byte;
+
+			prefixBytes, prefixBytesLength = addPrefixByte(prefixBytes, prefixBytesLength, byte);
+			byte, _ = bytes.readByte();
+			continue;
+
+		# Group 3
+		if (byte == ADDRESS_SIZE_OVERRIDE):
+			if (group3Prefix == -1):
+				group3Prefix = byte;
+
+			prefixBytes, prefixBytesLength = addPrefixByte(prefixBytes, prefixBytesLength, byte);
+			byte, _ = bytes.readByte();
+			continue;
+
+		break;
+
+	return group1Prefix, group2Prefix, group3Prefix, group4Prefix, prefixBytes, prefixBytesLength;
+
+
 """
 [bytes] -> [Instruction]
 """
-def decode(bytes, startDebugAt = -1):
+def decode(bytes, startDebugAt = -1, firstByteOffset = 0):
 	global shouldPrintDebug;
 
 	# if (type(bytes) != "<class 'x86.byte_reader.ByteReader'>"):
@@ -388,61 +474,27 @@ def decode(bytes, startDebugAt = -1):
 		if (byte == None):
 			break;
 
+		startByte += firstByteOffset;
+
 		# debugPrint("Reading instruction #" + str(len(instructions)) + " starting at " + getDisplayByteString(startByte));
 
-		LOCK_PREFIX = 0xf0;
-		REPNE_PREFIX = 0xf2;
-		REP_PREFIX = 0xf3;
-		group1Prefix = -1;
+		group1Prefix, group2Prefix, group3Prefix, group4Prefix, prefixBytes, prefixBytesLength = readPrefixBytes(bytes);
 
-		prefixBytes = 0x0;
-		prefixBytesLength = 0;
+		segmentOverride = operand.getSegmentOverrideFromPrefix(group2Prefix);
+		operandSizeOverride = group3Prefix;
+		addressSizeOverride = group4Prefix;
 
-		if (byte == LOCK_PREFIX):
-			group1Prefix = LOCK_PREFIX;
-			prefixBytes = prefixBytes | LOCK_PREFIX;
-			prefixBytesLength += 1;
-			byte, _ = bytes.readByte();
-
-		if (byte == REPNE_PREFIX):
-			group1Prefix = REPNE_PREFIX;
-			prefixBytes = prefixBytes | REPNE_PREFIX;
-			prefixBytesLength += 1;
-			byte, _ = bytes.readByte();
-
-		if (byte == REP_PREFIX):
-			group1Prefix = REP_PREFIX;
-			prefixBytes = prefixBytes | REP_PREFIX;
-			prefixBytesLength += 1;
-			byte, _ = bytes.readByte();
-
-		segmentOverride = operand.NO_SEGMENT_OVERRIDE;
-
-		if (byte == 0x64):
-			# debugPrint("Read FS segment override");
-			# todoPrint(str(len(instructions)) + " Handle more segment override prefixes");
-			segmentOverride = operand.FS_SEGMENT_OVERRIDE;
-
-			prefixBytes = (prefixBytes << (8 * prefixBytesLength)) | 0x64;
-			prefixBytesLength += 1;
-
-			byte, _ = bytes.readByte();
-
-		operandSizePrefix = -1;
-		if (byte == 0x66):
-			operandSizePrefix = 0x66;
-			# todoPrint(len(instructions), "Read operand size override prefix");
-			prefixBytes = (prefixBytes << (8 * prefixBytesLength)) | 0x66;
-			prefixBytesLength += 1;
-			byte, _ = bytes.readByte();
+		byte = bytes.getCurrentByte();
 
 		originalRexPrefix = None;
 		rexPrefix, byte, rexByte = readRexPrefix(byte, bytes);
 		originalRexPrefix = rexPrefix;
 
 		if (rexByte != 0):
-			prefixBytes = (prefixBytes << (8 * prefixBytesLength)) | rexByte;
-			prefixBytesLength += 1;
+			prefixBytes, prefixBytesLength = addPrefixByte(prefixBytes, prefixBytesLength, rexByte);
+			# prefixBytes = (prefixBytes << (8 * prefixBytesLength)) | rexByte;
+			# prefixBytesLength += 1;
+
 
 		opcodeDetails = None;
 		isTop5Bits = False;
@@ -588,7 +640,7 @@ def decode(bytes, startDebugAt = -1):
 				if (originalRexPrefix.getW()):
 					readImmediateBytes = 8;
 
-			if ((operandSizePrefix >= 0) and (readImmediateBytes != 1)):
+			if ((operandSizeOverride >= 0) and (readImmediateBytes != 1)):
 				# todoPrint(str(len(instructions)) + " Handle operand/address size overide");
 				readImmediateBytes = 2;
 
@@ -631,7 +683,7 @@ def decode(bytes, startDebugAt = -1):
 
 		# debugPrint("");
 
-		# if (len(instructions) > 50): # 10000):
+		# if (len(instructions) > 100): # 10000):
 		# 	break;
 
 	return instructions;

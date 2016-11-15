@@ -14,8 +14,19 @@ class ByteReader(object):
 		self._index += 1;
 		return byte, oldIndex;
 
-	def __len__(self):
-		return len(self._bytes);
+	def goBack(self):
+		if (self._index > 0):
+			self._index = self._index - 1;
+
+		if (len(self._currentlyRead) > 0):
+			self._currentlyRead = self._currentlyRead[:-1];
+
+	def getCurrentByte(self):
+		if (self._index == 0):
+			print("Attempt to read negative byte");
+			return None;
+		else:
+			return self._bytes[self._index - 1];
 
 	def resetCurrentlyRead(self):
 		self._currentlyRead = [ ];
@@ -28,12 +39,8 @@ class ByteReader(object):
 	def currentlyRead(self):
 		return self._currentlyRead;
 
-	def goBack(self):
-		if (self._index > 0):
-			self._index = self._index - 1;
-
-		if (len(self._currentlyRead) > 0):
-			self._currentlyRead = self._currentlyRead[:-1];
+	def __len__(self):
+		return len(self._bytes);
 
 	def __repr__(self):
 		return "ByteReader(\n\t" + \

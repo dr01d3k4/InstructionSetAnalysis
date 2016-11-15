@@ -23,6 +23,32 @@ def segmentOverrideToDisplayString(segment):
 	else:
 		return segmentOverrideToString(segment) + ":";
 
+CS_SEGMENT_OVERRIDE_PREFIX = 0x2e;
+SS_SEGMENT_OVERRIDE_PREFIX = 0x36;
+DS_SEGMENT_OVERRIDE_PREFIX = 0x3e;
+ES_SEGMENT_OVERRIDE_PREFIX = 0x26;
+FS_SEGMENT_OVERRIDE_PREFIX = 0x64;
+GS_SEGMENT_OVERRIDE_PREFIX = 0x65;
+
+def getSegmentOverrideFromPrefix(prefixByte):
+	if (prefixByte == -1):
+		return NO_SEGMENT_OVERRIDE;
+	elif (prefixByte == CS_SEGMENT_OVERRIDE_PREFIX):
+		return CS_SEGMENT_OVERRIDE;
+	elif (prefixByte == SS_SEGMENT_OVERRIDE_PREFIX):
+		return SS_SEGMENT_OVERRIDE;
+	elif (prefixByte == DS_SEGMENT_OVERRIDE_PREFIX):
+		return DS_SEGMENT_OVERRIDE;
+	elif (prefixByte == ES_SEGMENT_OVERRIDE_PREFIX):
+		return ES_SEGMENT_OVERRIDE;
+	elif (prefixByte == FS_SEGMENT_OVERRIDE_PREFIX):
+		return FS_SEGMENT_OVERRIDE;
+	elif (prefixByte == GS_SEGMENT_OVERRIDE_PREFIX):
+		return GS_SEGMENT_OVERRIDE;
+	else:
+		return NO_SEGMENT_OVERRIDE;
+
+
 
 IMMEDIATE_TYPE = 0;
 REGISTER_TYPE = 1;

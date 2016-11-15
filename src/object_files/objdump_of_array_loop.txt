@@ -1,4 +1,4 @@
-ben@ben-XPS-L701X:~/Documents/x86Decoder/parser$ objdump -d -M intel array_loop.o 
+ben@ben-XPS-L701X:~/Documents/InstructionSetAnalysis/src/object_files$ objdump -d -M intel array_loop.o 
 
 array_loop.o:     file format elf64-x86-64
 

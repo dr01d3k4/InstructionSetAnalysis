@@ -1,0 +1,179 @@
+ben@ben-XPS-L701X:~/Documents/InstructionSetAnalysis/haskell$ objdump -d -M intel add_function.o
+
+add_function.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <Main_add_info-0x20>:
+	...
+   8:	0c 00                	or     al,0x0
+   a:	00 00                	add    BYTE PTR [rax],al
+   c:	02 00                	add    al,BYTE PTR [rax]
+	...
+  16:	00 00                	add    BYTE PTR [rax],al
+  18:	0f 00 00             	sldt   WORD PTR [rax]
+  1b:	00 01                	add    BYTE PTR [rcx],al
+  1d:	00 00                	add    BYTE PTR [rax],al
+	...
+
+0000000000000020 <Main_add_info>:
+  20:	48 8d 45 e8 4c 39 f8 72 1f 48 89 75 f8 4c 89 75     H.E.L9.r.H.u.L.u
+  30:	f0 48 c7 45 e8 00 00 00 00 41 be 00 00 00 00 48     .H.E.....A.....H
+  40:	83 c5 e8 e9 00 00 00 00 bb 00 00 00 00 41 ff 65     .............A.e
+  50:	f8 0f 1f 80 00 00 00 00 00 00 00 00 00 00 00 00     ................
+	...
+  68:	10 00 00 00 01 00 00 00                             ........
+
+0000000000000070 <snW_info>:
+  70:	48 8d 45 d8          	lea    rax,[rbp-0x28]
+  74:	4c 39 f8             	cmp    rax,r15
+  77:	72 33                	jb     ac <snW_info+0x3c>
+  79:	48 c7 45 f0 00 00 00 	mov    QWORD PTR [rbp-0x10],0x0
+  80:	00 
+  81:	48 89 5d f8          	mov    QWORD PTR [rbp-0x8],rbx
+  85:	48 c7 45 e8 00 00 00 	mov    QWORD PTR [rbp-0x18],0x0
+  8c:	00 
+  8d:	48 c7 45 e0 00 00 00 	mov    QWORD PTR [rbp-0x20],0x0
+  94:	00 
+  95:	48 c7 45 d8 00 00 00 	mov    QWORD PTR [rbp-0x28],0x0
+  9c:	00 
+  9d:	41 be 00 00 00 00    	mov    r14d,0x0
+  a3:	48 83 c5 d8          	add    rbp,0xffffffffffffffd8
+  a7:	e9 00 00 00 00       	jmp    ac <snW_info+0x3c>
+  ac:	41 ff 65 f0          	jmp    QWORD PTR [r13-0x10]
+	...
+  c0:	16                   	(bad)  
+  c1:	00 00                	add    BYTE PTR [rax],al
+  c3:	00 07                	add    BYTE PTR [rdi],al
+  c5:	00 00                	add    BYTE PTR [rax],al
+	...
+
+00000000000000c8 <snY_info>:
+  c8:	48 8d 45 f0          	lea    rax,[rbp-0x10]
+  cc:	4c 39 f8             	cmp    rax,r15
+  cf:	0f 82 82 00 00 00    	jb     157 <snY_info+0x8f>
+  d5:	49 83 c4 20          	add    r12,0x20
+  d9:	4d 3b a5 90 00 00 00 	cmp    r12,QWORD PTR [r13+0x90]
+  e0:	77 6a                	ja     14c <snY_info+0x84>
+  e2:	49 c7 44 24 e8 00 00 	mov    QWORD PTR [r12-0x18],0x0
+  e9:	00 00 
+  eb:	49 8b 85 a0 00 00 00 	mov    rax,QWORD PTR [r13+0xa0]
+  f2:	49 89 44 24 f0       	mov    QWORD PTR [r12-0x10],rax
+  f7:	4c 89 ef             	mov    rdi,r13
+  fa:	48 89 de             	mov    rsi,rbx
+  fd:	49 8d 54 24 e8       	lea    rdx,[r12-0x18]
+ 102:	48 83 ec 08          	sub    rsp,0x8
+ 106:	b8 00 00 00 00       	mov    eax,0x0
+ 10b:	e8 00 00 00 00       	call   110 <snY_info+0x48>
+ 110:	48 83 c4 08          	add    rsp,0x8
+ 114:	48 85 c0             	test   rax,rax
+ 117:	74 42                	je     15b <snY_info+0x93>
+ 119:	48 c7 45 f0 00 00 00 	mov    QWORD PTR [rbp-0x10],0x0
+ 120:	00 
+ 121:	49 8d 44 24 e8       	lea    rax,[r12-0x18]
+ 126:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+ 12a:	49 c7 44 24 f8 00 00 	mov    QWORD PTR [r12-0x8],0x0
+ 131:	00 00 
+ 133:	bb 00 00 00 00       	mov    ebx,0x0
+ 138:	41 be 00 00 00 00    	mov    r14d,0x0
+ 13e:	49 8d 74 24 f8       	lea    rsi,[r12-0x8]
+ 143:	48 83 c5 f0          	add    rbp,0xfffffffffffffff0
+ 147:	e9 00 00 00 00       	jmp    14c <snY_info+0x84>
+ 14c:	49 c7 85 c0 00 00 00 	mov    QWORD PTR [r13+0xc0],0x20
+ 153:	20 00 00 00 
+ 157:	41 ff 65 f0          	jmp    QWORD PTR [r13-0x10]
+ 15b:	ff 23                	jmp    QWORD PTR [rbx]
+ 15d:	0f 1f 00             	nop    DWORD PTR [rax]
+	...
+ 170:	10 00                	adc    BYTE PTR [rax],al
+ 172:	00 00                	add    BYTE PTR [rax],al
+ 174:	01 00                	add    DWORD PTR [rax],eax
+	...
+
+0000000000000178 <snP_info>:
+ 178:	48 8d 45 f0          	lea    rax,[rbp-0x10]
+ 17c:	4c 39 f8             	cmp    rax,r15
+ 17f:	72 20                	jb     1a1 <snP_info+0x29>
+ 181:	48 c7 45 f0 00 00 00 	mov    QWORD PTR [rbp-0x10],0x0
+ 188:	00 
+ 189:	48 89 5d f8          	mov    QWORD PTR [rbp-0x8],rbx
+ 18d:	bb 00 00 00 00       	mov    ebx,0x0
+ 192:	41 be 00 00 00 00    	mov    r14d,0x0
+ 198:	48 83 c5 f0          	add    rbp,0xfffffffffffffff0
+ 19c:	e9 00 00 00 00       	jmp    1a1 <snP_info+0x29>
+ 1a1:	41 ff 65 f0          	jmp    QWORD PTR [r13-0x10]
+ 1a5:	0f 1f 00             	nop    DWORD PTR [rax]
+	...
+ 1b8:	16                   	(bad)  
+ 1b9:	00 00                	add    BYTE PTR [rax],al
+ 1bb:	00 03                	add    BYTE PTR [rbx],al
+ 1bd:	00 00                	add    BYTE PTR [rax],al
+	...
+
+00000000000001c0 <snZ_info>:
+ 1c0:	48 8d 45 f0          	lea    rax,[rbp-0x10]
+ 1c4:	4c 39 f8             	cmp    rax,r15
+ 1c7:	72 7c                	jb     245 <snZ_info+0x85>
+ 1c9:	49 83 c4 20          	add    r12,0x20
+ 1cd:	4d 3b a5 90 00 00 00 	cmp    r12,QWORD PTR [r13+0x90]
+ 1d4:	77 64                	ja     23a <snZ_info+0x7a>
+ 1d6:	49 c7 44 24 e8 00 00 	mov    QWORD PTR [r12-0x18],0x0
+ 1dd:	00 00 
+ 1df:	49 8b 85 a0 00 00 00 	mov    rax,QWORD PTR [r13+0xa0]
+ 1e6:	49 89 44 24 f0       	mov    QWORD PTR [r12-0x10],rax
+ 1eb:	4c 89 ef             	mov    rdi,r13
+ 1ee:	48 89 de             	mov    rsi,rbx
+ 1f1:	49 8d 54 24 e8       	lea    rdx,[r12-0x18]
+ 1f6:	48 83 ec 08          	sub    rsp,0x8
+ 1fa:	b8 00 00 00 00       	mov    eax,0x0
+ 1ff:	e8 00 00 00 00       	call   204 <snZ_info+0x44>
+ 204:	48 83 c4 08          	add    rsp,0x8
+ 208:	48 85 c0             	test   rax,rax
+ 20b:	74 3c                	je     249 <snZ_info+0x89>
+ 20d:	48 c7 45 f0 00 00 00 	mov    QWORD PTR [rbp-0x10],0x0
+ 214:	00 
+ 215:	49 8d 44 24 e8       	lea    rax,[r12-0x18]
+ 21a:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+ 21e:	49 c7 44 24 f8 00 00 	mov    QWORD PTR [r12-0x8],0x0
+ 225:	00 00 
+ 227:	bb 00 00 00 00       	mov    ebx,0x0
+ 22c:	4d 8d 74 24 f8       	lea    r14,[r12-0x8]
+ 231:	48 83 c5 f0          	add    rbp,0xfffffffffffffff0
+ 235:	e9 00 00 00 00       	jmp    23a <snZ_info+0x7a>
+ 23a:	49 c7 85 c0 00 00 00 	mov    QWORD PTR [r13+0xc0],0x20
+ 241:	20 00 00 00 
+ 245:	41 ff 65 f0          	jmp    QWORD PTR [r13-0x10]
+ 249:	ff 23                	jmp    QWORD PTR [rbx]
+ 24b:	0f 1f 44 00 00       	nop    DWORD PTR [rax+rax*1+0x0]
+	...
+ 260:	16                   	(bad)  
+ 261:	00 00                	add    BYTE PTR [rax],al
+ 263:	00 07                	add    BYTE PTR [rdi],al
+ 265:	00 00                	add    BYTE PTR [rax],al
+	...
+
+0000000000000268 <Main_main_info>:
+ 268:	48 8d 45 d8 4c 39 f8 0f 82 86 00 00 00 49 83 c4     H.E.L9.......I..
+ 278:	10 4d 3b a5 90 00 00 00 77 6e 49 c7 44 24 f8 00     .M;.....wnI.D$..
+ 288:	00 00 00 49 8b 85 a0 00 00 00 49 89 04 24 4c 89     ...I......I..$L.
+ 298:	ef 48 89 de 49 8d 54 24 f8 48 83 ec 08 b8 00 00     .H..I.T$.H......
+ 2a8:	00 00 e8 00 00 00 00 48 83 c4 08 48 85 c0 74 47     .......H...H..tG
+ 2b8:	48 c7 45 f0 00 00 00 00 49 8d 44 24 f8 48 89 45     H.E.....I.D$.H.E
+ 2c8:	f8 48 c7 45 e8 00 00 00 00 48 c7 45 e0 00 00 00     .H.E.....H.E....
+ 2d8:	00 48 c7 45 d8 00 00 00 00 41 be 00 00 00 00 48     .H.E.....A.....H
+ 2e8:	83 c5 d8 e9 00 00 00 00 49 c7 85 c0 00 00 00 10     ........I.......
+ 2f8:	00 00 00 41 ff 65 f0 ff 23 0f 1f 80 00 00 00 00     ...A.e..#.......
+	...
+ 318:	16 00 00 00 03 00 00 00                             ........
+
+0000000000000320 <ZCMain_main_info>:
+ 320:	48 8d 45 f0 4c 39 f8 72 73 49 83 c4 10 4d 3b a5     H.E.L9.rsI...M;.
+ 330:	90 00 00 00 77 5b 49 c7 44 24 f8 00 00 00 00 49     ....w[I.D$.....I
+ 340:	8b 85 a0 00 00 00 49 89 04 24 4c 89 ef 48 89 de     ......I..$L..H..
+ 350:	49 8d 54 24 f8 48 83 ec 08 b8 00 00 00 00 e8 00     I.T$.H..........
+ 360:	00 00 00 48 83 c4 08 48 85 c0 74 34 48 c7 45 f0     ...H...H..t4H.E.
+ 370:	00 00 00 00 49 8d 44 24 f8 48 89 45 f8 bb 00 00     ....I.D$.H.E....
+ 380:	00 00 41 be 00 00 00 00 48 83 c5 f0 e9 00 00 00     ..A.....H.......
+ 390:	00 49 c7 85 c0 00 00 00 10 00 00 00 41 ff 65 f0     .I..........A.e.
+ 3a0:	ff 23 

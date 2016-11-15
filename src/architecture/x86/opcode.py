@@ -638,6 +638,12 @@ oneByteOpcodes = {
 		"readImmediateBytes": 1
 	},
 
+	# hlt
+	0xf4: {
+		"name": "hlt",
+		"opcodeType": MISC_TYPE
+	},
+
 	# test/test/not/neg/mul/imul/div/idiv
 	# rm8
 	0xf6: {
@@ -694,6 +700,14 @@ twoByteOpcodes = {
 	0x18: {
 		"name": ["prefetchnta", "prefetcht0", "prefetcht1", "prefetcht2", "hint_nop", "hint_nop", "hint_nop", "hint_nop"],
 		"opcodeType": [TRANSFER_TYPE, TRANSFER_TYPE, TRANSFER_TYPE, TRANSFER_TYPE, MISC_TYPE, MISC_TYPE, MISC_TYPE, MISC_TYPE],
+		"opcodeExtension": True,
+		"readModRegRm": True
+	},
+
+	# nop
+	0x1f: {
+		"name": "nop",
+		"opcodeType": MISC_TYPE,
 		"opcodeExtension": True,
 		"readModRegRm": True
 	},
@@ -982,12 +996,12 @@ class Opcode(object):
 		return s;
 
 	def __hash__(self):
-		return hash((self._opcode, self._extension));
+		return hash((self._opcode, self._extension, self._name));
 
 	def __eq__(self, other):
 		if (other == None):
 			return False;
-		return ((self._opcode, self._extension) == (other._opcode, other._extension));
+		return ((self._opcode, self._extension, self._name) == (other._opcode, other._extension, self._name));
 
 
 	   #  def __hash__(self):
@@ -1012,6 +1026,13 @@ def getOpcode(opcodeByte, extension, name, opcodeType):
 		if (extension != -1):
 			# Get the real opcode or None if this specific one not yet created
 			opcode = opcode[extension];
+
+	# Handle case for opcode name being slightly different
+	# E.g. Has a rep prefix
+	# Just return a new opcode, don't cache
+	if (opcode != None):
+		if (opcode.name != name):
+			return Opcode(opcodeByte, extension, name, opcodeType);
 
 	# Haven't seen opcode yet
 	# i.e. not in cache, or a not-seen extension of opcode that has been seen
