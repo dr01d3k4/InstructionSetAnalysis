@@ -37,4 +37,5 @@ class x86(ArchitectureBase):
 
 
 	def getDataDirections(self):
+		print("TODO: Support 3 operand opcodes in data direction (e.g. reg <- [mem] * imm)");
 		return instruction.DATA_DIRECTIONS;

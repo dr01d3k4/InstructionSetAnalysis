@@ -1,7 +1,7 @@
 from __future__ import print_function;
 from util.binary_file import printHexDump;
-from util.byte_util import bytesToHexString, byteToHexStringSpaceAlign;
 import elf64.reader as elf64;
+from architecture.instruction_base import printInstructionsWithDebug;
 from architecture.architecture import getArchitecture;
 from compiler.compiler import getCompiler;
 import stats.calculate_stats as stats;
@@ -44,65 +44,6 @@ def openFileForWritingLinesClosure(filename):
 	return f, writeLine;
 
 
-def printInstructionsWithDebug(instructions, startPrintingAt = -1, showInstructionDetails = False):
-	if (startPrintingAt < 0):
-		return;
-
-	print("Starting at:", startPrintingAt);
-	print("Last instruction:", len(instructions));
-	print("Total printing:", len(instructions) - startPrintingAt);
-
-	if (startPrintingAt > 0):
-		instructions = instructions[startPrintingAt:];
-
-	if (len(instructions) == 0):
-		print("No instructions");
-		return;
-
-	lastInstructionStartByte = instructions[-1][0];
-	startByteLength = len(byteToHexStringSpaceAlign(lastInstructionStartByte));
-
-	maxInstructionLength = 0;
-	maxOpcodeLength = 0;
-	for _, instructionBytes, instruction in instructions:
-		instructionLength = len(instructionBytes);
-		if (instructionLength > maxInstructionLength):
-			maxInstructionLength = instructionLength;
-
-		opcodeLength = len(instruction.getOpcode().name);
-		if (opcodeLength > maxOpcodeLength):
-			maxOpcodeLength = opcodeLength;
-
-	maxMaxOpcodeLength = 6;
-	if (maxOpcodeLength > maxMaxOpcodeLength):
-		maxOpcodeLength = maxMaxOpcodeLength;
-
-	instructionNumber = max(startPrintingAt, 0);
-	for startByte, instructionBytes, instruction in instructions:
-		s = "";
-		s += "{:4}".format(instructionNumber);
-		s += " | ";
-		s += byteToHexStringSpaceAlign(startByte, length = startByteLength);
-		s += ": ";
-
-		bytesString = bytesToHexString(instructionBytes, bytesBetweenSpaces = 1);
-		# 3 because 2 hex chars for 1 byte + 1 space char
-		while (len(bytesString) < maxInstructionLength * 3):
-			bytesString += " ";
-
-		s += bytesString;
-		s += " ";
-		s += instruction.toString(maxOpcodeLength);
-		print(s);
-
-		if (showInstructionDetails):
-			print(repr(instruction));
-			if (startByte != lastInstructionStartByte):
-				print("-" * 80);
-
-		instructionNumber += 1;
-
-
 def readElf64File(filename):
 	elf64File, errorMessage = elf64.readElf64File(filename);
 
@@ -128,7 +69,7 @@ def decodeMachineCode(architecture, machineCode, firstByteOffset = 0, startPrint
 	instructionsWithDebug = architecture.decode(machineCode, firstByteOffset = firstByteOffset);
 	instructions = map(lambda x: x[2], instructionsWithDebug);
 
-	printInstructionsWithDebug(instructionsWithDebug, startPrintingAt = startPrintingFrom, showInstructionDetails = False);
+	printInstructionsWithDebug(instructionsWithDebug, startPrintingFrom = startPrintingFrom, showInstructionDetails = False);
 
 	return instructions;
 
@@ -177,7 +118,7 @@ def main():
 	ghc = getCompiler("ghc");
 	clang = getCompiler("clang");
 
-	printingStart = 120; # 1275290; # 1340; # 9900; # -1; # 1275199;
+	printingStart = -1; # 1275290; # 1340; # 9900; # -1; # 1275199;
 
 	lines = [ ];
 	writeOutput = accumulateLines(lines);

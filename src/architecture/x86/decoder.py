@@ -1,12 +1,13 @@
 from __future__ import print_function;
-from register import getRegRegister, getRmRegister, getBaseRegister, getIndexRegister, getInstructionPointerRegister;
+from architecture.instruction_base import printInstructionsWithDebug;
 from util.byte_util import bytesToHexString, byteToHexString, byteToBinaryString, getDisplayByteString;
 from util.byte_reader import ByteReader;
+from register import getRegRegister, getRmRegister, getBaseRegister, getIndexRegister, getInstructionPointerRegister;
 from instruction import Instruction;
 import opcode as opcodes;
 import operand
-import math;
 from rex_prefix import getRexPrefix, getRexPrefixFromNumber, getNoRexPrefix;
+# import math;
 
 """
 http://www.codeproject.com/Articles/662301/x-Instruction-Encoding-Revealed-Bit-Twiddling-fo
@@ -421,6 +422,13 @@ def decode(bytes, firstByteOffset = 0):
 			print("\t\tLocation: \t" + getDisplayByteString(startByte));
 			print("\t\tValue: \t\t" + getDisplayByteString(byte));
 			print("\t\tBytes read so far: " + bytesToHexString(bytes.currentlyRead, bytesBetweenSpaces = 1));
+			print("");
+
+			showInstructionHistory = 5;
+			print("Showing previous {:} instruction{:}".format(showInstructionHistory, "s" if showInstructionHistory != 1 else ""));
+			startFrom = max(0, len(instructions) - showInstructionHistory);
+			printInstructionsWithDebug(instructions, startPrintingFrom = startFrom);
+
 			print("-" * dashLength);
 			print("");
 			break;

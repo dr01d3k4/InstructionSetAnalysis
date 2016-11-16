@@ -513,6 +513,15 @@ oneByteOpcodes = {
 		"readModRegRm": True
 	},
 
+	# mov r8 -> rm8
+	0x8a: {
+		"name": "mov",
+		"opcodeType": TRANSFER_TYPE,
+		"dataSize": 8,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
 	# mov r16/32/64 -> rm16/32/64
 	0x8b: {
 		"name": "mov",

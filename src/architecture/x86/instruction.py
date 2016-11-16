@@ -1,6 +1,7 @@
 from __future__ import print_function;
 from architecture.instruction_base import InstructionBase;
 import operand;
+from util.byte_util import bytesToHexString, byteToHexStringSpaceAlign;
 
 NO_DIR = 0;
 IMM_DIR = 1;
@@ -138,4 +139,22 @@ class Instruction(InstructionBase):
 		s += "]\n";
 		s += ")";
 
+		return s;
+
+
+	def prettyPrint(self, startByte, instructionBytes, instructionNumber, startByteLength, maxInstructionBytesLength, maxOpcodeLength):
+		s = "";
+		s += "{:4}".format(instructionNumber);
+		s += " | ";
+		s += byteToHexStringSpaceAlign(startByte, length = startByteLength);
+		s += ": ";
+
+		bytesString = bytesToHexString(instructionBytes, bytesBetweenSpaces = 1);
+		# 3 because 2 hex chars for 1 byte + 1 space char
+		while (len(bytesString) < maxInstructionBytesLength * 3):
+			bytesString += " ";
+
+		s += bytesString;
+		s += " ";
+		s += self.toString(maxOpcodeLength);
 		return s;
