@@ -154,11 +154,13 @@ def printTable(rowNames, columnNames, values, displayingFunction = lambda x: x, 
 	print(s);
 
 
-def calculateStats(compiler, architecture, instructions):
+def calculateStats(architecture, compiler, filename, instructions):
 	print("");
-	print("Calculating stats for instructions");
-	print("Architecture:", architecture.getName());
-	print("Compiler:", compiler.getName());
+	print("Calculating stats");
+	print("Filename:\t\t", filename);
+	print("Architecture:\t\t", architecture.getName());
+	print("Compiler:\t\t", compiler.getName());
+	print("Total instructions:\t", len(instructions));
 	print("");
 
 	opcodeTypes = architecture.getOpcodeTypes();

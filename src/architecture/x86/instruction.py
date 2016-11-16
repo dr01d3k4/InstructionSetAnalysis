@@ -108,7 +108,7 @@ class Instruction(InstructionBase):
 		if (len(self._operands) > 0):
 			while (len(s) < maxOpcodeLength):
 				s += " ";
-			s += "  ";
+			s += " ";
 
 			for operand in self._operands:
 				s += str(operand);

@@ -1,8 +1,12 @@
 from gcc import gcc;
+from ghc import ghc;
+from clang import clang;
 
 
 compilers = {
-	"gcc": gcc()
+	"gcc": gcc(),
+	"ghc": ghc(),
+	"clang": clang()
 };
 
 

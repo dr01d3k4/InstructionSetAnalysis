@@ -130,11 +130,45 @@ top5BitsOpcodes = {
 
 
 oneByteOpcodes = {
+	# add r8 to rm8
+	0x01: {
+		"name": "add",
+		"opcodeType": ARITHMETIC_TYPE,
+		"dataSize": 8,
+		"readModRegRm": True
+	},
+
 	# add r16/32/64 to rm16/32/64
 	0x01: {
 		"name": "add",
 		"opcodeType": ARITHMETIC_TYPE,
 		"readModRegRm": True
+	},
+
+	# add rm8 to r8
+	0x02: {
+		"name": "add",
+		"opcodeType": ARITHMETIC_TYPE,
+		"dataSize": 8,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# add rm16/32/64 to r16/32/64
+	0x03: {
+		"name": "add",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# add al and imm8
+	0x04: {
+		"name": "add",
+		"opcodeType": ARITHMETIC_TYPE,
+		"dataSize": 8,
+		"readImmediateBytes": 1,
+		"autoInsertRegister": "000"	
 	},
 
 	# add ax/eax/rax and imm32

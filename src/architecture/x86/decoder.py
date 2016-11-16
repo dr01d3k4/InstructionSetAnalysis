@@ -393,12 +393,18 @@ def readPrefixBytes(bytes):
 	prefixBytes = 0x0;
 	prefixBytesLength = 0;
 
+	prefixNames = [ ];
 
 	while (True):
 		# Group 1
 		if ((byte == LOCK_PREFIX) or (byte == REPNE_PREFIX) or (byte == REP_PREFIX)):
 			if (group1Prefix == -1):
 				group1Prefix = byte;
+
+			if (byte == REPNE_PREFIX):
+				prefixNamees.append("repn");
+			elif (byte == REP_PREFIX):
+				prefixNames.append("rep");
 
 			prefixBytes, prefixBytesLength = addPrefixByte(prefixBytes, prefixBytesLength, byte);
 			byte, _ = bytes.readByte();
@@ -423,6 +429,8 @@ def readPrefixBytes(bytes):
 		if (byte == OPERAND_SIZE_OVERRIDE):
 			if (group3Prefix == -1):
 				group3Prefix = byte;
+			else:
+				prefixNames.append("data32");
 
 			prefixBytes, prefixBytesLength = addPrefixByte(prefixBytes, prefixBytesLength, byte);
 			byte, _ = bytes.readByte();
@@ -439,13 +447,15 @@ def readPrefixBytes(bytes):
 
 		break;
 
-	return group1Prefix, group2Prefix, group3Prefix, group4Prefix, prefixBytes, prefixBytesLength;
+	prefixString = " ".join(prefixNames);
+
+	return group1Prefix, group2Prefix, group3Prefix, group4Prefix, prefixBytes, prefixBytesLength, prefixString;
 
 
 """
 [bytes] -> [Instruction]
 """
-def decode(bytes, startDebugAt = -1, firstByteOffset = 0):
+def decode(bytes, firstByteOffset = 0, startDebugAt = -1):
 	global shouldPrintDebug;
 
 	# if (type(bytes) != "<class 'x86.byte_reader.ByteReader'>"):
@@ -456,7 +466,7 @@ def decode(bytes, startDebugAt = -1, firstByteOffset = 0):
 	instructions = [ ];
 	bytesRead = [ ];
 
-	if (startDebugAt == 0):
+	if (startDebugAt >= 0):
 		shouldPrintDebug = True;
 	else:
 		shouldPrintDebug = False;
@@ -478,7 +488,7 @@ def decode(bytes, startDebugAt = -1, firstByteOffset = 0):
 
 		# debugPrint("Reading instruction #" + str(len(instructions)) + " starting at " + getDisplayByteString(startByte));
 
-		group1Prefix, group2Prefix, group3Prefix, group4Prefix, prefixBytes, prefixBytesLength = readPrefixBytes(bytes);
+		group1Prefix, group2Prefix, group3Prefix, group4Prefix, prefixBytes, prefixBytesLength, prefixString = readPrefixBytes(bytes);
 
 		segmentOverride = operand.getSegmentOverrideFromPrefix(group2Prefix);
 		operandSizeOverride = group3Prefix;
@@ -606,14 +616,17 @@ def decode(bytes, startDebugAt = -1, firstByteOffset = 0):
 		if (opcodeName == ""):
 			print(len(instructions), "Opcode name is empty");
 
-		if (group1Prefix == REPNE_PREFIX):
-			# movsd
-			# if ((opcodeByte != 0x0f10) and (opcodeByte != 0x0f11)):
-			if (opcodeByte == 0xae):
-				opcodeName = "repnz " + opcodeName;
+		if (len(prefixString) > 0):
+			opcodeName = prefixString + " " + opcodeName;
 
-		elif (group1Prefix == REP_PREFIX):
-			opcodeName = "rep " + opcodeName;
+		# if (group1Prefix == REPNE_PREFIX):
+		# 	# movsd
+		# 	# if ((opcodeByte != 0x0f10) and (opcodeByte != 0x0f11)):
+		# 	if (opcodeByte == 0xae):
+		# 		opcodeName = "repnz " + opcodeName;
+
+		# elif (group1Prefix == REP_PREFIX):
+		# 	opcodeName = "rep " + opcodeName;
 			# opcodeByte = opcodeByte | (REPNE_PREFIX << (8 * opcodeByteLength));
 			# opcodeByteLength += 1;
 
