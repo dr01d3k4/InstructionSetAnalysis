@@ -4,7 +4,6 @@ from datetime import datetime;
 
 WIDTH_FORMATTER = "{:{width}}";
 
-# getPercentage = lambda t: (lambda c: (100.0 / t) * c if t != 0 else 0);
 getPercentage = lambda t: (lambda c: (100.0 / t) * c) if (t != 0) else (lambda _: 0);
 percentageFormat = lambda p: "{:6.2f}%".format(p)
 
@@ -27,37 +26,6 @@ def getRowTotals(matrix):
 
 def getColumnTotals(matrix):
 	return map(sum, transpose(matrix));
-
-
-# def printOpcodesByType(opcodeTypes, opcodesByType):
-# 	s = "opcodesByType = {";
-
-# 	for index, typeName in enumerate(opcodeTypes):
-# 		opcodes = opcodesByType[index];
-
-# 		s += "\n\t" + typeName + " = {";
-
-# 		for opcode in opcodes:
-# 			s += "\n\t\t";
-# 			s += repr(opcode);
-# 			s += ",";
-
-# 		if (len(opcodes) > 0):
-# 			s = s[:-1];
-# 			s += "\n\t";
-# 		else:
-# 			s += " ";
-
-# 		s += "},";
-
-# 	if (len(opcodeTypes) > 0):
-# 		s = s[:-1];
-# 		s += "\n";
-# 	else:
-# 		s += " ";
-
-# 	s += "}";
-# 	writeOutput(s);
 
 
 def printByType(types, values, displayingFunction = lambda x: x, writeOutput = print):
@@ -110,8 +78,6 @@ def dictionaryDiplayingFunction(indentLevel = 0, newLines = True):
 
 
 def printTable(rowNames, columnNames, values, displayingFunction = lambda x: x, showTotalRow = False, showTotalColumn = False, writeOutput = print):
-	# data = map(lambda a: map(lambda v: str(displayingFunction(v)), a), values);
-	# multimap = multimap(lambda v: str(displayingFunction(v)), values);
 	display = compose(str, displayingFunction);
 	data = multimap(display, values);
 

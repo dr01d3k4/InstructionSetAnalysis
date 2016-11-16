@@ -8,7 +8,43 @@ import stats.calculate_stats as stats;
 import gc;
 
 
-def printInstructionsWithDebug(instructions, showInstructionDetails = False, startPrintingAt = -1):
+# 0x8b8b75
+"""
+500000 instructions
+Before optimizations: 53.1s
+After REX optimizations: 51.6s
+After commenting out debug print calls: 24.6s
+After opcode caching: 22.2s
+"""
+
+
+OBJECT_FILES_ROOT = "object_files";
+
+
+def getFullFilename(folder, filename):
+	return OBJECT_FILES_ROOT + "/" + folder + "/" + filename;
+
+
+def getStatsFilename(folder, filename):
+	return getFullFilename(folder, "results_for_" + filename + ".txt");
+
+
+def accumulateLines(lines):
+	def inner(line):
+		lines.append(line);
+	return inner;
+
+
+def openFileForWritingLinesClosure(filename):
+	f = open(filename, "w");
+
+	def writeLine(line):
+		f.write(line + "\n");
+
+	return f, writeLine;
+
+
+def printInstructionsWithDebug(instructions, startPrintingAt = -1, showInstructionDetails = False):
 	if (startPrintingAt < 0):
 		return;
 
@@ -87,9 +123,9 @@ def getTextSection(elf64File):
 	return textSection;
 
 
-def decodeMachineCode(architecture, machineCode, firstByteOffset = 0, startPrintingFrom = -1, startDebugFrom = -1):
+def decodeMachineCode(architecture, machineCode, firstByteOffset = 0, startPrintingFrom = -1):
 	# "withDebug" is because this is a tuple of (startByte, [bytesInInstruction], InstructionInstance)
-	instructionsWithDebug = architecture.decode(machineCode, firstByteOffset = firstByteOffset, startDebugAt = startDebugFrom);
+	instructionsWithDebug = architecture.decode(machineCode, firstByteOffset = firstByteOffset);
 	instructions = map(lambda x: x[2], instructionsWithDebug);
 
 	printInstructionsWithDebug(instructionsWithDebug, startPrintingAt = startPrintingFrom, showInstructionDetails = False);
@@ -101,7 +137,7 @@ def calculateStats(architecture, compiler, filename, instructions, writeOutput =
 	return stats.calculateStats(architecture, compiler, filename, instructions, writeOutput);
 
 
-def doWorkOnObjectFile(architecture, compiler, filename, writeOutput = print, firstByteOffset = 0, startPrintingFrom = -1, startDebugFrom = -1):
+def dissassembleObjectFile(architecture, compiler, filename, firstByteOffset = 0, startPrintingFrom = -1):
 	elf64File = readElf64File(filename);
 	textSection = getTextSection(elf64File);
 
@@ -109,50 +145,30 @@ def doWorkOnObjectFile(architecture, compiler, filename, writeOutput = print, fi
 	elf64File = None;
 	gc.collect();
 
-	instructions = decodeMachineCode(architecture, textSection, firstByteOffset, startPrintingFrom, startDebugFrom);
-	# print("Total instruction count", len(instructions));
+	instructions = decodeMachineCode(architecture, textSection, firstByteOffset, startPrintingFrom);
 	textSection = None;
 	gc.collect();
-	
-	stats = calculateStats(architecture, compiler, filename, instructions, writeOutput);
-	gc.collect();
 
-# 0x8b8b75
-"""
-500000 instructions
-Before optimizations: 53.1s
-After REX optimizations: 51.6s
-After commenting out debug print calls: 24.6s
-After opcode caching: 22.2s
-"""
+	return instructions;
 
 
-def accumulateLines(lines):
-	def inner(line):
-		lines.append(line);
-	return inner;
+def outputStatsForObjectFile(architecture, compiler, folder, filename):
+	fullFilename = getFullFilename(folder, filename);
+	statsFilename = getStatsFilename(folder, filename);
 
+	instructions = dissassembleObjectFile(architecture, compiler, fullFilename);
 
-def openFileForWritingLines(filename):
-	f = open(filename, "w");
-
-	def writeLine(line):
-		f.write(line + "\n");
-
-	return f, writeLine;
-
-
-def doStuff(architecture, compiler, folder, filename):
-	root = "object_files"
-	fullFilename = root + "/" + folder + "/" + filename;
-
-	outputFilename = root + "/" + folder + "/" + "results_for_" + filename + ".txt";
-
-	outputFile, writeLine = openFileForWritingLines(outputFilename);
-
-	doWorkOnObjectFile(architecture, compiler, fullFilename, writeOutput = writeLine);
+	outputFile, writeLine = openFileForWritingLinesClosure(statsFilename);
+	stats = calculateStats(architecture, compiler, fullFilename, instructions, writeLine);
 
 	outputFile.close();
+
+
+def printStatsForObjectFile(architecture, compiler, folder, filename):
+	fullFilename = getFullFilename(folder, filename);
+
+	instructions = dissassembleObjectFile(architecture, compiler, fullFilename);
+	stats = calculateStats(architecture, compiler, fullFilename, instructions, print);
 
 
 def main():
@@ -161,31 +177,29 @@ def main():
 	ghc = getCompiler("ghc");
 	clang = getCompiler("clang");
 
-	printingStart = -1; # 1275290; # 1340; # 9900; # -1; # 1275199;
-	debugStart = -1;
-	firstByteOffset = 0x400440; # 0; # 0x4028b0;
+	printingStart = 120; # 1275290; # 1340; # 9900; # -1; # 1275199;
 
 	lines = [ ];
 	writeOutput = accumulateLines(lines);
 
-	# doWorkOnObjectFile(x86, gcc, "object_files/HelloWorld/hello_world_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	# doWorkOnObjectFile(x86, gcc, "object_files/AddFunction/add_function_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	# doWorkOnObjectFile(x86, gcc, "object_files/ArrayLoop/array_loop_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# dissassembleObjectFile(x86, gcc, "object_files/HelloWorld/hello_world_gcc.o", startPrintingFrom = printingStart);
+	# dissassembleObjectFile(x86, gcc, "object_files/AddFunction/add_function_gcc.o", startPrintingFrom = printingStart);
+	# dissassembleObjectFile(x86, gcc, "object_files/ArrayLoop/array_loop_gcc.o", startPrintingFrom = printingStart);
 	
-	# doWorkOnObjectFile(x86, gcc, "object_files/AddFunction/add_function_linked_gcc.out", writeOutput = print, firstByteOffset = 0x400490, startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# dissassembleObjectFile(x86, gcc, "object_files/AddFunction/add_function_linked_gcc.out", firstByteOffset = 0x400490, startPrintingFrom = printingStart);
+	# dissassembleObjectFile(x86, clang, "object_files/AddFunction/add_function_linked_clang.out", firstByteOffset = 0x400440, startPrintingFrom = printingStart);
 
-	doStuff(x86, gcc, "AddFunction", "add_function_linked_gcc.out");
-	doStuff(x86, clang, "AddFunction", "add_function_linked_clang.out");
+	# outputStatsForObjectFile(x86, gcc, "AddFunction", "add_function_linked_gcc.out");
+	# outputStatsForObjectFile(x86, clang, "AddFunction", "add_function_linked_clang.out");
 
-	# doWorkOnObjectFile(x86, clang, "object_files/AddFunction/add_function_linked_clang.out", firstByteOffset = 0x400440, startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# dissassembleObjectFile(x86, gcc, "object_files/gcc/gcc_gcc.o", startPrintingFrom = printingStart);
 
-	# doWorkOnObjectFile(x86, gcc, "object_files/gcc/gcc_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# dissassembleObjectFile(x86, gcc, "object_files/gcc/gcc_linked_gcc.out", firstByteOffset = 0x4028b0, startPrintingFrom = printingStart);
+	
+	dissassembleObjectFile(x86, clang, "object_files/gcc/gcc_linked_clang.out", firstByteOffset = 0x402800, startPrintingFrom = printingStart);
 
-	# doWorkOnObjectFile(x86, gcc, "object_files/gcc/gcc_linked_gcc.out", firstByteOffset = 0x4028b0, startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	# doWorkOnObjectFile(x86, clang, "object_files/gcc/gcc_linked_clang.out", firstByteOffset = 0x402800, startPrintingFrom = printingStart, startDebugFrom = debugStart);
-
-	# doStuff(x86, gcc, "gcc", "gcc_linked_gcc.out");
-	# doStuff(x86, clang, "gcc", "gcc_linked_clang.out");
+	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out");
+	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang.out");
 
 
 

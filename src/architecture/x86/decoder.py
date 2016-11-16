@@ -19,8 +19,6 @@ In x86 manual:
 	Chapter 2 starts on page 503
 	Format used in instruction set reference explained on page 572
 
-
-
 http://ref.x86asm.net/
 http://ref.x86asm.net/coder32.html
 Columns:
@@ -36,74 +34,18 @@ Columns:
 
 """
 
-# Mod-Reg-R/M byte
-"""
-1 byte (8 bits)
-"This byte determines the instruction's operands and the addressing modes relating to them."
+TOP_5_BITS_MASK = 0b11111000;
+REGISTER_MASK = 0b111;
 
-Format
-MSB 7 6 5 4 3 2 1 0 LSB
-Bits 7 6:
-	MOD bits
-	00 = "Fetch the contents of the address found within the register specified in the R/M section."
-		"Two exceptions to this rule are when the R/M bits are set to 100 - that's when the processor switches to SIB addressing and reads the SIB byte, treated next - or 101, when the processor switches to 32-bit displacement mode, which basically means that a 32 bit number is read from the displacement bytes (see figure 1) and then dereferenced. "
-	01 = "This is essentialy the same as 00, except that an 8-bit displacement is added to the value before dereferencing."
-	10 = "The same as the above, except that a 32-bit displacement is added to the value."
-	11 = "Direct addressing mode. Move the value in the source register to the destination register (the Reg and R/M byte will each refer to a register)."
-Bits 5 4 3:
-	"REG bits. Specifies the register being addressed."
-	Also can be used as opcode extension
-Bits 2 1 0:
-	"R/M bits. Specifies a register or, together with the MOD bits, can indicate displacement or SIB addressing."
+MOD_MASK = 0b11000000;
+REG_MASK = REGISTER_MASK << 3;
+RM_MASK  = REGISTER_MASK << 0;
 
+SCALE_MASK = MOD_MASK;
+INDEX_MASK = REG_MASK;
+BASE_MASK  = RM_MASK;
 
-modRegRmByte = readByte();
-modBits = (modRegRmByte & 0b11000000) >> 6; # modRegRmByte[0:2];
-regBits = (modRegRmByte & 0b00111000) >> 3; # modRegRmByte[2:5];
-rmBits = modRegRmByte & 0b00000111; # modRegRmByte[5:8];
-"""
-
-# Scale-Index-Base byte (SIB)
-"""
-Format
-MSB 7 6 5 4 3 2 1 0 LSB
-Bits 7 6:
-	Scale bits
-	00 = 1 byte
-	01 = 2 bytes
-	10 = 4 bytes
-	11 = 8 bytes
-Bits 5 4 3:
-	Index bits
-	Normally a register
-Bits 2 1 0
-	Base bits
-	Normally a register
-
-Evalutes to be memory[base + (index * scale)]
-
-"""
-
-"""
-   0:	55                   	push   %rbp
-   1:	48 89 e5             	mov    %rsp,%rbp
-   4:	bf 00 00 00 00       	mov    $0x0,%edi
-   9:	e8 00 00 00 00       	callq  e <main+0xe>
-   e:	b8 00 00 00 00       	mov    $0x0,%eax
-  13:	5d                   	pop    %rbp
-  14:	c3                   	retq 
-"""
-
-top5BitsMask = 0b11111000;
-registerMask = 0b111;
-
-modMask = 0b11000000;
-regMask = 0b00111000;
-rmMask  = 0b00000111;
-
-scaleMask = modMask;
-indexMask = regMask;
-baseMask  = rmMask;
+SCALES = [1, 2, 4, 8];
 
 # Group 1
 LOCK_PREFIX = 0xf0;
@@ -127,18 +69,10 @@ OPERAND_SIZE_OVERRIDE = 0x66;
 # Group 4
 ADDRESS_SIZE_OVERRIDE = 0x67;
 
-shouldPrintDebug = False;
-shouldPrintTodo = False;
-
-
-def debugPrint(*args, **kwargs):
-	if (shouldPrintDebug):
-		print(*args, **kwargs);
-
-
-def todoPrint(*args, **kwargs):
-	if (shouldPrintTodo):
-		print("TODO:", *args, **kwargs);
+# REX
+REX_PREFIX_UPPER_MASK = 0xf0;
+REX_PREFIX_LOWER_MASK = 0x0f;
+REX_PREFIX_BASE = 0x40;
 
 
 def twosComplement(n, bits):
@@ -171,48 +105,37 @@ def readImmediateSigned(bytes, n):
 def readImmediate8Unsigned(bytes):
 	return readImmediateUnsigned(bytes, 1);
 
+
 def readImmediate8Signed(bytes):
 	return readImmediateSigned(bytes, 1);
 
+
 def readImmediate32Signed(bytes):
 	return readImmediateSigned(bytes, 4);
+
 
 def readImmediate32Unsigned(bytes):
 	return readImmediateUnsigned(bytes, 4);
 
 
 def readModRegRmByte(byte):
-	mod = (byte & modMask) >> 6;
-	reg = (byte & regMask) >> 3;
-	rm = (byte & rmMask) >> 0;
+	mod = (byte & MOD_MASK) >> 6;
+	reg = (byte & REG_MASK) >> 3;
+	rm = (byte & RM_MASK) >> 0;
 
 	return mod, reg, rm;
 
 
 def readScaleIndexBaseByte(byte):
-	scale = (byte & scaleMask) >> 6;
-	index = (byte & indexMask) >> 3;
-	base = (byte & baseMask) >> 0;
+	scale = (byte & SCALE_MASK) >> 6;
+	index = (byte & INDEX_MASK) >> 3;
+	base = (byte & BASE_MASK) >> 0;
 
 	return scale, index, base;
 
 
 def decodeScaleIndexBaseByte(scaleBits, indexBits, baseBits, rexPrefix):
-	# debugPrint("Decoding SIB");
-	# debugPrint("Scale bits:", getDisplayByteString(scaleBits));
-	# debugPrint("Index bits:" , getDisplayByteString(indexBits));
-	# debugPrint("Base bits: ", getDisplayByteString(baseBits));
-
-	scale = 1;
-	if (scaleBits == 0b00):
-		scale = 1;
-	elif (scaleBits == 0b01):
-		scale = 2;
-	elif (scaleBits == 0b10):
-		scale = 4;
-	elif (scaleBits == 0b11):
-		scale = 8;
-
+	scale = SCALES[scaleBits];
 	index = getIndexRegister(indexBits, getNoRexPrefix(64));
 	base = getBaseRegister(baseBits, getNoRexPrefix(64));
 
@@ -221,27 +144,11 @@ def decodeScaleIndexBaseByte(scaleBits, indexBits, baseBits, rexPrefix):
 
 def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = False, segmentOverride = operand.NO_SEGMENT_OVERRIDE):
 	# Page 508 in intel manual
-
-	# debugPrint("Decoding modregrm");
-	# debugPrint("Reg is opcode extension:", str(regIsOpcodeExtension));
-	# debugPrint("Rex prefix:", repr(rexPrefix));
-
 	modRegRmByte = bytes.readByte()[0];
 	mod, reg, rm = readModRegRmByte(modRegRmByte);
 
-	# debugPrint("");
-	# debugPrint("Byte:", getDisplayByteString(modRegRmByte));
-	# debugPrint("Mod: ", getDisplayByteString(mod));
-	# debugPrint("Reg: " , getDisplayByteString(reg));
-	# debugPrint("Rm:  ", getDisplayByteString(rm));
-
 	regRegister = getRegRegister(reg, rexPrefix);
 	rmRegister = getRmRegister(rm, rexPrefix);
-
-	# debugPrint("");
-	# debugPrint("Reg register:", repr(regRegister));
-	# debugPrint("Rm register: ", repr(rmRegister));
-	# debugPrint("");
 
 	operands = [ ];
 
@@ -291,9 +198,6 @@ def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = F
 			displacement = readImmediate32Signed(bytes);
 			hasReadDisplacement = True;
 
-		# if (hasReadDisplacement):
-			# debugPrint("Read displacement: " + getDisplayByteString(displacement));
-
 		if (not hasReadSib):
 			if (not hasReadDisplacement):
 				if (rmRegister == None):
@@ -311,10 +215,6 @@ def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = F
 			index = sib[1];
 			base = sib[2];
 
-			# debugPrint("SIB bits:", sibBits);
-			# debugPrint("SIB:", sib);
-			# debugPrint("");
-
 			indexIsSP = ((indexBits == 0b100) and (not rexPrefix.getX()));
 
 
@@ -326,7 +226,6 @@ def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = F
 			else:
 				if (baseBits == 0b101):
 					baseDisplacement = readImmediate32Signed(bytes);
-					# debugPrint("Base displacement: ", getDisplayByteString(baseDisplacement));
 				
 					if (indexIsSP):
 						rmOperand = operand.ImmediateDisplacementOperand(baseDisplacement, segmentOverride);
@@ -359,23 +258,23 @@ def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = F
 	return operands;
 
 
-def readRexPrefix(prefixByte, bytes):
-	# http://wiki.osdev.org/X86-64_Instruction_Encoding#REX_prefix
+# def readRexPrefix(prefixByte, bytes):
+# 	# http://wiki.osdev.org/X86-64_Instruction_Encoding#REX_prefix
 
-	rexPrefix = getNoRexPrefix();
+# 	rexPrefix = getNoRexPrefix();
 
-	byte = prefixByte;
-	prefixByteToReturn = 0x00;
+# 	byte = prefixByte;
+# 	prefixByteToReturn = 0x00;
 
-	if (prefixByte & 0xf0 == 0x40):
-		prefixByteToReturn = prefixByte;
+# 	if (prefixByte & 0xf0 == 0x40):
+# 		prefixByteToReturn = prefixByte;
 
-		byte, _ = bytes.readByte();
+# 		byte, _ = bytes.readByte();
 
-		rexNumber = prefixByte & 0x0F;
-		rexPrefix = getRexPrefixFromNumber(rexNumber);
+# 		rexNumber = prefixByte & 0x0F;
+# 		rexPrefix = getRexPrefixFromNumber(rexNumber);
 
-	return rexPrefix, byte, prefixByteToReturn;
+# 	return rexPrefix, byte, prefixByteToReturn;
 
 
 def addPrefixByte(prefixBytes, prefixBytesLength, byte):
@@ -389,6 +288,7 @@ def readPrefixBytes(bytes):
 	group2Prefix = -1;
 	group3Prefix = -1;
 	group4Prefix = -1;
+	rexPrefix = getNoRexPrefix();
 
 	prefixBytes = 0x0;
 	prefixBytesLength = 0;
@@ -447,18 +347,22 @@ def readPrefixBytes(bytes):
 
 		break;
 
+	if (byte & REX_PREFIX_UPPER_MASK == REX_PREFIX_BASE):
+		rexNumber = byte & REX_PREFIX_LOWER_MASK;
+		rexPrefix = getRexPrefixFromNumber(rexNumber);
+
+		prefixBytes, prefixBytesLength = addPrefixByte(prefixBytes, prefixBytesLength, byte);
+		bytes.readByte();
+
 	prefixString = " ".join(prefixNames);
 
-	return group1Prefix, group2Prefix, group3Prefix, group4Prefix, prefixBytes, prefixBytesLength, prefixString;
+	return group1Prefix, group2Prefix, group3Prefix, group4Prefix, rexPrefix, prefixBytes, prefixBytesLength, prefixString;
 
 
 """
 [bytes] -> [Instruction]
 """
-def decode(bytes, firstByteOffset = 0, startDebugAt = -1):
-	global shouldPrintDebug;
-
-	# if (type(bytes) != "<class 'x86.byte_reader.ByteReader'>"):
+def decode(bytes, firstByteOffset = 0):
 	if (type(bytes) is not ByteReader):
 		bytes = ByteReader(bytes);
 
@@ -466,16 +370,8 @@ def decode(bytes, firstByteOffset = 0, startDebugAt = -1):
 	instructions = [ ];
 	bytesRead = [ ];
 
-	if (startDebugAt >= 0):
-		shouldPrintDebug = True;
-	else:
-		shouldPrintDebug = False;
-
 	while (True):
 		bytes.resetCurrentlyRead();
-
-		if ((not shouldPrintDebug) and (startDebugAt > 0) and (len(instructions) >= startDebugAt)):
-			shouldPrintDebug = True;
 
 		opcode = None;
 		operands = [ ];
@@ -486,25 +382,14 @@ def decode(bytes, firstByteOffset = 0, startDebugAt = -1):
 
 		startByte += firstByteOffset;
 
-		# debugPrint("Reading instruction #" + str(len(instructions)) + " starting at " + getDisplayByteString(startByte));
-
-		group1Prefix, group2Prefix, group3Prefix, group4Prefix, prefixBytes, prefixBytesLength, prefixString = readPrefixBytes(bytes);
+		group1Prefix, group2Prefix, group3Prefix, group4Prefix, rexPrefix, prefixBytes, prefixBytesLength, prefixString = readPrefixBytes(bytes);
 
 		segmentOverride = operand.getSegmentOverrideFromPrefix(group2Prefix);
 		operandSizeOverride = group3Prefix;
 		addressSizeOverride = group4Prefix;
-
-		byte = bytes.getCurrentByte();
-
-		originalRexPrefix = None;
-		rexPrefix, byte, rexByte = readRexPrefix(byte, bytes);
 		originalRexPrefix = rexPrefix;
 
-		if (rexByte != 0):
-			prefixBytes, prefixBytesLength = addPrefixByte(prefixBytes, prefixBytesLength, rexByte);
-			# prefixBytes = (prefixBytes << (8 * prefixBytesLength)) | rexByte;
-			# prefixBytesLength += 1;
-
+		byte = bytes.getCurrentByte();
 
 		opcodeDetails = None;
 		isTop5Bits = False;
@@ -512,14 +397,13 @@ def decode(bytes, firstByteOffset = 0, startDebugAt = -1):
 		opcodeByteLength = 1;
 		opcodeExtension = -1;
 
-		if (byte & top5BitsMask in opcodes.top5BitsOpcodes):
-			opcodeDetails = opcodes.top5BitsOpcodes[byte & top5BitsMask];
+		if (byte & TOP_5_BITS_MASK in opcodes.top5BitsOpcodes):
+			opcodeDetails = opcodes.top5BitsOpcodes[byte & TOP_5_BITS_MASK];
 			isTop5Bits = True;
 		elif (byte in opcodes.oneByteOpcodes):
 			opcodeDetails = opcodes.oneByteOpcodes[byte];
 
 		elif (byte == 0x0f):
-			# debugPrint("\tTwo byte opcode");
 			byte, _ = bytes.readByte();
 
 			opcodeByte = (opcodeByte << 8) | byte;
@@ -540,14 +424,6 @@ def decode(bytes, firstByteOffset = 0, startDebugAt = -1):
 			print("-" * dashLength);
 			print("");
 			break;
-
-		# debugPrint("Opcode byte: " + getDisplayByteString(opcodeByte));
-		# debugPrint("Opcode details = {");
-		# for key, value in opcodeDetails.iteritems():
-			# debugPrint("\t", str(key), "=", str(value));
-		# debugPrint("}");
-
-		# debugPrint("");
 
 		if ("name" not in opcodeDetails):
 			print("No name for opcode", opcodeByte);
@@ -578,38 +454,24 @@ def decode(bytes, firstByteOffset = 0, startDebugAt = -1):
 
 		if ("dataSize" in opcodeDetails):
 			dataSize = opcodeDetails["dataSize"];
-			# if ((dataSize != 8) and (dataSize != 16) and (dataSize != 32) and (dataSize != 64)):
-			# 	# debugPrint("Unknown data size:", str(dataSize));
-			# else:
-				# debugPrint("Setting data size to", str(dataSize));
 			rexPrefix = rexPrefix.withDataSize(dataSize);
 
 		if (isTop5Bits):
-			# debugPrint("Should read top 5 bits opcode");
-
-			# if (opcodeByteLength > 1):
-			# 	todoPrint("Handle top-5-bit-opcode with multi-byte opcodes");
-
-			registerField = opcodeByte & registerMask;
-			opcodeByte = opcodeByte & top5BitsMask
+			registerField = opcodeByte & REGISTER_MASK;
+			opcodeByte = opcodeByte & TOP_5_BITS_MASK
 
 			registerOperand = operand.RegisterOperand(getRmRegister(registerField, rexPrefix));
 			operands.append(registerOperand);
 
 		if (hasOpcodeExtension):
-			# debugPrint("Should read opcode extension");
-
 			modRegRmByte = bytes.readByte()[0];
 			mod, reg, rm = readModRegRmByte(modRegRmByte);
 
 			opcodeExtension = reg;
-			# debugPrint("Opcode extension: " + getDisplayByteString(opcodeExtension));
 
-			#  if (str(type(opcodeName)) == "<type 'list'>"):
 			if (type(opcodeName) is list):
 				opcodeName = opcodeName[opcodeExtension];
 
-			# if (str(type(opcodeType)) == "<type 'list'>"):
 			if (type(opcodeType) is list):
 				opcodeType = opcodeType[opcodeExtension];
 
@@ -619,25 +481,10 @@ def decode(bytes, firstByteOffset = 0, startDebugAt = -1):
 		if (len(prefixString) > 0):
 			opcodeName = prefixString + " " + opcodeName;
 
-		# if (group1Prefix == REPNE_PREFIX):
-		# 	# movsd
-		# 	# if ((opcodeByte != 0x0f10) and (opcodeByte != 0x0f11)):
-		# 	if (opcodeByte == 0xae):
-		# 		opcodeName = "repnz " + opcodeName;
-
-		# elif (group1Prefix == REP_PREFIX):
-		# 	opcodeName = "rep " + opcodeName;
-			# opcodeByte = opcodeByte | (REPNE_PREFIX << (8 * opcodeByteLength));
-			# opcodeByteLength += 1;
-
-		# opcode = opcodes.Opcode(opcodeByte, opcodeExtension, opcodeName, opcodeType);
 		opcode = opcodes.getOpcode(opcodeByte, opcodeExtension, opcodeName, opcodeType);
 
 		if (shouldReadModRegRm):
-			# debugPrint("Should read modredrm");
-
 			if (hasOpcodeExtension):
-				# debugPrint("Already read opcode extension so going back");
 				bytes.goBack();
 
 			newOperands = decodeModRegRm(bytes, rexPrefix, rmIsSource = rmIsSource, regIsOpcodeExtension = hasOpcodeExtension, segmentOverride = segmentOverride);
@@ -654,10 +501,8 @@ def decode(bytes, firstByteOffset = 0, startDebugAt = -1):
 					readImmediateBytes = 8;
 
 			if ((operandSizeOverride >= 0) and (readImmediateBytes != 1)):
-				# todoPrint(str(len(instructions)) + " Handle operand/address size overide");
 				readImmediateBytes = 2;
 
-			# debugPrint("Should read " + str(readImmediateBytes) + " read immediate bytes");
 			immediateData = readImmediateSigned(bytes, readImmediateBytes);
 			immediateOperand = operand.ImmediateOperand(immediateData);
 			operands.append(immediateOperand);
@@ -672,19 +517,6 @@ def decode(bytes, firstByteOffset = 0, startDebugAt = -1):
 			instructionTuple = (startByte, instructionBytes, instruction);
 
 			instructions.append(instructionTuple);
-
-			# if (opcodeByte == 0x0f10):
-			# 	print(instructionTuple);
-
-			# if (group1Prefix != -1):
-			# 	print(instructionTuple);
-
-			# debugPrint("");
-			# debugPrint("Read instruction:");
-			# debugPrint(instruction.toString());
-			# debugPrint("Bytes: " + bytesToHexString(instructionBytes, bytesBetweenSpaces = 1));
-			# debugPrint("Instruction: " + repr(instruction));
-			# debugPrint("-" * 80);
 		else:
 			print("Opcode is None");
 			print("\t\tIndex: \t" + getDisplayByteString(len(instructions)));
@@ -693,8 +525,6 @@ def decode(bytes, firstByteOffset = 0, startDebugAt = -1):
 			print("\t\tBytes read so far: " + bytesToHexString(bytes.currentlyRead, bytesBetweenSpaces = 1));
 			print("");
 			break;
-
-		# debugPrint("");
 
 		# if (len(instructions) > 100): # 10000):
 		# 	break;

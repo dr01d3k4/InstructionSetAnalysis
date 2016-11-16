@@ -10,7 +10,7 @@ class ArchitectureBase(object):
 
 
 	@abc.abstractmethod
-	def decode(self, bytes, firstByteOffset, startDebugAt):
+	def decode(self, bytes, firstByteOffset):
 		pass;
 
 
