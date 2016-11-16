@@ -10,8 +10,8 @@ class x86(ArchitectureBase):
 		super(ArchitectureBase, self).__init__();
 
 
-	def decode(self, bytes, firstByteOffset = 0):
-		return decoder.decode(bytes, firstByteOffset);
+	def decode(self, bytes, firstByteOffset = 0, instructionLimit = 1):
+		return decoder.decode(bytes, firstByteOffset, instructionLimit);
 
 
 	def getName(self):

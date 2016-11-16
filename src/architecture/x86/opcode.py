@@ -566,6 +566,23 @@ oneByteOpcodes = {
 		]
 	},
 
+	# test al with imm8
+	0xa8: {
+		"name": "test",
+		"opcodeType": ARITHMETIC_TYPE,
+		"dataSize": 8,
+		"readImmediateBytes": 1,
+		"autoInsertRegister": "000"
+	},
+
+	# test ax with imm8
+	0xa9: {
+		"name": "test",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readImmediateBytes": 4,
+		"autoInsertRegister": "000"
+	},
+
 	# scas
 	0xae: {
 		"name": "scas",
@@ -694,7 +711,8 @@ oneByteOpcodes = {
 		"opcodeType": ARITHMETIC_TYPE,
 		"dataSize": 8,
 		"opcodeExtension": True,
-		"readModRegRm": True
+		"readModRegRm": True,
+		"readImmediateBytes": 1
 	},
 
 	# test/test/not/neg/mul/imul/div/idiv
@@ -800,6 +818,12 @@ twoByteOpcodes = {
 	# cmovae rm16/32/64 -> r16/32/64
 	0x43: conditionalMoveDetails("cmovae"),
 
+	# cmove rm16/32/64 -> r16/32/64
+	0x44: conditionalMoveDetails("cmove"),
+
+	# cmovne rm16/32/64 -> r16/32/64
+	0x45: conditionalMoveDetails("cmovne"),
+
 	# cmovbe rm16/32/64 -> r16/32/64
 	0x46: conditionalMoveDetails("cmovbe"),
 	
@@ -872,6 +896,38 @@ twoByteOpcodes = {
 		"rmIsSource": False
 	},
 
+	# punpckldq mm/m32 -> mm
+	0x62: {
+		"name": "punpckldq",
+		"opcodeType": TRANSFER_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# movq mm -> rm32/64
+	0x6e: {
+		"name": "movq",
+		"opcodeType": TRANSFER_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# pshufd xmm2/m128 + imm8 -> xmm1
+	0x70: {
+		"name": "pshufd",
+		"opcodeType": TRANSFER_TYPE,
+		"readModRegRm": True,
+		"rmIsSource": False,
+		"readImmediateBytes": 1	
+	},
+
+	# movq rm32/64 -> mm
+	0x7e: {
+		"name": "movq",
+		"opcodeType": TRANSFER_TYPE,
+		"readModRegRm": True
+	},
+
 	# jb rel32
 	0x82: jumpDetails("jb", 4),
 
@@ -905,6 +961,9 @@ twoByteOpcodes = {
 	# jns rel32
 	0x89: jumpDetails("jns", 4),
 
+	# jp rel32
+	0x8a: jumpDetails("jp", 4),
+
 	# jle rel32
 	0x8f: jumpDetails("jg", 4),
 
@@ -937,6 +996,13 @@ twoByteOpcodes = {
 
 	# setg /0 rm8
 	0x9f: setByteOnConditionDetails("setg"),
+
+	# bt rm16/32/64 r16/32/64
+	0xa3: {
+		"name": "bt",
+		"opcodeType": TRANSFER_TYPE,
+		"readModRegRm": True
+	},
 
 	# imul r16/32/64 <- r16/32/64 * rm16/32/64
 	0xaf: {

@@ -4,9 +4,9 @@ from util.byte_util import bytesToHexString, byteToHexString, byteToBinaryString
 from util.byte_reader import ByteReader;
 from register import getRegRegister, getRmRegister, getBaseRegister, getIndexRegister, getInstructionPointerRegister;
 from instruction import Instruction;
+from rex_prefix import getRexPrefix, getRexPrefixFromNumber, getNoRexPrefix;
 import opcode as opcodes;
 import operand
-from rex_prefix import getRexPrefix, getRexPrefixFromNumber, getNoRexPrefix;
 # import math;
 
 """
@@ -259,25 +259,6 @@ def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = F
 	return operands;
 
 
-# def readRexPrefix(prefixByte, bytes):
-# 	# http://wiki.osdev.org/X86-64_Instruction_Encoding#REX_prefix
-
-# 	rexPrefix = getNoRexPrefix();
-
-# 	byte = prefixByte;
-# 	prefixByteToReturn = 0x00;
-
-# 	if (prefixByte & 0xf0 == 0x40):
-# 		prefixByteToReturn = prefixByte;
-
-# 		byte, _ = bytes.readByte();
-
-# 		rexNumber = prefixByte & 0x0F;
-# 		rexPrefix = getRexPrefixFromNumber(rexNumber);
-
-# 	return rexPrefix, byte, prefixByteToReturn;
-
-
 def addPrefixByte(prefixBytes, prefixBytesLength, byte):
 	return ((prefixBytes << (8 * prefixBytesLength)) | byte), prefixBytesLength + 1;
 
@@ -360,10 +341,30 @@ def readPrefixBytes(bytes):
 	return group1Prefix, group2Prefix, group3Prefix, group4Prefix, rexPrefix, prefixBytes, prefixBytesLength, prefixString;
 
 
+def failDecoding(errorMessage, instructions, startByte, byte, bytes):
+	dashLength = 120;
+	print("");
+	print("-" * dashLength);
+	print("\t{:}".format(errorMessage));
+	print("\t\tIndex: \t{:}".format(getDisplayByteString(len(instructions))));
+	print("\t\tLocation: \t{:}".format(getDisplayByteString(startByte)));
+	print("\t\tValue: \t\t{:}".format(getDisplayByteString(byte)));
+	print("\t\tBytes read so far: {:}".format(bytesToHexString(bytes.currentlyRead, bytesBetweenSpaces = 1)));
+	print("");
+
+	showInstructionHistory = 8;
+	print("Showing previous {:} instruction{:}".format(showInstructionHistory, "s" if showInstructionHistory != 1 else ""));
+	startFrom = max(0, len(instructions) - showInstructionHistory);
+	printInstructionsWithDebug(instructions, startPrintingFrom = startFrom, showInstructionDetails = False);
+
+	print("-" * dashLength);
+	print("");
+
+
 """
 [bytes] -> [Instruction]
 """
-def decode(bytes, firstByteOffset = 0):
+def decode(bytes, firstByteOffset = 0, instructionLimit = -1):
 	if (type(bytes) is not ByteReader):
 		bytes = ByteReader(bytes);
 
@@ -373,6 +374,10 @@ def decode(bytes, firstByteOffset = 0):
 
 	while (True):
 		bytes.resetCurrentlyRead();
+
+		if ((instructionLimit >= 0) and (len(instructions) >= instructionLimit)):
+			failDecoding("Reached instruction limit of {:}".format(instructionLimit), instructions, startByte, byte, bytes);
+			break;
 
 		opcode = None;
 		operands = [ ];
@@ -414,23 +419,7 @@ def decode(bytes, firstByteOffset = 0):
 				opcodeDetails = opcodes.twoByteOpcodes[byte];
 		
 		if (opcodeDetails == None):
-			dashLength = 120;
-			print("");
-			print("-" * dashLength);
-			print("\tRead unknown byte");
-			print("\t\tIndex: \t" + getDisplayByteString(len(instructions)));
-			print("\t\tLocation: \t" + getDisplayByteString(startByte));
-			print("\t\tValue: \t\t" + getDisplayByteString(byte));
-			print("\t\tBytes read so far: " + bytesToHexString(bytes.currentlyRead, bytesBetweenSpaces = 1));
-			print("");
-
-			showInstructionHistory = 5;
-			print("Showing previous {:} instruction{:}".format(showInstructionHistory, "s" if showInstructionHistory != 1 else ""));
-			startFrom = max(0, len(instructions) - showInstructionHistory);
-			printInstructionsWithDebug(instructions, startPrintingFrom = startFrom);
-
-			print("-" * dashLength);
-			print("");
+			failDecoding("Read unknown byte", instructions, startByte, byte, bytes);
 			break;
 
 		if ("name" not in opcodeDetails):
@@ -458,7 +447,7 @@ def decode(bytes, firstByteOffset = 0):
 		autoImmediateOperands = opcodes.getOpcodeParamOrDefault(opcodeDetails, "autoImmediateOperands");
 
 		if (hasOpcodeExtension and not shouldReadModRegRm):
-			print(hex(opcodeByte), opcodeName, " has opcode extension but not reading modregrm");
+			failDecoding("{:} {:} has opcode extension but not reading modregrm".format(hex(opcodeByte), opcodeName), instructions, startByte, byte, bytes);
 
 		if ("dataSize" in opcodeDetails):
 			dataSize = opcodeDetails["dataSize"];
@@ -484,7 +473,8 @@ def decode(bytes, firstByteOffset = 0):
 				opcodeType = opcodeType[opcodeExtension];
 
 		if (opcodeName == ""):
-			print(len(instructions), "Opcode name is empty");
+			failDecoding("Opcode name is empty", instructions, startByte, byte, bytes);
+			break;
 
 		if (len(prefixString) > 0):
 			opcodeName = prefixString + " " + opcodeName;
@@ -526,15 +516,7 @@ def decode(bytes, firstByteOffset = 0):
 
 			instructions.append(instructionTuple);
 		else:
-			print("Opcode is None");
-			print("\t\tIndex: \t" + getDisplayByteString(len(instructions)));
-			print("\t\tLocation: \t" + getDisplayByteString(startByte));
-			print("\t\tValue: \t\t" + getDisplayByteString(byte));
-			print("\t\tBytes read so far: " + bytesToHexString(bytes.currentlyRead, bytesBetweenSpaces = 1));
-			print("");
+			failDecoding("Opcode is None", instructions, startByte, byte, bytes);
 			break;
-
-		# if (len(instructions) > 100): # 10000):
-		# 	break;
 
 	return instructions;

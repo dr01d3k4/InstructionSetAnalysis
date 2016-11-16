@@ -194,7 +194,7 @@ def calculateStats(architecture, compiler, filename, instructions, writeOutput =
 		if (opcode in uniqueOpcodesByType[opcodeType]):
 			uniqueOpcodesByType[opcodeType][opcode] += 1;
 		else:
-			uniqueOpcodesByType[opcodeType][opcode] = 0;
+			uniqueOpcodesByType[opcodeType][opcode] = 1;
 			totalUniqueOpcodes += 1;
 
 		for operandType, operand in instruction.getOperandTypes():

@@ -48,6 +48,7 @@ def printInstructionsWithDebug(instructions, startPrintingFrom = -1, showInstruc
 	print("Starting at:", startPrintingFrom);
 	print("Last instruction:", len(instructions));
 	print("Total printing:", len(instructions) - startPrintingFrom);
+	print("");
 
 	if (startPrintingFrom > 0):
 		instructions = instructions[startPrintingFrom:];

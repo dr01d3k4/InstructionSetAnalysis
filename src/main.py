@@ -64,9 +64,9 @@ def getTextSection(elf64File):
 	return textSection;
 
 
-def decodeMachineCode(architecture, machineCode, firstByteOffset = 0, startPrintingFrom = -1):
+def decodeMachineCode(architecture, machineCode, firstByteOffset = 0, startPrintingFrom = -1, instructionLimit = -1):
 	# "withDebug" is because this is a tuple of (startByte, [bytesInInstruction], InstructionInstance)
-	instructionsWithDebug = architecture.decode(machineCode, firstByteOffset = firstByteOffset);
+	instructionsWithDebug = architecture.decode(machineCode, firstByteOffset, instructionLimit);
 	instructions = map(lambda x: x[2], instructionsWithDebug);
 
 	printInstructionsWithDebug(instructionsWithDebug, startPrintingFrom = startPrintingFrom, showInstructionDetails = False);
@@ -78,7 +78,7 @@ def calculateStats(architecture, compiler, filename, instructions, writeOutput =
 	return stats.calculateStats(architecture, compiler, filename, instructions, writeOutput);
 
 
-def dissassembleObjectFile(architecture, compiler, filename, firstByteOffset = 0, startPrintingFrom = -1):
+def dissassembleObjectFile(architecture, compiler, filename, firstByteOffset = 0, startPrintingFrom = -1, instructionLimit = -1):
 	elf64File = readElf64File(filename);
 	textSection = getTextSection(elf64File);
 
@@ -86,7 +86,7 @@ def dissassembleObjectFile(architecture, compiler, filename, firstByteOffset = 0
 	elf64File = None;
 	gc.collect();
 
-	instructions = decodeMachineCode(architecture, textSection, firstByteOffset, startPrintingFrom);
+	instructions = decodeMachineCode(architecture, textSection, firstByteOffset, startPrintingFrom, instructionLimit);
 	textSection = None;
 	gc.collect();
 
@@ -119,9 +119,7 @@ def main():
 	clang = getCompiler("clang");
 
 	printingStart = -1; # 1275290; # 1340; # 9900; # -1; # 1275199;
-
-	lines = [ ];
-	writeOutput = accumulateLines(lines);
+	instructionLimit = -1; # 626545;
 
 	# dissassembleObjectFile(x86, gcc, "object_files/HelloWorld/hello_world_gcc.o", startPrintingFrom = printingStart);
 	# dissassembleObjectFile(x86, gcc, "object_files/AddFunction/add_function_gcc.o", startPrintingFrom = printingStart);
@@ -137,21 +135,10 @@ def main():
 
 	# dissassembleObjectFile(x86, gcc, "object_files/gcc/gcc_linked_gcc.out", firstByteOffset = 0x4028b0, startPrintingFrom = printingStart);
 	
-	dissassembleObjectFile(x86, clang, "object_files/gcc/gcc_linked_clang.out", firstByteOffset = 0x402800, startPrintingFrom = printingStart);
+	# dissassembleObjectFile(x86, clang, "object_files/gcc/gcc_linked_clang.out", firstByteOffset = 0x402800, startPrintingFrom = printingStart, instructionLimit = instructionLimit);
 
-	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out");
-	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang.out");
-
-
-
-	if (len(lines) > 0):
-		print("");
-		print("Showing lines:");
-		print("-" * 80);
-		for line in lines:
-			print("\"" + str(line) + "\"");
-		print("-" * 80);
-
+	outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out");
+	outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang.out");
 
 	# doWorkOnObjectFile(ghc, x86, "object_files/AddFunction/add_function_ghc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 
