@@ -2,9 +2,18 @@
 pdf/
 gcc.c
 gcc.o
+gcc_gcc.o
+gcc_clang.o
 gcc_linked.out
+gcc_linked_gcc.out
+gcc_linked_clang.out
 objdump_of_gcc.txt
+objdump_of_gcc_gcc.txt
+objdump_of_gcc_clang.txt
 objdump_of_gcc_linked.txt
+objdump_of_gcc_linked_gcc.txt
+objdump_of_gcc_linked_clang.txt
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
