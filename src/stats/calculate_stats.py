@@ -1,4 +1,5 @@
 from __future__ import print_function;
+from datetime import datetime;
 
 
 WIDTH_FORMATTER = "{:{width}}";
@@ -145,6 +146,7 @@ def printTable(rowNames, columnNames, values, displayingFunction = lambda x: x, 
 
 	rowsToDisplay = [ ];
 	for row in dataToDisplay:
+	
 		dataWithLengths = zip(row, colWidths);
 		rowString = " | ".join(map(lambda dataWithLength: WIDTH_FORMATTER.format(dataWithLength[0], width = dataWithLength[1]), dataWithLengths));
 		rowsToDisplay.append(rowString);
@@ -154,13 +156,22 @@ def printTable(rowNames, columnNames, values, displayingFunction = lambda x: x, 
 	writeOutput(s);
 
 
+
+def getCurrentTimeReadable():
+	return datetime.now().strftime("%Y/%m/%d %H:%M:%S");
+
+
 def calculateStats(architecture, compiler, filename, instructions, writeOutput = print):
 	print("");
-	writeOutput("Calculating stats");
+	print("Calculating stats");
 	writeOutput("Filename:\t\t{:}".format(filename));
 	writeOutput("Architecture:\t\t{:}".format(architecture.getName()));
 	writeOutput("Compiler:\t\t{:}".format(compiler.getName()));
 	writeOutput("Total instructions:\t{:}".format(len(instructions)));
+	writeOutput("");
+	writeOutput("Generated at {:}".format(getCurrentTimeReadable()));
+	writeOutput("");
+	writeOutput(("-") * 120);
 	writeOutput("");
 
 	opcodeTypes = architecture.getOpcodeTypes();
@@ -246,8 +257,8 @@ def calculateStats(architecture, compiler, filename, instructions, writeOutput =
 
 	operandTypesByOpcodeTypeGroupedTotalPercentage = multimap(getPercentage(totalOperands), operandTypesByOpcodeTypeGrouped);
 
-	operandTypesByOpcodeTypeGroupedRowTotals = getRowTotals(operandTypesByOpcodeTypeGrouped); # map(sum, operandTypesByOpcodeTypeGrouped);
-	operandTypesByOpcodeTypeGroupedColumnTotals = getColumnTotals(operandTypesByOpcodeTypeGrouped); # map(sum, transpose(operandTypesByOpcodeTypeGrouped));
+	operandTypesByOpcodeTypeGroupedRowTotals = getRowTotals(operandTypesByOpcodeTypeGrouped);
+	operandTypesByOpcodeTypeGroupedColumnTotals = getColumnTotals(operandTypesByOpcodeTypeGrouped);
 
 	operandTypesByOpcodeTypeGroupedOperandTypePercentage = [
 		[
@@ -277,12 +288,11 @@ def calculateStats(architecture, compiler, filename, instructions, writeOutput =
 	writeOutput("");
 	writeOutput("Total unique opcodes: {:}".format(totalUniqueOpcodes));
 	writeOutput("Counts");
-	printByType(opcodeTypes, uniqueOpcodesByType, dictionaryDiplayingFunction(3, newLines = False), writeOutput = writeOutput);
+	printByType(opcodeTypes, uniqueOpcodesByType, dictionaryDiplayingFunction(3, newLines = True), writeOutput = writeOutput);
 
 	writeOutput("");
 	writeOutput("Total unique opcodes compared to actual opcodes");
 	printByType(opcodeTypes, uniqueOpcodesComparedToActual, writeOutput = writeOutput);
-
 
 	writeOutput("");
 	writeOutput("Total operands: {:}".format(totalOperands));
@@ -308,18 +318,8 @@ def calculateStats(architecture, compiler, filename, instructions, writeOutput =
 	writeOutput("Operand types by opcode types as percentage of opcode type");
 	printTable(opcodeTypes, operandTypes, operandTypesByOpcodeTypeGroupedOpcodeTypePercentage, percentageFormat, showTotalRow = False, showTotalColumn = True, writeOutput = writeOutput);
 
-
 	writeOutput("");
 	writeOutput("Data direction by opcode type");
 	printTable(opcodeTypes, dataDirections, dataDirectionsByType, showTotalRow = True, showTotalColumn = True, writeOutput = writeOutput);
-
-	# for k in operandTypesByOpcodeType:
-	# 	writeOutput("\t" + str(k));
-
-
-
-	# writeOutput("");
-	# for k in operandTypesByOpcodeTypeGrouped:
-	# 	writeOutput("\t" + str(k));
 
 	return None;

@@ -1,5 +1,6 @@
 *.pdf
 pdf/
+src/object_files/gcc/
 gcc.c
 gcc.o
 gcc_gcc.o

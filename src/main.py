@@ -126,10 +126,34 @@ After commenting out debug print calls: 24.6s
 After opcode caching: 22.2s
 """
 
+
 def accumulateLines(lines):
 	def inner(line):
 		lines.append(line);
 	return inner;
+
+
+def openFileForWritingLines(filename):
+	f = open(filename, "w");
+
+	def writeLine(line):
+		f.write(line + "\n");
+
+	return f, writeLine;
+
+
+def doStuff(architecture, compiler, folder, filename):
+	root = "object_files"
+	fullFilename = root + "/" + folder + "/" + filename;
+
+	outputFilename = root + "/" + folder + "/" + "results_for_" + filename + ".txt";
+
+	outputFile, writeLine = openFileForWritingLines(outputFilename);
+
+	doWorkOnObjectFile(architecture, compiler, fullFilename, writeOutput = writeLine);
+
+	outputFile.close();
+
 
 def main():
 	x86 = getArchitecture("x86");
@@ -144,17 +168,24 @@ def main():
 	lines = [ ];
 	writeOutput = accumulateLines(lines);
 
-	# doWorkOnObjectFile(x86, gcc, "object_files/hello_world_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	# doWorkOnObjectFile(x86, gcc, "object_files/add_function_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	# doWorkOnObjectFile(x86, gcc, "object_files/array_loop_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(x86, gcc, "object_files/HelloWorld/hello_world_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(x86, gcc, "object_files/AddFunction/add_function_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(x86, gcc, "object_files/ArrayLoop/array_loop_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 	
-	doWorkOnObjectFile(x86, gcc, "object_files/add_function_linked_gcc.out", writeOutput = print, firstByteOffset = 0x400490, startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	# doWorkOnObjectFile(x86, clang, "object_files/add_function_linked_clang.out", firstByteOffset = 0x400440, startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(x86, gcc, "object_files/AddFunction/add_function_linked_gcc.out", writeOutput = print, firstByteOffset = 0x400490, startPrintingFrom = printingStart, startDebugFrom = debugStart);
 
-	# doWorkOnObjectFile(x86, gcc, "object_files/gcc_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	doStuff(x86, gcc, "AddFunction", "add_function_linked_gcc.out");
+	doStuff(x86, clang, "AddFunction", "add_function_linked_clang.out");
 
-	# doWorkOnObjectFile(x86, gcc, "object_files/gcc_linked_gcc.out", firstByteOffset = 0x4028b0, startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	# doWorkOnObjectFile(x86, clang, "object_files/gcc_linked_clang.out", firstByteOffset = 0x402800, startPrintingFrom = printingStart, startDebugFrom = debugStart,);
+	# doWorkOnObjectFile(x86, clang, "object_files/AddFunction/add_function_linked_clang.out", firstByteOffset = 0x400440, startPrintingFrom = printingStart, startDebugFrom = debugStart);
+
+	# doWorkOnObjectFile(x86, gcc, "object_files/gcc/gcc_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+
+	# doWorkOnObjectFile(x86, gcc, "object_files/gcc/gcc_linked_gcc.out", firstByteOffset = 0x4028b0, startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(x86, clang, "object_files/gcc/gcc_linked_clang.out", firstByteOffset = 0x402800, startPrintingFrom = printingStart, startDebugFrom = debugStart);
+
+	# doStuff(x86, gcc, "gcc", "gcc_linked_gcc.out");
+	# doStuff(x86, clang, "gcc", "gcc_linked_clang.out");
 
 
 
@@ -167,7 +198,7 @@ def main():
 		print("-" * 80);
 
 
-	# doWorkOnObjectFile(ghc, x86, "object_files/add_function_ghc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(ghc, x86, "object_files/AddFunction/add_function_ghc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 
 
 main();
