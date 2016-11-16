@@ -56,10 +56,10 @@ def getColumnTotals(matrix):
 # 		s += " ";
 
 # 	s += "}";
-# 	print(s);
+# 	writeOutput(s);
 
 
-def printByType(types, values, displayingFunction = lambda x: x):
+def printByType(types, values, displayingFunction = lambda x: x, writeOutput = print):
 	longestTypeNameLength = 0;
 
 	for typeName in types:
@@ -77,7 +77,7 @@ def printByType(types, values, displayingFunction = lambda x: x):
 		s += " = ";
 		s += str(displayingFunction(values[index]));
 
-		print(s);
+		writeOutput(s);
 
 
 def dictionaryDiplayingFunction(indentLevel = 0, newLines = True):
@@ -108,7 +108,7 @@ def dictionaryDiplayingFunction(indentLevel = 0, newLines = True):
 	return inner;
 
 
-def printTable(rowNames, columnNames, values, displayingFunction = lambda x: x, showTotalRow = False, showTotalColumn = False):
+def printTable(rowNames, columnNames, values, displayingFunction = lambda x: x, showTotalRow = False, showTotalColumn = False, writeOutput = print):
 	# data = map(lambda a: map(lambda v: str(displayingFunction(v)), a), values);
 	# multimap = multimap(lambda v: str(displayingFunction(v)), values);
 	display = compose(str, displayingFunction);
@@ -151,17 +151,17 @@ def printTable(rowNames, columnNames, values, displayingFunction = lambda x: x, 
 
 	s = ("\n" + middleLine + "\n").join(rowsToDisplay);
 
-	print(s);
+	writeOutput(s);
 
 
-def calculateStats(architecture, compiler, filename, instructions):
+def calculateStats(architecture, compiler, filename, instructions, writeOutput = print):
 	print("");
-	print("Calculating stats");
-	print("Filename:\t\t", filename);
-	print("Architecture:\t\t", architecture.getName());
-	print("Compiler:\t\t", compiler.getName());
-	print("Total instructions:\t", len(instructions));
-	print("");
+	writeOutput("Calculating stats");
+	writeOutput("Filename:\t\t{:}".format(filename));
+	writeOutput("Architecture:\t\t{:}".format(architecture.getName()));
+	writeOutput("Compiler:\t\t{:}".format(compiler.getName()));
+	writeOutput("Total instructions:\t{:}".format(len(instructions)));
+	writeOutput("");
 
 	opcodeTypes = architecture.getOpcodeTypes();
 	operandTypes = architecture.getOperandTypes();
@@ -169,25 +169,25 @@ def calculateStats(architecture, compiler, filename, instructions):
 	totalActualOpcodes = architecture.getUniqueOpcodeCount();
 	totalActualOpcodesByType = architecture.getCountOfUniqueOpcodesForTypes();
 
-	print("Opcode types");
+	writeOutput("Opcode types");
 	for index, typeName in enumerate(opcodeTypes):
-		print("\t", index, typeName);
+		writeOutput("\t{:} {:}".format(index, typeName));
 
-	print("");
-	print("Total unique opcodes", totalActualOpcodes);
-	print("Total actual opcodes by type");
+	writeOutput("");
+	writeOutput("Total unique opcodes {:}".format(totalActualOpcodes));
+	writeOutput("Total actual opcodes by type");
 	for index, (typeName, opcodeCount) in enumerate(zip(opcodeTypes, totalActualOpcodesByType)):
-		print("\t", index, typeName, "\t", opcodeCount);
+		writeOutput("\t{:} {:10} {:}".format(index, typeName, opcodeCount));
 
-	print("");
-	print("Operand types");
+	writeOutput("");
+	writeOutput("Operand types");
 	for index, typeName in enumerate(operandTypes):
-		print("\t", index, typeName);
+		writeOutput("\t{:} {:}".format(index, typeName));
 
-	print("");
-	print("Data directions");
+	writeOutput("");
+	writeOutput("Data directions");
 	for index, direction in enumerate(dataDirections):
-		print("\t", index, direction);
+		writeOutput("\t{:} {:}".format(index, direction));
 
 	emptyTotals = lambda t: map(lambda _: [ ], t);
 	emptyTotalsDict = lambda t: map(lambda _: { }, t);
@@ -266,60 +266,60 @@ def calculateStats(architecture, compiler, filename, instructions):
 	];
 
 
-	print("");
-	print("Total opcodes:", totalOpcodes);
-	print("Counts");
-	printByType(opcodeTypes, opcodeTypeCounts);
-	print("");
-	print("Percentages");
-	printByType(opcodeTypes, opcodePercentages, percentageFormat);
+	writeOutput("");
+	writeOutput("Total opcodes: {:}".format(totalOpcodes));
+	writeOutput("Counts");
+	printByType(opcodeTypes, opcodeTypeCounts, writeOutput = writeOutput);
+	writeOutput("");
+	writeOutput("Percentages");
+	printByType(opcodeTypes, opcodePercentages, percentageFormat, writeOutput = writeOutput);
 
-	print("");
-	print("Total unique opcodes", totalUniqueOpcodes);
-	print("Counts");
-	printByType(opcodeTypes, uniqueOpcodesByType, dictionaryDiplayingFunction(3, newLines = False));
+	writeOutput("");
+	writeOutput("Total unique opcodes: {:}".format(totalUniqueOpcodes));
+	writeOutput("Counts");
+	printByType(opcodeTypes, uniqueOpcodesByType, dictionaryDiplayingFunction(3, newLines = False), writeOutput = writeOutput);
 
-	print("");
-	print("Total unique opcodes compared to actual opcodes");
-	printByType(opcodeTypes, uniqueOpcodesComparedToActual);
+	writeOutput("");
+	writeOutput("Total unique opcodes compared to actual opcodes");
+	printByType(opcodeTypes, uniqueOpcodesComparedToActual, writeOutput = writeOutput);
 
 
-	print("");
-	print("Total operands:", totalOperands);
-	print("Counts");
-	printByType(operandTypes, operandTypeCounts);
-	print("");
-	print("Percentages");
-	printByType(operandTypes, operandPercentages, percentageFormat);
+	writeOutput("");
+	writeOutput("Total operands: {:}".format(totalOperands));
+	writeOutput("Counts");
+	printByType(operandTypes, operandTypeCounts, writeOutput = writeOutput);
+	writeOutput("");
+	writeOutput("Percentages");
+	printByType(operandTypes, operandPercentages, percentageFormat, writeOutput = writeOutput);
 
-	print("");
-	print("Operand types by opcode types");
-	printTable(opcodeTypes, operandTypes, operandTypesByOpcodeTypeGrouped, showTotalRow = True, showTotalColumn = True);
+	writeOutput("");
+	writeOutput("Operand types by opcode types");
+	printTable(opcodeTypes, operandTypes, operandTypesByOpcodeTypeGrouped, showTotalRow = True, showTotalColumn = True, writeOutput = writeOutput);
 
-	print("");
-	print("Operand types by opcode types as percentage of total operands");
-	printTable(opcodeTypes, operandTypes, operandTypesByOpcodeTypeGroupedTotalPercentage, percentageFormat, showTotalRow = True, showTotalColumn = True);
+	writeOutput("");
+	writeOutput("Operand types by opcode types as percentage of total operands");
+	printTable(opcodeTypes, operandTypes, operandTypesByOpcodeTypeGroupedTotalPercentage, percentageFormat, showTotalRow = True, showTotalColumn = True, writeOutput = writeOutput);
 	
-	print("");
-	print("Operand types by opcode types as percentage of operand type");
-	printTable(opcodeTypes, operandTypes, operandTypesByOpcodeTypeGroupedOperandTypePercentage, percentageFormat, showTotalRow = True, showTotalColumn = False);
+	writeOutput("");
+	writeOutput("Operand types by opcode types as percentage of operand type");
+	printTable(opcodeTypes, operandTypes, operandTypesByOpcodeTypeGroupedOperandTypePercentage, percentageFormat, showTotalRow = True, showTotalColumn = False, writeOutput = writeOutput);
 
-	print("");
-	print("Operand types by opcode types as percentage of opcode type");
-	printTable(opcodeTypes, operandTypes, operandTypesByOpcodeTypeGroupedOpcodeTypePercentage, percentageFormat, showTotalRow = False, showTotalColumn = True);
+	writeOutput("");
+	writeOutput("Operand types by opcode types as percentage of opcode type");
+	printTable(opcodeTypes, operandTypes, operandTypesByOpcodeTypeGroupedOpcodeTypePercentage, percentageFormat, showTotalRow = False, showTotalColumn = True, writeOutput = writeOutput);
 
 
-	print("");
-	print("Data direction by opcode type");
-	printTable(opcodeTypes, dataDirections, dataDirectionsByType, showTotalRow = True, showTotalColumn = True);
+	writeOutput("");
+	writeOutput("Data direction by opcode type");
+	printTable(opcodeTypes, dataDirections, dataDirectionsByType, showTotalRow = True, showTotalColumn = True, writeOutput = writeOutput);
 
 	# for k in operandTypesByOpcodeType:
-	# 	print("\t", k);
+	# 	writeOutput("\t" + str(k));
 
 
 
-	# print("");
+	# writeOutput("");
 	# for k in operandTypesByOpcodeTypeGrouped:
-	# 	print("\t", k);
+	# 	writeOutput("\t" + str(k));
 
 	return None;

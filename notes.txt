@@ -156,3 +156,9 @@ As more opcodes get added:
 
 
 For counting total opcodes in x86, could write a script to analyse http://ref.x86asm.net/coder32.html and get them?
+
+
+
+Compiler versions:
+gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+clang 3.5

@@ -402,7 +402,7 @@ def readPrefixBytes(bytes):
 				group1Prefix = byte;
 
 			if (byte == REPNE_PREFIX):
-				prefixNamees.append("repn");
+				prefixNames.append("repn");
 			elif (byte == REP_PREFIX):
 				prefixNames.append("rep");
 

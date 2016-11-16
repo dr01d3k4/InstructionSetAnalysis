@@ -97,11 +97,11 @@ def decodeMachineCode(architecture, machineCode, firstByteOffset = 0, startPrint
 	return instructions;
 
 
-def calculateStats(architecture, compiler, filename, instructions):
-	return stats.calculateStats(architecture, compiler, filename, instructions);
+def calculateStats(architecture, compiler, filename, instructions, writeOutput = print):
+	return stats.calculateStats(architecture, compiler, filename, instructions, writeOutput);
 
 
-def doWorkOnObjectFile(architecture, compiler, filename, firstByteOffset = 0, startPrintingFrom = -1, startDebugFrom = -1):
+def doWorkOnObjectFile(architecture, compiler, filename, writeOutput = print, firstByteOffset = 0, startPrintingFrom = -1, startDebugFrom = -1):
 	elf64File = readElf64File(filename);
 	textSection = getTextSection(elf64File);
 
@@ -114,7 +114,7 @@ def doWorkOnObjectFile(architecture, compiler, filename, firstByteOffset = 0, st
 	textSection = None;
 	gc.collect();
 	
-	stats = calculateStats(architecture, compiler, filename, instructions);
+	stats = calculateStats(architecture, compiler, filename, instructions, writeOutput);
 	gc.collect();
 
 # 0x8b8b75
@@ -126,6 +126,10 @@ After commenting out debug print calls: 24.6s
 After opcode caching: 22.2s
 """
 
+def accumulateLines(lines):
+	def inner(line):
+		lines.append(line);
+	return inner;
 
 def main():
 	x86 = getArchitecture("x86");
@@ -133,21 +137,34 @@ def main():
 	ghc = getCompiler("ghc");
 	clang = getCompiler("clang");
 
-	printingStart = 0; # -1; # 1275290; # 1340; # 9900; # -1; # 1275199;
+	printingStart = -1; # 1275290; # 1340; # 9900; # -1; # 1275199;
 	debugStart = -1;
 	firstByteOffset = 0x400440; # 0; # 0x4028b0;
 
-	# doWorkOnObjectFile(gcc, x86, "object_files/hello_world_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	# doWorkOnObjectFile(gcc, x86, "object_files/add_function_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	# doWorkOnObjectFile(gcc, x86, "object_files/array_loop_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	lines = [ ];
+	writeOutput = accumulateLines(lines);
 
-	# doWorkOnObjectFile(gcc, x86, "object_files/gcc_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
-	# doWorkOnObjectFile(gcc, x86, "object_files/gcc_linked_gcc.out" firstByteOffset = 0x4028b0, startPrintingFrom = printingStart, startDebugFrom = debugStart,);
+	# doWorkOnObjectFile(x86, gcc, "object_files/hello_world_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(x86, gcc, "object_files/add_function_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(x86, gcc, "object_files/array_loop_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	
+	doWorkOnObjectFile(x86, gcc, "object_files/add_function_linked_gcc.out", writeOutput = print, firstByteOffset = 0x400490, startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(x86, clang, "object_files/add_function_linked_clang.out", firstByteOffset = 0x400440, startPrintingFrom = printingStart, startDebugFrom = debugStart);
+
+	# doWorkOnObjectFile(x86, gcc, "object_files/gcc_gcc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
+
+	# doWorkOnObjectFile(x86, gcc, "object_files/gcc_linked_gcc.out", firstByteOffset = 0x4028b0, startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	# doWorkOnObjectFile(x86, clang, "object_files/gcc_linked_clang.out", firstByteOffset = 0x402800, startPrintingFrom = printingStart, startDebugFrom = debugStart,);
 
 
-	# doWorkOnObjectFile(x86, gcc, "object_files/add_function_linked_gcc.out", firstByteOffset = 0x400490, startPrintingFrom = printingStart, startDebugFrom = debugStart);
 
-	doWorkOnObjectFile(x86, clang, "object_files/add_function_linked_clang.out", firstByteOffset = 0x400440, startPrintingFrom = printingStart, startDebugFrom = debugStart);
+	if (len(lines) > 0):
+		print("");
+		print("Showing lines:");
+		print("-" * 80);
+		for line in lines:
+			print("\"" + str(line) + "\"");
+		print("-" * 80);
 
 
 	# doWorkOnObjectFile(ghc, x86, "object_files/add_function_ghc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
