@@ -8,6 +8,7 @@ gcc_clang.o
 gcc_linked.out
 gcc_linked_gcc.out
 gcc_linked_clang.out
+gcc_linked_clang_o3.out
 objdump_of_gcc.txt
 objdump_of_gcc_gcc.txt
 objdump_of_gcc_clang.txt

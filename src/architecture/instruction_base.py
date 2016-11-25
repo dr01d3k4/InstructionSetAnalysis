@@ -37,7 +37,7 @@ class InstructionBase(object):
 
 
 	@abc.abstractmethod
-	def prettyPrint(self, startByte, instructionBytes, instructionNumber, startByteLength, maxInstructionBytesLength, maxOpcodeLength):
+	def prettyPrint(self, startByte, instructionBytes, instructionNumber, intructionNumberLength, startByteLength, maxInstructionBytesLength, maxOpcodeLength):
 		pass;
 
 
@@ -60,6 +60,9 @@ def printInstructionsWithDebug(instructions, startPrintingFrom = -1, showInstruc
 	lastInstructionStartByte = instructions[-1][0];
 	startByteLength = len(byteToHexStringSpaceAlign(lastInstructionStartByte));
 
+	lastInstructionNumber = len(instructions) - 1;
+	instructionNumberLength = len(str(lastInstructionNumber));
+
 	maxInstructionBytesLength = 0;
 	maxOpcodeLength = 0;
 	for _, instructionBytes, instruction in instructions:
@@ -77,7 +80,13 @@ def printInstructionsWithDebug(instructions, startPrintingFrom = -1, showInstruc
 
 	instructionNumber = max(startPrintingFrom, 0);
 	for startByte, instructionBytes, instruction in instructions:
-		s = instruction.prettyPrint(startByte, instructionBytes, instructionNumber, startByteLength, maxInstructionBytesLength, maxOpcodeLength);
+		# if (instruction.opcode.opcode != 0xf1f):
+		# 	continue;
+
+		# print(hex(instruction.getOpcode().opcode));
+
+		# if (instruction.getOpcode().opcode == 0xf1f):
+		s = instruction.prettyPrint(startByte, instructionBytes, instructionNumber, intructionNumberLength, startByteLength, maxInstructionBytesLength, maxOpcodeLength);
 		print(s);
 
 		if (showInstructionDetails):

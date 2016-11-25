@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1479821146 source:/home/ben/Documents/InstructionSetAnalysis/c/ManualAddresssing/main.c
+	<stdio.h>
+	<stdlib.h>
+	<stdint.h>
+

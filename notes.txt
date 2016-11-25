@@ -162,3 +162,16 @@ For counting total opcodes in x86, could write a script to analyse http://ref.x8
 Compiler versions:
 gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
 clang 3.5
+
+
+
+
+
+TODO:
+- Count all x86 opcodes
+- Generate more numbers + graphs
+- Look at which instructions both gcc and clang use + instructions only 1 use
+- Remove nop instructions that appear after ret (+ possibly after other jumps)
+- Maybe get the manualaddressing working but not highest priority
+	- At least write out the transformation in psuedo-assembly
+- Try different optimization levels

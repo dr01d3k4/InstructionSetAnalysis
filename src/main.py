@@ -18,11 +18,14 @@ After opcode caching: 22.2s
 """
 
 
-OBJECT_FILES_ROOT = "object_files";
+OBJECT_FILES_ROOT = "object_files/";
 
 
 def getFullFilename(folder, filename):
-	return OBJECT_FILES_ROOT + "/" + folder + "/" + filename;
+	if (folder != ""):
+		folder += "/";
+
+	return OBJECT_FILES_ROOT + folder + filename;
 
 
 def getStatsFilename(folder, filename):
@@ -118,7 +121,7 @@ def main():
 	ghc = getCompiler("ghc");
 	clang = getCompiler("clang");
 
-	printingStart = -1; # 1275290; # 1340; # 9900; # -1; # 1275199;
+	printingStart = 0; # -1; # 1275290; # 1340; # 9900; # -1; # 1275199;
 	instructionLimit = -1; # 626545;
 
 	# dissassembleObjectFile(x86, gcc, "object_files/HelloWorld/hello_world_gcc.o", startPrintingFrom = printingStart);
@@ -137,8 +140,8 @@ def main():
 	
 	# dissassembleObjectFile(x86, clang, "object_files/gcc/gcc_linked_clang.out", firstByteOffset = 0x402800, startPrintingFrom = printingStart, instructionLimit = instructionLimit);
 
-	outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out");
-	outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang.out");
+	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out");
+	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang.out");
 
 	# doWorkOnObjectFile(ghc, x86, "object_files/AddFunction/add_function_ghc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 

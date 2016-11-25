@@ -1,0 +1,61 @@
+Project title : ManualAddresssing
+Project path  : /home/ben/Documents/InstructionSetAnalysis/c/ManualAddresssing/
+
+Frame function: 
+Frame address : 0x7fffffffe180
+--------------------------------------------------------------------------------
+
+// [rbc - 0xc] = TEST_ARRAY_LENGTH
+// [rbp - 0x10] = i
+// [rbp - 0x8] = testArray
+
+
+
+
+0x40057d	push   rbp
+0x40057e	mov    rbp,rsp
+0x400581	sub    rsp,0x10
+
+	// load TEST_ARRAY_LENGTH into memory
+0x400585	mov    DWORD PTR [rbp-0xc],0x64
+
+	// testArray = calloc(...)
+0x40058c	mov    eax,DWORD PTR [rbp-0xc]
+0x40058f	cdqe
+0x400591	mov    esi,0x8
+0x400596	mov    rdi,rax
+0x400599	call   0x400470 <calloc@plt>
+0x40059e	mov    QWORD PTR [rbp-0x8],rax
+
+	// i = 0
+0x4005a2	mov    DWORD PTR [rbp-0x10],0x0
+	// jump to condition
+0x4005a9	jmp    0x4005ca <main+77>
+
+	// loop body
+0x4005ab	mov    eax,DWORD PTR [rbp-0x10]
+0x4005ae	cdqe
+0x4005b0	lea    rdx,[rax*8+0x0]
+0x4005b8	mov    rax,QWORD PTR [rbp-0x8]
+0x4005bc	add    rax,rdx
+0x4005bf	mov    DWORD PTR [rax+0x4],0x5
+
+	// i++
+0x4005c6	add    DWORD PTR [rbp-0x10],0x1
+	// condition
+	// load eax with i
+0x4005ca	mov    eax,DWORD PTR [rbp-0x10]
+	// compare against TEST_ARRAY_LENGTH
+0x4005cd	cmp    eax,DWORD PTR [rbp-0xc]
+	// jump to top of loop if less than
+0x4005d0	jl     0x4005ab <main+46>
+
+	// free(testArray);
+0x4005d2	mov    rax,QWORD PTR [rbp-0x8]
+0x4005d6	mov    rdi,rax
+0x4005d9	call   0x400450 <free@plt>
+
+	// return 0
+0x4005de	mov    eax,0x0
+0x4005e3	leave
+0x4005e4	ret
