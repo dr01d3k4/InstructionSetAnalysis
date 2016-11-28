@@ -5,7 +5,7 @@ from datetime import datetime;
 WIDTH_FORMATTER = "{:{width}}";
 
 getPercentage = lambda t: (lambda c: (100.0 / t) * c) if (t != 0) else (lambda _: 0);
-percentageFormat = lambda p: "{:6.2f}%".format(p)
+percentageFormat = lambda p: "{:6.3f}%".format(p)
 
 
 def transpose(matrix):
@@ -127,13 +127,15 @@ def getCurrentTimeReadable():
 	return datetime.now().strftime("%Y/%m/%d %H:%M:%S");
 
 
-def calculateStats(architecture, compiler, filename, instructions, writeOutput = print):
+def calculateStats(architecture, compiler, inputFilename, outputFilename, instructions, nopsSkippedAfterJumps, writeOutput = print):
 	print("");
 	print("Calculating stats");
-	writeOutput("Filename:\t\t{:}".format(filename));
+	writeOutput("Input filename:\t\t{:}".format(inputFilename));
+	writeOutput("Output filename:\t\t{:}".format(outputFilename));
 	writeOutput("Architecture:\t\t{:}".format(architecture.getName()));
 	writeOutput("Compiler:\t\t{:}".format(compiler.getName()));
 	writeOutput("Total instructions:\t{:}".format(len(instructions)));
+	writeOutput("Nops skipped:\t\t{:}".format(nopsSkippedAfterJumps));
 	writeOutput("");
 	writeOutput("Generated at {:}".format(getCurrentTimeReadable()));
 	writeOutput("");

@@ -364,13 +364,15 @@ def failDecoding(errorMessage, instructions, startByte, byte, bytes):
 """
 [bytes] -> [Instruction]
 """
-def decode(bytes, firstByteOffset = 0, instructionLimit = -1):
+def decode(bytes, skipNopsAfterJumps = False, firstByteOffset = 0, instructionLimit = -1):
 	if (type(bytes) is not ByteReader):
 		bytes = ByteReader(bytes);
 
 	byte = 0;
 	instructions = [ ];
 	bytesRead = [ ];
+
+	nopsSkippedAfterJumps = 0;
 
 	while (True):
 		bytes.resetCurrentlyRead();
@@ -509,6 +511,18 @@ def decode(bytes, firstByteOffset = 0, instructionLimit = -1):
 			operands.append(operand.ImmediateOperand(autoImmediateOperand));
 
 		if (opcode != None):
+			if (skipNopsAfterJumps):
+				opcodeNumber = opcode.opcode;
+				# Current opcode is a nop
+				if ((opcodeNumber == 0x90) or (opcodeNumber == 0x0f1f)):
+					# Look at previous instruction
+					if (len(instructions) > 0):
+						prevOpcodeNumber = instructions[-1][2].getOpcode().opcode;
+						# Is previous halt, unconditional jump or return
+						if ((prevOpcodeNumber == 0xf4) or (prevOpcodeNumber == 0xff) or (prevOpcodeNumber == 0xc3)):
+							nopsSkippedAfterJumps += 1;
+							continue;
+
 			instruction = Instruction(prefixBytes, opcode, operands);
 			instructionBytes = bytes.currentlyRead;
 
@@ -519,4 +533,4 @@ def decode(bytes, firstByteOffset = 0, instructionLimit = -1):
 			failDecoding("Opcode is None", instructions, startByte, byte, bytes);
 			break;
 
-	return instructions;
+	return instructions, nopsSkippedAfterJumps;

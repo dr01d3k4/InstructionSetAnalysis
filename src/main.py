@@ -21,15 +21,25 @@ After opcode caching: 22.2s
 OBJECT_FILES_ROOT = "object_files/";
 
 
-def getFullFilename(folder, filename):
+def dotsToUnderscores(filename):
+	return filename.replace(".", "_");
+
+
+def getInputFilename(folder, filename):
 	if (folder != ""):
 		folder += "/";
 
 	return OBJECT_FILES_ROOT + folder + filename;
 
 
-def getStatsFilename(folder, filename):
-	return getFullFilename(folder, "results_for_" + filename + ".txt");
+def getOutputFilename(folder, filename, skipNopsAfterJumps = False):
+	editedFilename = "results_for_";
+	editedFilename += dotsToUnderscores(filename);
+	if (skipNopsAfterJumps):
+		editedFilename += "_nop_skip";
+	editedFilename += ".txt";
+
+	return getInputFilename(folder, editedFilename);
 
 
 def accumulateLines(lines):
@@ -67,21 +77,21 @@ def getTextSection(elf64File):
 	return textSection;
 
 
-def decodeMachineCode(architecture, machineCode, firstByteOffset = 0, startPrintingFrom = -1, instructionLimit = -1):
+def decodeMachineCode(architecture, machineCode, skipNopsAfterJumps = False, firstByteOffset = 0, startPrintingFrom = -1, instructionLimit = -1):
 	# "withDebug" is because this is a tuple of (startByte, [bytesInInstruction], InstructionInstance)
-	instructionsWithDebug = architecture.decode(machineCode, firstByteOffset, instructionLimit);
+	instructionsWithDebug, nopsSkippedAfterJumps = architecture.decode(machineCode, skipNopsAfterJumps, firstByteOffset, instructionLimit);
 	instructions = map(lambda x: x[2], instructionsWithDebug);
 
 	printInstructionsWithDebug(instructionsWithDebug, startPrintingFrom = startPrintingFrom, showInstructionDetails = False);
 
-	return instructions;
+	return instructions, nopsSkippedAfterJumps;
 
 
-def calculateStats(architecture, compiler, filename, instructions, writeOutput = print):
-	return stats.calculateStats(architecture, compiler, filename, instructions, writeOutput);
+def calculateStats(architecture, compiler, inputFilename, outputFilename, instructions, nopsSkippedAfterJumps, writeOutput = print):
+	return stats.calculateStats(architecture, compiler, inputFilename, outputFilename, instructions, nopsSkippedAfterJumps, writeOutput);
 
 
-def dissassembleObjectFile(architecture, compiler, filename, firstByteOffset = 0, startPrintingFrom = -1, instructionLimit = -1):
+def dissassembleObjectFile(architecture, compiler, filename, skipNopsAfterJumps = False, firstByteOffset = 0, startPrintingFrom = -1, instructionLimit = -1):
 	elf64File = readElf64File(filename);
 	textSection = getTextSection(elf64File);
 
@@ -89,30 +99,47 @@ def dissassembleObjectFile(architecture, compiler, filename, firstByteOffset = 0
 	elf64File = None;
 	gc.collect();
 
-	instructions = decodeMachineCode(architecture, textSection, firstByteOffset, startPrintingFrom, instructionLimit);
+	instructions, nopsSkippedAfterJumps = decodeMachineCode(architecture, textSection, skipNopsAfterJumps, firstByteOffset, startPrintingFrom, instructionLimit);
 	textSection = None;
 	gc.collect();
 
-	return instructions;
+	return instructions, nopsSkippedAfterJumps;
 
 
-def outputStatsForObjectFile(architecture, compiler, folder, filename):
-	fullFilename = getFullFilename(folder, filename);
-	statsFilename = getStatsFilename(folder, filename);
+def outputStatsForObjectFile(architecture, compiler, folder, filename, skipNopsAfterJumps = False):
+	inputFilename = getInputFilename(folder, filename);
+	outputFilename = getOutputFilename(folder, filename, skipNopsAfterJumps);
 
-	instructions = dissassembleObjectFile(architecture, compiler, fullFilename);
+	print("-" * 80);
+	print("Outputting stats for \"" + filename + "\"");
+	print("Input filename: ", inputFilename);
+	print("Output filename:", outputFilename);
+	print("Skipping nops after jumps:", skipNopsAfterJumps);
 
-	outputFile, writeLine = openFileForWritingLinesClosure(statsFilename);
-	stats = calculateStats(architecture, compiler, fullFilename, instructions, writeLine);
+	instructions, nopsSkippedAfterJumps = dissassembleObjectFile(architecture, compiler, inputFilename, skipNopsAfterJumps);
+	print("");
+	print("Instructions decoded");
+	print("Total instructions:", len(instructions));
+	if (skipNopsAfterJumps):
+		print("Nops skipped after jumps: ", nopsSkippedAfterJumps);
 
+	outputFile, writeLine = openFileForWritingLinesClosure(outputFilename);
+	stats = calculateStats(architecture, compiler, inputFilename, outputFilename, instructions, nopsSkippedAfterJumps, writeLine);
+
+	print("");
+	print("Done, closing file");
 	outputFile.close();
+	gc.collect();
+
+	print("-" * 80);
+	print("");
 
 
-def printStatsForObjectFile(architecture, compiler, folder, filename):
-	fullFilename = getFullFilename(folder, filename);
+def printStatsForObjectFile(architecture, compiler, folder, filename, skipNopsAfterJumps = False):
+	inputFilename = getInputFilename(folder, filename);
 
-	instructions = dissassembleObjectFile(architecture, compiler, fullFilename);
-	stats = calculateStats(architecture, compiler, fullFilename, instructions, print);
+	instructions, nopsSkippedAfterJumps = dissassembleObjectFile(architecture, compiler, inputFilename, skipNopsAfterJumps);
+	stats = calculateStats(architecture, compiler, inputFilename, "-", instructions, nopsSkippedAfterJumps, print);
 
 
 def main():
@@ -121,27 +148,37 @@ def main():
 	ghc = getCompiler("ghc");
 	clang = getCompiler("clang");
 
-	printingStart = 0; # -1; # 1275290; # 1340; # 9900; # -1; # 1275199;
-	instructionLimit = -1; # 626545;
+	printingStart = -1; # 1275290; # 1340; # 9900; # -1; # 1275199;
+	instructionLimit = 200; # -1; # 626545;
+	skipNopsAfterJumps = False;
 
 	# dissassembleObjectFile(x86, gcc, "object_files/HelloWorld/hello_world_gcc.o", startPrintingFrom = printingStart);
 	# dissassembleObjectFile(x86, gcc, "object_files/AddFunction/add_function_gcc.o", startPrintingFrom = printingStart);
 	# dissassembleObjectFile(x86, gcc, "object_files/ArrayLoop/array_loop_gcc.o", startPrintingFrom = printingStart);
 	
-	# dissassembleObjectFile(x86, gcc, "object_files/AddFunction/add_function_linked_gcc.out", firstByteOffset = 0x400490, startPrintingFrom = printingStart);
-	# dissassembleObjectFile(x86, clang, "object_files/AddFunction/add_function_linked_clang.out", firstByteOffset = 0x400440, startPrintingFrom = printingStart);
+	# dissassembleObjectFile(x86, gcc, "object_files/AddFunction/add_function_linked_gcc.out", skipNopsAfterJumps = skipNopsAfterJumps, firstByteOffset = 0x400490, startPrintingFrom = printingStart);
+	# dissassembleObjectFile(x86, clang, "object_files/AddFunction/add_function_linked_clang.out", skipNopsAfterJumps = skipNopsAfterJumps, firstByteOffset = 0x400440, startPrintingFrom = printingStart);
 
 	# outputStatsForObjectFile(x86, gcc, "AddFunction", "add_function_linked_gcc.out");
 	# outputStatsForObjectFile(x86, clang, "AddFunction", "add_function_linked_clang.out");
 
 	# dissassembleObjectFile(x86, gcc, "object_files/gcc/gcc_gcc.o", startPrintingFrom = printingStart);
 
-	# dissassembleObjectFile(x86, gcc, "object_files/gcc/gcc_linked_gcc.out", firstByteOffset = 0x4028b0, startPrintingFrom = printingStart);
+	# dissassembleObjectFile(x86, gcc, "object_files/gcc/gcc_linked_gcc.out", skipNopsAfterJumps = skipNopsAfterJumps, firstByteOffset = 0x4028b0, startPrintingFrom = printingStart);
 	
-	# dissassembleObjectFile(x86, clang, "object_files/gcc/gcc_linked_clang.out", firstByteOffset = 0x402800, startPrintingFrom = printingStart, instructionLimit = instructionLimit);
+	dissassembleObjectFile(x86, gcc, "object_files/gcc/gcc_linked_gcc_o3.out", skipNopsAfterJumps = skipNopsAfterJumps, firstByteOffset = 0x4028b0, startPrintingFrom = printingStart);
+	
+	# dissassembleObjectFile(x86, clang, "object_files/gcc/gcc_linked_clang.out", skipNopsAfterJumps = skipNopsAfterJumps, firstByteOffset = 0x402800, startPrintingFrom = printingStart, instructionLimit = instructionLimit);
 
 	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out");
+	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out", skipNopsAfterJumps = True);
 	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang.out");
+	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang.out", skipNopsAfterJumps = True);
+
+	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc_o3.out");
+	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc_o3.out", skipNopsAfterJumps = True);
+	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang_o3.out");
+	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang_o3.out", skipNopsAfterJumps = True);
 
 	# doWorkOnObjectFile(ghc, x86, "object_files/AddFunction/add_function_ghc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 

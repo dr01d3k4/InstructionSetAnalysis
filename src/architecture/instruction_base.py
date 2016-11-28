@@ -37,7 +37,7 @@ class InstructionBase(object):
 
 
 	@abc.abstractmethod
-	def prettyPrint(self, startByte, instructionBytes, instructionNumber, intructionNumberLength, startByteLength, maxInstructionBytesLength, maxOpcodeLength):
+	def prettyPrint(self, startByte, instructionBytes, instructionNumber, instructionNumberLength, startByteLength, maxInstructionBytesLength, maxOpcodeLength):
 		pass;
 
 
@@ -86,7 +86,7 @@ def printInstructionsWithDebug(instructions, startPrintingFrom = -1, showInstruc
 		# print(hex(instruction.getOpcode().opcode));
 
 		# if (instruction.getOpcode().opcode == 0xf1f):
-		s = instruction.prettyPrint(startByte, instructionBytes, instructionNumber, intructionNumberLength, startByteLength, maxInstructionBytesLength, maxOpcodeLength);
+		s = instruction.prettyPrint(startByte, instructionBytes, instructionNumber, instructionNumberLength, startByteLength, maxInstructionBytesLength, maxOpcodeLength);
 		print(s);
 
 		if (showInstructionDetails):

@@ -142,9 +142,9 @@ class Instruction(InstructionBase):
 		return s;
 
 
-	def prettyPrint(self, startByte, instructionBytes, instructionNumber, intructionNumberLength, startByteLength, maxInstructionBytesLength, maxOpcodeLength):
+	def prettyPrint(self, startByte, instructionBytes, instructionNumber, instructionNumberLength, startByteLength, maxInstructionBytesLength, maxOpcodeLength):
 		s = "";
-		s += ("{:" + instructionNumberLength + "}").format(instructionNumber);
+		s += ("{:" + str(instructionNumberLength) + "}").format(instructionNumber);
 		s += " | ";
 		s += byteToHexStringSpaceAlign(startByte, length = startByteLength);
 		s += ": ";

@@ -61,15 +61,15 @@ REGISTER_SCALE_DISPLACEMENT_TYPE = 7;
 SIB_DISPLACEMENT_TYPE = 8;
 
 OPERAND_TYPES = [
-	"immediate",
-	"register",
-	"[register]",
-	"[immediate]",
-	"[register + immediate]",
-	"[register * scale]",
-	"[register + register * scale]",
-	"[register * scale + immediate]",
-	"[register + register * scale + immediate]",
+	"imm", # "immediate",
+	"reg", # "register",
+	"[reg]", # "[register]",
+	"[imm]", # "[immediate]",
+	"[reg + imm]",  # "[register + immediate]",
+	"[reg*scale]", # "[register * scale]",
+	"[reg + reg*scale]", # "[register + register * scale]",
+	"[reg*scale + imm]", # "[register * scale + immediate]",
+	"[reg + reg*scale + imm]",# "[register + register * scale + immediate]",
 ];
 
 
