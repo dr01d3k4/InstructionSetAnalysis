@@ -76,6 +76,16 @@ Registers = [
 		Register("RDI", "111")
 	],
 	[
+		Register("XMM0", "000"),
+		Register("XMM1", "001"),
+		Register("XMM2", "010"),
+		Register("XMM3", "011"),
+		Register("XMM4", "100"),
+		Register("XMM5", "101"),
+		Register("XMM6", "110"),
+		Register("XMM7", "111"),
+	],
+	[
 		Register("R8",  "000"),
 		Register("R9",  "001"),
 		Register("R10", "010"),
@@ -98,23 +108,31 @@ def getRegister(registerId, rexPrefix, adjustingBit = False):
 
 	dataSize = rexPrefix.getDataSize();
 
-	if ((dataSize != 8) and (dataSize != 16) and (dataSize != 32) and (dataSize != 64)):
+	if ((dataSize != 8) and (dataSize != 16) and (dataSize != 32) and (dataSize != 64) and (dataSize != 128)):
 		print("Invalid data size:", dataSize);
 		return None;
 
+	if (dataSize == 128):
+		adjustingBit = False;
+
 	adjustedSize = 0;
-	if (dataSize == 16):
+	if (dataSize == 8):
+		adjustedSize = 0;
+	elif (dataSize == 16):
 		adjustedSize = 1;
 	elif (dataSize == 32):
 		adjustedSize = 2;
 	elif (dataSize == 64):
 		adjustedSize = 3;
+	elif (dataSize == 128):
+		adjustedSize = 4;
 
-	if (registerId == 4) or (registerId == 5):
-		adjustedSize = 3;
+	if (dataSize != 128):
+		if ((registerId == 4) or (registerId == 5)):
+			adjustedSize = 3;
 
 	if (adjustingBit):
-		return Registers[4][registerId];
+		return Registers[5][registerId];
 	else:
 		return Registers[adjustedSize][registerId];
 

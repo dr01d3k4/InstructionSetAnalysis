@@ -30,14 +30,9 @@ class RexPrefixBase(object):
 
 
 class RexPrefix(RexPrefixBase):
-	def __init__(self, w, r, x, b):
+	def __init__(self, is128, w, r, x, b):
 		super(RexPrefixBase, self).__init__();
-		self._w = w;
-		self._r = r;
-		self._x = x;
-		self._b = b;
-
-	def set(self, w, r, x, b):
+		self._is128 = is128;
 		self._w = w;
 		self._r = r;
 		self._x = x;
@@ -60,12 +55,16 @@ class RexPrefix(RexPrefixBase):
 		return self._b;
 
 	def getDataSize(self):
-		size = 64 if self._w else 32;
-		return size;
+		if (self._is128):
+			return 128;
+		elif (self._w):
+			return 64;
+		else:
+			return 32;
 
 	def withDataSize(self, dataSize):
-		return RexPrefix(dataSize == 64, self._r, self._x, self._b);
-		# return getRexPrefix(dataSize == 64, self._r, self._x, self._b);
+		# return RexPrefix(dataSize == 64 or dataSize == 128, self._r, self._x, self._b, dataSize == 128);
+		return getRexPrefix(dataSize == 128, dataSize == 64, self._r, self._x, self._b);
 
 	def getW(self):
 		return True if self._w else False;
@@ -81,6 +80,7 @@ class RexPrefix(RexPrefixBase):
 
 	def __repr__(self):
 		return "RexPrefix(" + \
+			"is128 = " + str(self._is128) + ", " + \
 			"w = " + str(self._w) + ", " + \
 			"r = " + str(self._r) + ", " + \
 			"x = " + str(self._x) + ", " + \
@@ -101,8 +101,8 @@ class NoRexPrefix(RexPrefixBase):
 
 	def withDataSize(self, dataSize):
 		# self._dataSize = dataSize;
-		return NoRexPrefix(dataSize);
-		# return getNoRexPrefix(dataSize);
+		# return NoRexPrefix(dataSize);
+		return getNoRexPrefix(dataSize);
 
 	def getW(self):
 		return False;
@@ -124,31 +124,48 @@ class NoRexPrefix(RexPrefixBase):
 
 
 RexPrefixes = [
-	RexPrefix(False, False, False, False),
-	RexPrefix(False, False, False, True),
-	RexPrefix(False, False, True, False),
-	RexPrefix(False, False, True, True),
-	RexPrefix(False, True, False, False),
-	RexPrefix(False, True, False, True),
-	RexPrefix(False, True, True, False),
-	RexPrefix(False, True, True, True),
-	RexPrefix(True, False, False, False),
-	RexPrefix(True, False, False, True),
-	RexPrefix(True, False, True, False),
-	RexPrefix(True, False, True, True),
-	RexPrefix(True, True, False, False),
-	RexPrefix(True, True, False, True),
-	RexPrefix(True, True, True, False),
-	RexPrefix(True, True, True, True),
+	RexPrefix(False, False, False, False, False),
+	RexPrefix(False, False, False, False, True),
+	RexPrefix(False, False, False, True, False),
+	RexPrefix(False, False, False, True, True),
+	RexPrefix(False, False, True, False, False),
+	RexPrefix(False, False, True, False, True),
+	RexPrefix(False, False, True, True, False),
+	RexPrefix(False, False, True, True, True),
+	RexPrefix(False, True, False, False, False),
+	RexPrefix(False, True, False, False, True),
+	RexPrefix(False, True, False, True, False),
+	RexPrefix(False, True, False, True, True),
+	RexPrefix(False, True, True, False, False),
+	RexPrefix(False, True, True, False, True),
+	RexPrefix(False, True, True, True, False),
+	RexPrefix(False, True, True, True, True),
+	RexPrefix(True, False, False, False, False),
+	RexPrefix(True, False, False, False, True),
+	RexPrefix(True, False, False, True, False),
+	RexPrefix(True, False, False, True, True),
+	RexPrefix(True, False, True, False, False),
+	RexPrefix(True, False, True, False, True),
+	RexPrefix(True, False, True, True, False),
+	RexPrefix(True, False, True, True, True),
+	RexPrefix(True, True, False, False, False),
+	RexPrefix(True, True, False, False, True),
+	RexPrefix(True, True, False, True, False),
+	RexPrefix(True, True, False, True, True),
+	RexPrefix(True, True, True, False, False),
+	RexPrefix(True, True, True, False, True),
+	RexPrefix(True, True, True, True, False),
+	RexPrefix(True, True, True, True, True),
 ];
 
 NoRexPrefix8 = NoRexPrefix(8);
 NoRexPrefix16 = NoRexPrefix(16);
 NoRexPrefix32 = NoRexPrefix(32);
 NoRexPrefix64 = NoRexPrefix(64);
+NoRexPrefix128 = NoRexPrefix(128);
 
 
-def getRexPrefix(w, r, x, b):
+def getRexPrefix(is128, w, r, x, b):
 	number = 0;
 	if (w):
 		number = number | 0x08;
@@ -159,7 +176,13 @@ def getRexPrefix(w, r, x, b):
 	if (b):
 		number = number | 0x01;
 
-	return getRexPrefixFromNumber;
+	if (is128):
+		number = number | 0x10;
+
+	# if (is128):
+	# 	print(is128, w, r, x, b, bin(number));
+
+	return getRexPrefixFromNumber(number);
 
 
 def getRexPrefixFromNumber(number):
@@ -179,6 +202,8 @@ def getNoRexPrefix(dataSize = 32):
 		return NoRexPrefix32;
 	elif (dataSize == 64):
 		return NoRexPrefix64;
+	elif (dataSize == 128):
+		return NoRexPrefix128;
 	else:
 		print("Unknown data size for no rex prefix");
 		return None;

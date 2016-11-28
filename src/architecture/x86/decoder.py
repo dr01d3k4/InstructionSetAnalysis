@@ -35,7 +35,7 @@ Columns:
 
 """
 
-TOP_5_BITS_MASK = 0b11111000;
+TOP_5_BITS_MASK = 0b1111111111111000;
 REGISTER_MASK = 0b111;
 
 MOD_MASK = 0b11000000;
@@ -352,7 +352,7 @@ def failDecoding(errorMessage, instructions, startByte, byte, bytes):
 	print("\t\tBytes read so far: {:}".format(bytesToHexString(bytes.currentlyRead, bytesBetweenSpaces = 1)));
 	print("");
 
-	showInstructionHistory = 8;
+	showInstructionHistory = 10; # 8;
 	print("Showing previous {:} instruction{:}".format(showInstructionHistory, "s" if showInstructionHistory != 1 else ""));
 	startFrom = max(0, len(instructions) - showInstructionHistory);
 	printInstructionsWithDebug(instructions, startPrintingFrom = startFrom, showInstructionDetails = False);
@@ -417,7 +417,11 @@ def decode(bytes, skipNopsAfterJumps = False, firstByteOffset = 0, instructionLi
 			opcodeByte = (opcodeByte << 8) | byte;
 			opcodeByteLength += 1;
 
-			if (byte in opcodes.twoByteOpcodes):
+			if (byte & TOP_5_BITS_MASK in opcodes.twoByteTop5BitsOpcodes):
+				opcodeDetails = opcodes.twoByteTop5BitsOpcodes[byte & TOP_5_BITS_MASK];
+				isTop5Bits = True;
+
+			elif (byte in opcodes.twoByteOpcodes):
 				opcodeDetails = opcodes.twoByteOpcodes[byte];
 		
 		if (opcodeDetails == None):
@@ -495,6 +499,9 @@ def decode(bytes, skipNopsAfterJumps = False, firstByteOffset = 0, instructionLi
 		if (autoInsertRegister):
 			operands.append(operand.RegisterOperand(getRmRegister(int(autoInsertRegister, 2), rexPrefix)));
 
+		if (type(readImmediateBytes) == list):
+			readImmediateBytes = readImmediateBytes[opcodeExtension];
+			
 		if (readImmediateBytes > 0):
 			if (immediateCanBe64WithRexW):
 				if (originalRexPrefix.getW()):

@@ -148,8 +148,8 @@ def main():
 	ghc = getCompiler("ghc");
 	clang = getCompiler("clang");
 
-	printingStart = -1; # 1275290; # 1340; # 9900; # -1; # 1275199;
-	instructionLimit = 200; # -1; # 626545;
+	printingStart = -1;
+	instructionLimit = 1000; # 1088080;
 	skipNopsAfterJumps = False;
 
 	# dissassembleObjectFile(x86, gcc, "object_files/HelloWorld/hello_world_gcc.o", startPrintingFrom = printingStart);
@@ -166,9 +166,11 @@ def main():
 
 	# dissassembleObjectFile(x86, gcc, "object_files/gcc/gcc_linked_gcc.out", skipNopsAfterJumps = skipNopsAfterJumps, firstByteOffset = 0x4028b0, startPrintingFrom = printingStart);
 	
-	dissassembleObjectFile(x86, gcc, "object_files/gcc/gcc_linked_gcc_o3.out", skipNopsAfterJumps = skipNopsAfterJumps, firstByteOffset = 0x4028b0, startPrintingFrom = printingStart);
+	dissassembleObjectFile(x86, gcc, "object_files/gcc/gcc_linked_gcc_o3.out", skipNopsAfterJumps = skipNopsAfterJumps, firstByteOffset = 0x402bd0, startPrintingFrom = printingStart, instructionLimit = instructionLimit);
 	
 	# dissassembleObjectFile(x86, clang, "object_files/gcc/gcc_linked_clang.out", skipNopsAfterJumps = skipNopsAfterJumps, firstByteOffset = 0x402800, startPrintingFrom = printingStart, instructionLimit = instructionLimit);
+
+	# dissassembleObjectFile(x86, clang, "object_files/gcc/gcc_linked_clang_o3.out", skipNopsAfterJumps = skipNopsAfterJumps, firstByteOffset = 0x402850, startPrintingFrom = printingStart, instructionLimit = instructionLimit);
 
 	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out");
 	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out", skipNopsAfterJumps = True);
