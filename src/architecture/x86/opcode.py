@@ -1420,4 +1420,3 @@ def getOpcode(opcodeByte, extension, name, opcodeType):
 			OpcodesCache[opcodeByte][extension] = opcode;
 
 	return opcode;
-

@@ -374,6 +374,9 @@ def decode(bytes, skipNopsAfterJumps = False, firstByteOffset = 0, instructionLi
 
 	nopsSkippedAfterJumps = 0;
 
+	opcodesBeforeNops = { };
+	showOpcodesBeforeNops = False;
+
 	while (True):
 		bytes.resetCurrentlyRead();
 
@@ -524,11 +527,22 @@ def decode(bytes, skipNopsAfterJumps = False, firstByteOffset = 0, instructionLi
 				if ((opcodeNumber == 0x90) or (opcodeNumber == 0x0f1f)):
 					# Look at previous instruction
 					if (len(instructions) > 0):
-						prevOpcodeNumber = instructions[-1][2].getOpcode().opcode;
+						previousInstruction = instructions[-1][2];
+						previousOpcode = previousInstruction.getOpcode();
+						prevOpcodeNumber = previousOpcode.opcode;
+
 						# Is previous halt, unconditional jump or return
-						if ((prevOpcodeNumber == 0xf4) or (prevOpcodeNumber == 0xff) or (prevOpcodeNumber == 0xc3)):
+						if ((prevOpcodeNumber == 0xc3) # ret
+							or (prevOpcodeNumber == 0xe9) # jmp
+							or (prevOpcodeNumber == 0xeb) # jmp
+							or (prevOpcodeNumber == 0xf4) # hlt
+							or (prevOpcodeNumber == 0xff) # jmp
+							):
 							nopsSkippedAfterJumps += 1;
 							continue;
+						else:
+							opcodesBeforeNops[previousOpcode] = True;
+							# print(repr(previousOpcode));
 
 			instruction = Instruction(prefixBytes, opcode, operands);
 			instructionBytes = bytes.currentlyRead;
@@ -539,5 +553,13 @@ def decode(bytes, skipNopsAfterJumps = False, firstByteOffset = 0, instructionLi
 		else:
 			failDecoding("Opcode is None", instructions, startByte, byte, bytes);
 			break;
+
+	if ((showOpcodesBeforeNops) and (len(opcodesBeforeNops) > 0)):
+		if (len(opcodesBeforeNops) > 500):
+			print("# of opcodes before nops:", len(opcodesBeforeNops));
+		else:
+			print("Opcodes before nops:");
+			for opcode in opcodesBeforeNops:
+				print("\t", repr(opcode));
 
 	return instructions, nopsSkippedAfterJumps;
