@@ -1,4 +1,5 @@
 *.pdf
+c/gcc_test/
 pdf/
 src/object_files/gcc/
 gcc.c

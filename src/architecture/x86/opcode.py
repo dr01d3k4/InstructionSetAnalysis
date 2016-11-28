@@ -241,11 +241,19 @@ oneByteOpcodes = {
 		"autoInsertRegister": "000"	
 	},
 
+	# sbb r8 from rm8
+	0x18: {
+		"name": "sbb",
+		"opcodeType": ARITHMETIC_TYPE,
+		"dataSize": 8,
+		"readModRegRm": True
+	},
+
 	# sbb r16/32/64 from rm16/32/64
 	0x19: {
 		"name": "sbb",
 		"opcodeType": ARITHMETIC_TYPE,
-		"readModRegRm": True,
+		"readModRegRm": True
 	},
 
 	# and rm8 and r8
@@ -492,6 +500,9 @@ oneByteOpcodes = {
 
 	# jp rel8
 	0x7a: jumpDetails("jp"),
+
+	# jnp rel8
+	0x7b: jumpDetails("jnp"),
 
 	# jl rel8
 	0x7c: jumpDetails("jl"),
@@ -754,6 +765,18 @@ oneByteOpcodes = {
 
 	# rol/ror/rcl/rcr/shl/shr/sal/sar
 	# shift/rotate cl by rm16/32/64
+	0xd2: {
+		"name": ["rol", "ror", "rcl", "rcr", "shl", "shr", "sal", "sar"],
+		"opcodeType": [ARITHMETIC_TYPE, ARITHMETIC_TYPE, ARITHMETIC_TYPE, ARITHMETIC_TYPE, LOGIC_TYPE, LOGIC_TYPE, ARITHMETIC_TYPE, ARITHMETIC_TYPE],
+		"dataSize": 8,
+		"opcodeExtension": True,
+		"readModRegRm": True,
+		"autoInsertRegister": "001"
+	},
+
+
+	# rol/ror/rcl/rcr/shl/shr/sal/sar
+	# shift/rotate cl by rm16/32/64
 	0xd3: {
 		"name": ["rol", "ror", "rcl", "rcr", "shl", "shr", "sal", "sar"],
 		"opcodeType": [ARITHMETIC_TYPE, ARITHMETIC_TYPE, ARITHMETIC_TYPE, ARITHMETIC_TYPE, LOGIC_TYPE, LOGIC_TYPE, ARITHMETIC_TYPE, ARITHMETIC_TYPE],
@@ -798,7 +821,7 @@ oneByteOpcodes = {
 		"dataSize": 8,
 		"opcodeExtension": True,
 		"readModRegRm": True,
-		"readImmediateBytes": 1
+		"readImmediateBytes": [1, 1, 0, 0, 0, 0, 0, 0]
 	},
 
 	# test/test/not/neg/mul/imul/div/idiv
@@ -811,10 +834,19 @@ oneByteOpcodes = {
 		"readImmediateBytes": [4, 4, 0, 0, 0, 0, 0, 0]
 	},
 
+	# inc/dec/""/""/""/""/""/""
+	0xfe: {
+		"name": ["inc", "dec", "", "", "", "", "", ""],
+		"opcodeType": [ARITHMETIC_TYPE, ARITHMETIC_TYPE],
+		"dataSize": 8,
+		"opcodeExtension": True,
+		"readModRegRm": True
+	},
+
 	# inc/dec/call/callf/jmp/jmpf/push/""
 	0xff: {
 		"name": ["inc", "dec", "call", "callf", "jmp", "jmpf", "push", ""],
-		"opcodeType": JUMP_TYPE,
+		"opcodeType": [ARITHMETIC_TYPE, ARITHMETIC_TYPE, JUMP_TYPE, JUMP_TYPE, JUMP_TYPE, JUMP_TYPE, JUMP_TYPE],
 		"opcodeExtension": True,
 		"readModRegRm": True
 	}
@@ -834,6 +866,14 @@ twoByteOpcodes = {
 	# movsd xmm2 -> xmm1/m64
 	0x11: {
 		"name": "movsd",
+		"opcodeType": TRANSFER_TYPE,
+		"dataSize": 128,
+		"readModRegRm": True
+	},
+
+	# movhlps xmm2 -> xmm1
+	0x12: {
+		"name": "movhlps",
 		"opcodeType": TRANSFER_TYPE,
 		"dataSize": 128,
 		"readModRegRm": True
@@ -952,10 +992,28 @@ twoByteOpcodes = {
 	# cmovg rm16/32/64 -> r16/32/64
 	0x4f: conditionalMoveDetails("cmovg"),
 
-	# cvtps2pd xmm2/m64 -> xmm1
-	0x5a: {
-		"name": "cvtps2pd",
-		"opcodeType": TRANSFER_TYPE,
+	# andpd xmm2/m128 to xmm1
+	0x54: {
+		"name": "andpd",
+		"opcodeType": LOGIC_TYPE,
+		"dataSize": 128,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# andnpd xmm2/m128 to xmm1
+	0x55: {
+		"name": "andnpd",
+		"opcodeType": LOGIC_TYPE,
+		"dataSize": 128,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# orpd xmm2/m128 to xmm1
+	0x56: {
+		"name": "orpd",
+		"opcodeType": LOGIC_TYPE,
 		"dataSize": 128,
 		"readModRegRm": True,
 		"rmIsSource": False
@@ -988,6 +1046,15 @@ twoByteOpcodes = {
 		"rmIsSource": False
 	},
 
+	# cvtps2pd xmm2/m64 -> xmm1
+	0x5a: {
+		"name": "cvtps2pd",
+		"opcodeType": TRANSFER_TYPE,
+		"dataSize": 128,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
 	# subsd xmm2/m64 to xmm1
 	0x5c: {
 		"name": "subsd",
@@ -1009,6 +1076,15 @@ twoByteOpcodes = {
 	# divsd xmm2/m64 to xmm1
 	0x5e: {
 		"name": "divsd",
+		"opcodeType": ARITHMETIC_TYPE,
+		"dataSize": 128,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# maxsd xmm2/m64 to xmm1
+	0x5f: {
+		"name": "maxsd",
 		"opcodeType": ARITHMETIC_TYPE,
 		"dataSize": 128,
 		"readModRegRm": True,
@@ -1042,6 +1118,16 @@ twoByteOpcodes = {
 		"readModRegRm": True,
 		"rmIsSource": False
 	},
+
+	# punpckhqdq xmm2/m128 -> xmm1
+	0x6d: {
+		"name": "punpckhqdq",
+		"opcodeType": TRANSFER_TYPE,
+		"dataSize": 128,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
 
 	# movq mm -> rm32/64
 	0x6e: {
@@ -1104,7 +1190,7 @@ twoByteOpcodes = {
 		"name": "movq",
 		"opcodeType": TRANSFER_TYPE,
 		"readModRegRm": True,
-		"rmIsSource": False
+		# "rmIsSource": False
 	},
 
 	# movdqa mm64 -> mm
@@ -1174,6 +1260,12 @@ twoByteOpcodes = {
 
 	# seta /0 rm8
 	0x97: setByteOnConditionDetails("seta"),
+
+	# sets /0 rm8
+	0x98: setByteOnConditionDetails("sets"),
+
+	# setns /0 rm8
+	0x99: setByteOnConditionDetails("setns"),
 	
 	# setl /0 rm8
 	0x9c: setByteOnConditionDetails("setl"),
@@ -1194,12 +1286,53 @@ twoByteOpcodes = {
 		"readModRegRm": True
 	},
 
+	# shld r/m16 r16 imm8
+	0xa4: {
+		"name": "shld",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readModRegRm": True,
+		"readImmediateBytes": 1
+	},
+
+	# shld r/m16 r16 cl
+	0xa5: {
+		"name": "shld",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readModRegRm": True,
+		"autoInsertRegister": "001",
+	},
+
+	# shrd r/m16 r16 imm8
+	0xac: {
+		"name": "shrd",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readModRegRm": True,
+		"readImmediateBytes": 1
+	},
+
+	# shrd r/m16 r16 cl
+	0xad: {
+		"name": "shrd",
+		"opcodeType": ARITHMETIC_TYPE,
+		"readModRegRm": True,
+		"autoInsertRegister": "001",
+	},
+
 	# imul r16/32/64 <- r16/32/64 * rm16/32/64
 	0xaf: {
 		"name": "imul",
 		"opcodeType": ARITHMETIC_TYPE,
 		"readModRegRm": True,
 		"rmIsSource": False
+	},
+
+	# bt/bts/br/btc rm16/32 imm8
+	0xba: {
+		"name": ["", "", "", "", "bt", "bts", "btr", "btc"],
+		"opcodeType": TRANSFER_TYPE,
+		"opcodeExtension": True,
+		"readModRegRm": True,
+		"readImmediateBytes": 1
 	},
 
 	# movzx rm8 -> r16/32/64
@@ -1242,6 +1375,28 @@ twoByteOpcodes = {
 		"rmIsSource": False
 	},
 
+	# pinsrw r32/m16 + imm8 -> mm
+	0xc4: {
+		"name": "pinsrw",
+		"opcodeType": TRANSFER_TYPE,
+		"dataSize": 128,
+		"readModRegRm": True,
+		"rmIsSource": False,
+		"readImmediateBytes": 1	
+	},
+
+
+	# pextrw mm + imm8 -> reg
+	0xc5: {
+		"name": "pextrw",
+		"opcodeType": TRANSFER_TYPE,
+		"dataSize": 128,
+		"readModRegRm": True,
+		"rmIsSource": False,
+		"readImmediateBytes": 1	
+	},
+
+
 	# shufps xmm2/m128 + imm8 -> xmm1
 	0xc6: {
 		"name": "shufps",
@@ -1268,6 +1423,14 @@ twoByteOpcodes = {
 		"dataSize": 128,
 		"readModRegRm": True,
 		"rmIsSource": False
+	},
+
+	# movq xmm1 -> xmm2/m128
+	0xd6: {
+		"name": "movq",
+		"opcodeType": ARITHMETIC_TYPE,
+		"dataSize": 128,
+		"readModRegRm": True
 	},
 
 	# pandn mm/m64 bitwise and not mm
@@ -1300,6 +1463,15 @@ twoByteOpcodes = {
 	# pmuludq xmm2/m64 to xmm1
 	0xf4: {
 		"name": "pmuludq",
+		"opcodeType": LOGIC_TYPE,
+		"dataSize": 128,
+		"readModRegRm": True,
+		"rmIsSource": False
+	},
+
+	# psubq xmm2/m128 to xmm1
+	0xfb: {
+		"name": "psubq",
 		"opcodeType": LOGIC_TYPE,
 		"dataSize": 128,
 		"readModRegRm": True,

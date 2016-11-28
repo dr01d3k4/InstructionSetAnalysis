@@ -175,3 +175,8 @@ TODO:
 - Maybe get the manualaddressing working but not highest priority
 	- At least write out the transformation in psuedo-assembly
 - Try different optimization levels
+
+
+
+
+http://dynamorio.org/home.html

@@ -149,8 +149,8 @@ def main():
 	clang = getCompiler("clang");
 
 	printingStart = -1;
-	instructionLimit = -1; # 1088080;
-	skipNopsAfterJumps = True;
+	instructionLimit = -1; # 1181583;
+	skipNopsAfterJumps = False;
 
 	# dissassembleObjectFile(x86, gcc, "object_files/HelloWorld/hello_world_gcc.o", startPrintingFrom = printingStart);
 	# dissassembleObjectFile(x86, gcc, "object_files/AddFunction/add_function_gcc.o", startPrintingFrom = printingStart);
@@ -173,12 +173,12 @@ def main():
 	# dissassembleObjectFile(x86, clang, "object_files/gcc/gcc_linked_clang_o3.out", skipNopsAfterJumps = skipNopsAfterJumps, firstByteOffset = 0x402850, startPrintingFrom = printingStart, instructionLimit = instructionLimit);
 
 	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out");
-	outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out", skipNopsAfterJumps = True);
+	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out", skipNopsAfterJumps = True);
 	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang.out");
-	outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang.out", skipNopsAfterJumps = True);
+	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang.out", skipNopsAfterJumps = True);
 
 	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc_o3.out");
-	outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc_o3.out", skipNopsAfterJumps = True);
+	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc_o3.out", skipNopsAfterJumps = True);
 	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang_o3.out");
 	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang_o3.out", skipNopsAfterJumps = True);
 

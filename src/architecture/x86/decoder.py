@@ -375,7 +375,7 @@ def decode(bytes, skipNopsAfterJumps = False, firstByteOffset = 0, instructionLi
 	nopsSkippedAfterJumps = 0;
 
 	opcodesBeforeNops = { };
-	showOpcodesBeforeNops = False;
+	showOpcodesBeforeNops = True;
 
 	while (True):
 		bytes.resetCurrentlyRead();
@@ -541,7 +541,10 @@ def decode(bytes, skipNopsAfterJumps = False, firstByteOffset = 0, instructionLi
 							nopsSkippedAfterJumps += 1;
 							continue;
 						else:
-							opcodesBeforeNops[previousOpcode] = True;
+							if (previousOpcode in opcodesBeforeNops):
+								opcodesBeforeNops[previousOpcode] += 1;
+							else:
+								opcodesBeforeNops[previousOpcode] = 1;
 							# print(repr(previousOpcode));
 
 			instruction = Instruction(prefixBytes, opcode, operands);
@@ -554,12 +557,13 @@ def decode(bytes, skipNopsAfterJumps = False, firstByteOffset = 0, instructionLi
 			failDecoding("Opcode is None", instructions, startByte, byte, bytes);
 			break;
 
-	if ((showOpcodesBeforeNops) and (len(opcodesBeforeNops) > 0)):
+	if (showOpcodesBeforeNops and (len(opcodesBeforeNops) > 0)):
 		if (len(opcodesBeforeNops) > 500):
 			print("# of opcodes before nops:", len(opcodesBeforeNops));
 		else:
 			print("Opcodes before nops:");
-			for opcode in opcodesBeforeNops:
-				print("\t", repr(opcode));
+			sortedOpcodesBeforeNops = sorted(list(opcodesBeforeNops.items()), key = lambda x: x[1], reverse = True);
+			for opcode, count in sortedOpcodesBeforeNops:
+				print("\t", count, repr(opcode));
 
 	return instructions, nopsSkippedAfterJumps;
