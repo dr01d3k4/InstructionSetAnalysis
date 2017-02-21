@@ -161,15 +161,113 @@ def printStatsForObjectFile(architecture, compiler, folder, filename, skipNopsAf
 	stats = calculateStats(architecture, compiler, inputFilename, "-", instructions, nopsSkippedAfterJumps, print);
 
 
+def tidyCallgrindInstructions(callgrindInstructions):
+	tidyInstructions = [ ];
+	print(callgrindInstructions);
+
+	tidyNumber = lambda x: x; # int(x, 16);
+
+	i = 0;
+	while (i < len(callgrindInstructions)):
+		if (type(callgrindInstructions[i]) is list):
+			tidyInstructions.append(tidyNumber(callgrindInstructions[i][0]));
+		elif (type(callgrindInstructions[i]) is dict):
+			newData = callgrindInstructions[i].copy();
+
+			i += 1;
+			if (i >= len(callgrindInstructions)):
+				print("Instruction expected for call but reached end");
+				break;
+
+			newData["instruction"] = tidyNumber(callgrindInstructions[i][0]);
+
+			tidyInstructions.append(newData);
+
+		i += 1;
+
+	print(tidyInstructions);
+
+	tidyInstructions2 = { };
+	i = 0;
+
+	while (i < len(tidyInstructions) - 1):
+		if (type(tidyInstructions[i]) is str):
+			currentNumber = tidyNumber(tidyInstructions[i]);
+			nextNumber = -1;
+
+			i += 1;
+
+			if (type(tidyInstructions[i]) is str):
+				nextNumber = tidyNumber(tidyInstructions[i]);
+			elif (type(tidyInstructions[i]) is dict):
+				nextNumber = tidyNumber(tidyInstructions[i]["instruction"])
+			else:
+				print("Unknown type");
+			# tidyInstructions2.append((currentNumber, nextNumber));
+			tidyInstructions[currentNumber]
+
+		elif (type(tidyInstructions[i]) is dict):
+			currentData = tidyInstructions[i];
+			currentNumber = tidyNumber(tidyInstructions[i]["instruction"]);
+			nextNumber = -1;
+
+			i += 1;
+
+			if (type(tidyInstructions[i]) is str):
+				nextNumber = tidyNumber(tidyInstructions[i]);
+			elif (type(tidyInstructions[i]) is dict):
+				nextNumber = tidyNumber(tidyInstructions[i]["instruction"])
+			else:
+				print("Unknown type");
+			tidyInstructions2.append((currentNumber, nextNumber, currentData));
+
+	return tidyInstructions2;
+	
+	# print(tidyInstructions);
+
+	# tidyInstructions2 = { };
+	# i = 0;
+	# while (i < len(tidyInstructions) - 1):
+	# 	if ((type(tidyInstructions[i]) is int) and (type(tidyInstructions[i + 1]) is int)):
+	# 		tidyInstructions2[tidyInstructions[i]] = tidyInstructions[i + 1];
+
+	# 	i += 1;
+
+	# return tidyInstructions2;
+
+
 def doDynamicAnalysis(instructionsWithDebug, callgrindFunctions):
 	if ("main" not in callgrindFunctions):
 		print("No main in callgrind");
 		return;
+
 	mainFunction = callgrindFunctions["main"];
 
+	instructionsDict = {startByte: (len(bytes), instruction) for startByte, bytes, instruction in instructionsWithDebug};
 	
+	mainInstructions = mainFunction["instructions"];
+	tidyInstructions = tidyCallgrindInstructions(mainInstructions);
 
-	
+	# print(mainInstructions);
+	# print(instructionsDict);
+	print(tidyInstructions); 
+
+	# dynamicInstructions = [ ];
+
+	# programCounter = tidyInstructions[0];
+
+	# while (True):
+	# 	if (not programCounter in instructionsDict):
+	# 		print("Program counter out of bounds");
+	# 		break;
+
+	# 	fetchedInstruction = instructionsDict[programCounter];
+	# 	dynamicInstructions.append(fetchedInstruction[1]);
+	# 	programCounter += fetchedInstruction[0];
+
+	# print(dynamicInstructions);
+
+
 
 
 def main():
