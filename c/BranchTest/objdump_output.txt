@@ -1,0 +1,56 @@
+000000000040052d <main>:
+  40052d:	55                   	push   %rbp
+  40052e:	48 89 e5             	mov    %rsp,%rbp
+  400531:	48 83 ec 10          	sub    $0x10,%rsp
+  400535:	bf f8 05 40 00       	mov    $0x4005f8,%edi
+  40053a:	e8 d1 fe ff ff       	callq  400410 <puts@plt>
+  40053f:	c7 45 fc 00 00 00 00 	movl   $0x0,-0x4(%rbp)
+  400546:	83 7d fc 04          	cmpl   $0x4,-0x4(%rbp)
+  40054a:	7f 0c                	jg     400558 <main+0x2b>
+  40054c:	bf 05 06 40 00       	mov    $0x400605,%edi
+  400551:	e8 ba fe ff ff       	callq  400410 <puts@plt>
+  400556:	eb 0a                	jmp    400562 <main+0x35>
+  400558:	bf 18 06 40 00       	mov    $0x400618,%edi
+  40055d:	e8 ae fe ff ff       	callq  400410 <puts@plt>
+  400562:	b8 00 00 00 00       	mov    $0x0,%eax
+  400567:	c9                   	leaveq 
+  400568:	c3                   	retq   
+  400569:	0f 1f 80 00 00 00 00 	nopl   0x0(%rax)
+
+
+
+fl=/home/ben/Documents/InstructionSetAnalysis/c/BranchTest/main.c
+fn=main
+0x40052d 5 1 0 1
+0x40052e 5 1
+0x400531 5 1
+0x400535 6 1
+0x40053a 6 1 0 1
+cob=/lib/x86_64-linux-gnu/libc-2.19.so
+cfi=/build/eglibc-oGUzwX/eglibc-2.19/libio/ioputs.c
+cfn=puts
+calls=1 0x6fd60 34 
+0x40053a 6 1057 293 154 46 8 1 46 3
+cob=/lib/x86_64-linux-gnu/ld-2.19.so
+cfi=/build/eglibc-oGUzwX/eglibc-2.19/elf/../sysdeps/x86_64/dl-trampoline.S
+cfn=_dl_runtime_resolve
+calls=1 0x164a0 34 
+0x40053a 6 744 239 101 0 4 0 0 2
+0x40053a 6 5 3 2
+0x40053f 7 1 0 1
+0x400546 8 1 1
+0x40054a 8 1
+0x40054c 9 1
+0x400551 9 1 0 1
+cob=/lib/x86_64-linux-gnu/libc-2.19.so
+cfi=/build/eglibc-oGUzwX/eglibc-2.19/libio/ioputs.c
+cfn=puts
+calls=1 0x6fd60 34 
+0x400551 9 388 94 44 4 0 0 4
+0x400551 9 1 1
+0x400556 9 1
+jump=1 0x400562 14 
+0x400556 9 
+0x400562 14 1
+0x400567 15 1 1
+0x400568 15 1 1

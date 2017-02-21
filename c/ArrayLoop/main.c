@@ -25,7 +25,11 @@ int main() {
 
 void squareArray(int* array, const int length) {
 	for (int i = 0; i < length; i += 1) {
-		*array *= *array;
+		if (array[i] < 5) {
+			*array *= *array;
+		} else {
+			*array = (*array * 2) + 5;
+		}
 		array++;
 	}
 }

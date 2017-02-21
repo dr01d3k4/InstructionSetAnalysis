@@ -3,6 +3,7 @@ c/gcc_test/
 pdf/
 src/object_files/gcc/
 gcc.c
+gcc.s
 gcc.o
 gcc_gcc.o
 gcc_clang.o
@@ -19,6 +20,10 @@ objdump_of_gcc_linked_gcc.txt
 objdump_of_gcc_linked_gcc_o3.txt
 objdump_of_gcc_linked_clang.txt
 objdump_of_gcc_linked_clang_o3.txt
+callgrind.out.*
+
+
+
 
 
 # Byte-compiled / optimized / DLL files

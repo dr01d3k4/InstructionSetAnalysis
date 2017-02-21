@@ -6,6 +6,7 @@ from architecture.architecture import getArchitecture;
 from compiler.compiler import getCompiler;
 import stats.calculate_stats as stats;
 import gc;
+from callgrind_parser.parser import parseCallgrindOutput;
 
 
 # 0x8b8b75
@@ -77,13 +78,16 @@ def getTextSection(elf64File):
 	return textSection;
 
 
-def decodeMachineCode(architecture, machineCode, skipNopsAfterJumps = False, firstByteOffset = 0, startPrintingFrom = -1, instructionLimit = -1):
+def decodeMachineCodeWithDebug(architecture, machineCode, skipNopsAfterJumps = False, firstByteOffset = 0, startPrintingFrom = -1, instructionLimit = -1):
 	# "withDebug" is because this is a tuple of (startByte, [bytesInInstruction], InstructionInstance)
 	instructionsWithDebug, nopsSkippedAfterJumps = architecture.decode(machineCode, skipNopsAfterJumps, firstByteOffset, instructionLimit);
-	instructions = map(lambda x: x[2], instructionsWithDebug);
-
 	printInstructionsWithDebug(instructionsWithDebug, startPrintingFrom = startPrintingFrom, showInstructionDetails = False);
+	return instructionsWithDebug, nopsSkippedAfterJumps;
 
+
+def decodeMachineCode(architecture, machineCode, skipNopsAfterJumps = False, firstByteOffset = 0, startPrintingFrom = -1, instructionLimit = -1):
+	instructionsWithDebug, nopsSkippedAfterJumps = decodeMachineCodeWithDebug(architecture, machineCode, skipNopsAfterJumps, firstByteOffset, startPrintingFrom, instructionLimit);
+	instructions = map(lambda x: x[2], instructionsWithDebug);
 	return instructions, nopsSkippedAfterJumps;
 
 
@@ -104,6 +108,21 @@ def dissassembleObjectFile(architecture, compiler, filename, skipNopsAfterJumps 
 	gc.collect();
 
 	return instructions, nopsSkippedAfterJumps;
+
+
+def dissassembleObjectFileWithDebug(architecture, compiler, filename, skipNopsAfterJumps = False, firstByteOffset = 0, startPrintingFrom = -1, instructionLimit = -1):
+	elf64File = readElf64File(filename);
+	textSection = getTextSection(elf64File);
+
+	elf64File.setSectionContents(".text", None);
+	elf64File = None;
+	gc.collect();
+
+	instructionsWithDebug, nopsSkippedAfterJumps = decodeMachineCodeWithDebug(architecture, textSection, skipNopsAfterJumps, firstByteOffset, startPrintingFrom, instructionLimit);
+	textSection = None;
+	gc.collect();
+
+	return instructionsWithDebug, nopsSkippedAfterJumps;
 
 
 def outputStatsForObjectFile(architecture, compiler, folder, filename, skipNopsAfterJumps = False):
@@ -142,6 +161,17 @@ def printStatsForObjectFile(architecture, compiler, folder, filename, skipNopsAf
 	stats = calculateStats(architecture, compiler, inputFilename, "-", instructions, nopsSkippedAfterJumps, print);
 
 
+def doDynamicAnalysis(instructionsWithDebug, callgrindFunctions):
+	if ("main" not in callgrindFunctions):
+		print("No main in callgrind");
+		return;
+	mainFunction = callgrindFunctions["main"];
+
+	
+
+	
+
+
 def main():
 	x86 = getArchitecture("x86");
 	gcc = getCompiler("gcc");
@@ -151,6 +181,19 @@ def main():
 	printingStart = -1;
 	instructionLimit = -1; # 1181583;
 	skipNopsAfterJumps = False;
+
+
+
+
+	# outputStatsForObjectFile(x86, gcc, "BranchTest", "main", True);
+	instructionsWithDebug, _ = dissassembleObjectFileWithDebug(x86, gcc, "object_files/BranchTest/main", True, firstByteOffset = 0x400440, startPrintingFrom = -1);
+	# print("-" * 100);
+	# print(instructionsWithDebug);
+	callgrindFunctions = parseCallgrindOutput("CallgrindTestFile.out");
+
+	doDynamicAnalysis(instructionsWithDebug, callgrindFunctions);
+
+
 
 	# dissassembleObjectFile(x86, gcc, "object_files/HelloWorld/hello_world_gcc.o", startPrintingFrom = printingStart);
 	# dissassembleObjectFile(x86, gcc, "object_files/AddFunction/add_function_gcc.o", startPrintingFrom = printingStart);

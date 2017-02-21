@@ -1,0 +1,6 @@
+Compile with
+gcc -std=c99 main.c -g -o main
+
+Valgrind command
+valgrind --tool=callgrind --dump-instr=yes --dump-line=yes --simulate-cache=yes --collect-jumps=yes --compress-strings=no --compress-pos=no ./main
+
