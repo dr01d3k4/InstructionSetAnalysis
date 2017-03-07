@@ -113,9 +113,17 @@ def parseCallgrindOutput(callgrindFileName):
 					lineSplit = line[len(start) + 1:].split();
 					lineData = {
 						"type": start,
-						"config": callConfig.copy(),
+						# "config": callConfig.copy(),
 						"data": lineSplit
 					};
+					if (start == "calls"):
+						lineData["config"] = callConfig.copy();
+						callConfig = {
+							"cob": None,
+							"cfi": None,
+							"cfn": None,
+							"jfi": None
+						};
 
 					functionName = functionConfig["fn"];
 					if ((functionName != None) and (functionName in functions)):

@@ -7,6 +7,7 @@ from compiler.compiler import getCompiler;
 import stats.calculate_stats as stats;
 import gc;
 from callgrind_parser.parser import parseCallgrindOutput;
+from callgrind_parser.analyser import doDynamicAnalysis;
 
 
 # 0x8b8b75
@@ -16,6 +17,16 @@ Before optimizations: 53.1s
 After REX optimizations: 51.6s
 After commenting out debug print calls: 24.6s
 After opcode caching: 22.2s
+"""
+
+
+"""
+http://www.lttng.org/docs/v2.9/#doc-getting-started
+https://github.com/wuyongzheng/pin-instat
+http://stackoverflow.com/questions/2971926/tracing-profiling-instructions
+https://github.com/jwhitham/x86determiniser
+https://lwn.net/Articles/648154/
+
 """
 
 
@@ -161,115 +172,6 @@ def printStatsForObjectFile(architecture, compiler, folder, filename, skipNopsAf
 	stats = calculateStats(architecture, compiler, inputFilename, "-", instructions, nopsSkippedAfterJumps, print);
 
 
-def tidyCallgrindInstructions(callgrindInstructions):
-	tidyInstructions = [ ];
-	print(callgrindInstructions);
-
-	tidyNumber = lambda x: x; # int(x, 16);
-
-	i = 0;
-	while (i < len(callgrindInstructions)):
-		if (type(callgrindInstructions[i]) is list):
-			tidyInstructions.append(tidyNumber(callgrindInstructions[i][0]));
-		elif (type(callgrindInstructions[i]) is dict):
-			newData = callgrindInstructions[i].copy();
-
-			i += 1;
-			if (i >= len(callgrindInstructions)):
-				print("Instruction expected for call but reached end");
-				break;
-
-			newData["instruction"] = tidyNumber(callgrindInstructions[i][0]);
-
-			tidyInstructions.append(newData);
-
-		i += 1;
-
-	print(tidyInstructions);
-
-	tidyInstructions2 = { };
-	i = 0;
-
-	while (i < len(tidyInstructions) - 1):
-		if (type(tidyInstructions[i]) is str):
-			currentNumber = tidyNumber(tidyInstructions[i]);
-			nextNumber = -1;
-
-			i += 1;
-
-			if (type(tidyInstructions[i]) is str):
-				nextNumber = tidyNumber(tidyInstructions[i]);
-			elif (type(tidyInstructions[i]) is dict):
-				nextNumber = tidyNumber(tidyInstructions[i]["instruction"])
-			else:
-				print("Unknown type");
-			# tidyInstructions2.append((currentNumber, nextNumber));
-			tidyInstructions[currentNumber]
-
-		elif (type(tidyInstructions[i]) is dict):
-			currentData = tidyInstructions[i];
-			currentNumber = tidyNumber(tidyInstructions[i]["instruction"]);
-			nextNumber = -1;
-
-			i += 1;
-
-			if (type(tidyInstructions[i]) is str):
-				nextNumber = tidyNumber(tidyInstructions[i]);
-			elif (type(tidyInstructions[i]) is dict):
-				nextNumber = tidyNumber(tidyInstructions[i]["instruction"])
-			else:
-				print("Unknown type");
-			tidyInstructions2.append((currentNumber, nextNumber, currentData));
-
-	return tidyInstructions2;
-	
-	# print(tidyInstructions);
-
-	# tidyInstructions2 = { };
-	# i = 0;
-	# while (i < len(tidyInstructions) - 1):
-	# 	if ((type(tidyInstructions[i]) is int) and (type(tidyInstructions[i + 1]) is int)):
-	# 		tidyInstructions2[tidyInstructions[i]] = tidyInstructions[i + 1];
-
-	# 	i += 1;
-
-	# return tidyInstructions2;
-
-
-def doDynamicAnalysis(instructionsWithDebug, callgrindFunctions):
-	if ("main" not in callgrindFunctions):
-		print("No main in callgrind");
-		return;
-
-	mainFunction = callgrindFunctions["main"];
-
-	instructionsDict = {startByte: (len(bytes), instruction) for startByte, bytes, instruction in instructionsWithDebug};
-	
-	mainInstructions = mainFunction["instructions"];
-	tidyInstructions = tidyCallgrindInstructions(mainInstructions);
-
-	# print(mainInstructions);
-	# print(instructionsDict);
-	print(tidyInstructions); 
-
-	# dynamicInstructions = [ ];
-
-	# programCounter = tidyInstructions[0];
-
-	# while (True):
-	# 	if (not programCounter in instructionsDict):
-	# 		print("Program counter out of bounds");
-	# 		break;
-
-	# 	fetchedInstruction = instructionsDict[programCounter];
-	# 	dynamicInstructions.append(fetchedInstruction[1]);
-	# 	programCounter += fetchedInstruction[0];
-
-	# print(dynamicInstructions);
-
-
-
-
 def main():
 	x86 = getArchitecture("x86");
 	gcc = getCompiler("gcc");
@@ -284,12 +186,17 @@ def main():
 
 
 	# outputStatsForObjectFile(x86, gcc, "BranchTest", "main", True);
-	instructionsWithDebug, _ = dissassembleObjectFileWithDebug(x86, gcc, "object_files/BranchTest/main", True, firstByteOffset = 0x400440, startPrintingFrom = -1);
+	# instructionsWithDebug, _ = dissassembleObjectFileWithDebug(x86, gcc, "object_files/BranchTest/main", True, firstByteOffset = 0x400440, startPrintingFrom = -1);
+	instructionsWithDebug, _ = dissassembleObjectFileWithDebug(x86, gcc, "object_files/DoubleBranchTest/main", True, firstByteOffset = 0x400490, startPrintingFrom = -1);
+	# print(instructionsWithDebug);
 	# print("-" * 100);
 	# print(instructionsWithDebug);
-	callgrindFunctions = parseCallgrindOutput("CallgrindTestFile.out");
 
-	doDynamicAnalysis(instructionsWithDebug, callgrindFunctions);
+	# printInstructionsWithDebug(instructionsWithDebug, startPrintingFrom = 0);
+
+	callgrindFunctions = parseCallgrindOutput("object_files/DoubleBranchTest/CallgrindTestFile.out");
+	dynamicInstructions = map(lambda x: (x[0], [ ], x[1]), doDynamicAnalysis(instructionsWithDebug, callgrindFunctions));
+	printInstructionsWithDebug(dynamicInstructions, startPrintingFrom = 0);
 
 
 
