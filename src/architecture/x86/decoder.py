@@ -218,7 +218,6 @@ def decodeModRegRm(bytes, rexPrefix, rmIsSource = True, regIsOpcodeExtension = F
 
 			indexIsSP = ((indexBits == 0b100) and (not rexPrefix.getX()));
 
-
 			if (mod != 0b00):
 				if (indexIsSP):
 					rmOperand = operand.RegisterDisplacementOperand(base, displacement, segmentOverride);

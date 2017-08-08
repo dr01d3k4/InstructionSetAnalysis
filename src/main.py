@@ -8,6 +8,7 @@ import stats.calculate_stats as stats;
 import gc;
 from callgrind_parser.parser import parseCallgrindOutput;
 from callgrind_parser.analyser import doDynamicAnalysis;
+import time;
 
 
 # 0x8b8b75
@@ -102,11 +103,13 @@ def decodeMachineCode(architecture, machineCode, skipNopsAfterJumps = False, fir
 	return instructions, nopsSkippedAfterJumps;
 
 
-def calculateStats(architecture, compiler, inputFilename, outputFilename, instructions, nopsSkippedAfterJumps, writeOutput = print):
-	return stats.calculateStats(architecture, compiler, inputFilename, outputFilename, instructions, nopsSkippedAfterJumps, writeOutput);
+def calculateStats(architecture, compiler, inputFilename, outputFilename, instructions, nopsSkippedAfterJumps, timeTaken, writeOutput = print):
+	return stats.calculateStats(architecture, compiler, inputFilename, outputFilename, instructions, nopsSkippedAfterJumps, timeTaken, writeOutput);
 
 
 def dissassembleObjectFile(architecture, compiler, filename, skipNopsAfterJumps = False, firstByteOffset = 0, startPrintingFrom = -1, instructionLimit = -1):
+	startTime = time.time();
+
 	elf64File = readElf64File(filename);
 	textSection = getTextSection(elf64File);
 
@@ -118,10 +121,14 @@ def dissassembleObjectFile(architecture, compiler, filename, skipNopsAfterJumps 
 	textSection = None;
 	gc.collect();
 
-	return instructions, nopsSkippedAfterJumps;
+	endTime = time.time();
+	timeTaken = endTime - startTime;
+	return instructions, nopsSkippedAfterJumps, timeTaken;
 
 
 def dissassembleObjectFileWithDebug(architecture, compiler, filename, skipNopsAfterJumps = False, firstByteOffset = 0, startPrintingFrom = -1, instructionLimit = -1):
+	startTime = time.time();
+
 	elf64File = readElf64File(filename);
 	textSection = getTextSection(elf64File);
 
@@ -133,7 +140,10 @@ def dissassembleObjectFileWithDebug(architecture, compiler, filename, skipNopsAf
 	textSection = None;
 	gc.collect();
 
-	return instructionsWithDebug, nopsSkippedAfterJumps;
+	endTime = time.time();
+	timeTaken = endTime - startTime;
+
+	return instructionsWithDebug, nopsSkippedAfterJumps, timeTaken;
 
 
 def outputStatsForObjectFile(architecture, compiler, folder, filename, skipNopsAfterJumps = False):
@@ -146,7 +156,7 @@ def outputStatsForObjectFile(architecture, compiler, folder, filename, skipNopsA
 	print("Output filename:", outputFilename);
 	print("Skipping nops after jumps:", skipNopsAfterJumps);
 
-	instructions, nopsSkippedAfterJumps = dissassembleObjectFile(architecture, compiler, inputFilename, skipNopsAfterJumps);
+	instructions, nopsSkippedAfterJumps, timeTaken = dissassembleObjectFile(architecture, compiler, inputFilename, skipNopsAfterJumps);
 	print("");
 	print("Instructions decoded");
 	print("Total instructions:", len(instructions));
@@ -154,7 +164,7 @@ def outputStatsForObjectFile(architecture, compiler, folder, filename, skipNopsA
 		print("Nops skipped after jumps: ", nopsSkippedAfterJumps);
 
 	outputFile, writeLine = openFileForWritingLinesClosure(outputFilename);
-	stats = calculateStats(architecture, compiler, inputFilename, outputFilename, instructions, nopsSkippedAfterJumps, writeLine);
+	stats = calculateStats(architecture, compiler, inputFilename, outputFilename, instructions, nopsSkippedAfterJumps, timeTaken, writeLine);
 
 	print("");
 	print("Done, closing file");
@@ -168,8 +178,8 @@ def outputStatsForObjectFile(architecture, compiler, folder, filename, skipNopsA
 def printStatsForObjectFile(architecture, compiler, folder, filename, skipNopsAfterJumps = False):
 	inputFilename = getInputFilename(folder, filename);
 
-	instructions, nopsSkippedAfterJumps = dissassembleObjectFile(architecture, compiler, inputFilename, skipNopsAfterJumps);
-	stats = calculateStats(architecture, compiler, inputFilename, "-", instructions, nopsSkippedAfterJumps, print);
+	instructions, nopsSkippedAfterJumps, timeTaken = dissassembleObjectFile(architecture, compiler, inputFilename, skipNopsAfterJumps);
+	stats = calculateStats(architecture, compiler, inputFilename, "-", instructions, nopsSkippedAfterJumps, timeTaken, print);
 
 
 def main():
@@ -183,20 +193,35 @@ def main():
 	skipNopsAfterJumps = False;
 
 
-
-
 	# outputStatsForObjectFile(x86, gcc, "BranchTest", "main", True);
+	# printStatsForObjectFile(x86, gcc, "BranchTest", "main", True);
+
 	# instructionsWithDebug, _ = dissassembleObjectFileWithDebug(x86, gcc, "object_files/BranchTest/main", True, firstByteOffset = 0x400440, startPrintingFrom = -1);
-	instructionsWithDebug, _ = dissassembleObjectFileWithDebug(x86, gcc, "object_files/DoubleBranchTest/main", True, firstByteOffset = 0x400490, startPrintingFrom = -1);
+	# instructionsWithDebug, _ = dissassembleObjectFileWithDebug(x86, gcc, "object_files/DoubleBranchTest/main", True, firstByteOffset = 0x400490, startPrintingFrom = -1);
 	# print(instructionsWithDebug);
 	# print("-" * 100);
 	# print(instructionsWithDebug);
 
 	# printInstructionsWithDebug(instructionsWithDebug, startPrintingFrom = 0);
 
-	callgrindFunctions = parseCallgrindOutput("object_files/DoubleBranchTest/CallgrindTestFile.out");
-	dynamicInstructions = map(lambda x: (x[0], [ ], x[1]), doDynamicAnalysis(instructionsWithDebug, callgrindFunctions));
-	printInstructionsWithDebug(dynamicInstructions, startPrintingFrom = 0);
+	# callgrindFunctions = parseCallgrindOutput("object_files/DoubleBranchTest/CallgrindTestFile.out");
+	# dynamicInstructions = map(lambda x: (x[0], [ ], x[1]), doDynamicAnalysis(instructionsWithDebug, callgrindFunctions));
+	# dynamicInstructions = doDynamicAnalysis(instructionsWithDebug, callgrindFunctions);
+
+	# printInstructionsWithDebug(dynamicInstructions, startPrintingFrom = 0);
+	# printInstructionsWithDebug(map(lambda x: (x[0], [ ], x[1]), dynamicInstructions["main"]), startPrintingFrom = 0);
+
+
+	# for functionName, data in dynamicInstructions.iteritems():
+	# 	code = map(lambda x: (x[0], [ ], x[1]), data);
+	# 	print("");
+	# 	print("-" * 100);
+	# 	print("Dynamic code for function:", functionName);
+	# 	printInstructionsWithDebug(code, startPrintingFrom = 0);
+
+	# import pprint;
+	# pp = pprint.PrettyPrinter(indent = 4);
+	# pp.pprint(dynamicInstructions);
 
 
 
@@ -220,15 +245,15 @@ def main():
 
 	# dissassembleObjectFile(x86, clang, "object_files/gcc/gcc_linked_clang_o3.out", skipNopsAfterJumps = skipNopsAfterJumps, firstByteOffset = 0x402850, startPrintingFrom = printingStart, instructionLimit = instructionLimit);
 
-	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out");
-	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out", skipNopsAfterJumps = True);
-	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang.out");
-	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang.out", skipNopsAfterJumps = True);
+	outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out");
+	outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc.out", skipNopsAfterJumps = True);
+	outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang.out");
+	outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang.out", skipNopsAfterJumps = True);
 
-	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc_o3.out");
-	# outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc_o3.out", skipNopsAfterJumps = True);
-	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang_o3.out");
-	# outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang_o3.out", skipNopsAfterJumps = True);
+	outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc_o3.out");
+	outputStatsForObjectFile(x86, gcc, "gcc", "gcc_linked_gcc_o3.out", skipNopsAfterJumps = True);
+	outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang_o3.out");
+	outputStatsForObjectFile(x86, clang, "gcc", "gcc_linked_clang_o3.out", skipNopsAfterJumps = True);
 
 	# doWorkOnObjectFile(ghc, x86, "object_files/AddFunction/add_function_ghc.o", startPrintingFrom = printingStart, startDebugFrom = debugStart);
 

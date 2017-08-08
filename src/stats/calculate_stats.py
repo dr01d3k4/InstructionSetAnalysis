@@ -1,5 +1,6 @@
 from __future__ import print_function;
 from datetime import datetime;
+import time;
 
 
 WIDTH_FORMATTER = "{:{width}}";
@@ -127,16 +128,41 @@ def getCurrentTimeReadable():
 	return datetime.now().strftime("%Y/%m/%d %H:%M:%S");
 
 
-def calculateStats(architecture, compiler, inputFilename, outputFilename, instructions, nopsSkippedAfterJumps, writeOutput = print):
+def timeTakenToString(timeTaken):
+	timeInSeconds = timeTaken % 60; # int((timeTaken % 60) * 10000) / 10000.0;
+	timeInMinutes = int(timeTaken / 60) % 60;
+	timeInHours = int((timeTaken / 60) / 60);
+	timeInMilliseconds = timeTaken - int(timeTaken);
+
+	timeString = "";
+	timeFormat = "{:} {:}{:}";
+	formatTime = lambda t, s: (", " if (len(timeString) != 0) else "") + timeFormat.format(t, s, "" if (t == 1) else "s");
+
+	if (timeInHours != 0):
+		timeString += formatTime(timeInHours, "hour");
+
+	if (timeInMinutes != 0):
+		timeString += formatTime(timeInMinutes, "minute");
+
+	if ((timeInSeconds != 0) or (len(timeString) == 0)):
+		timeString += formatTime(timeInSeconds, "second");
+
+	return timeString;
+
+
+def calculateStats(architecture, compiler, inputFilename, outputFilename, instructions, nopsSkippedAfterJumps, timeTaken, writeOutput = print):
 	print("");
 	print("Calculating stats");
 	writeOutput("Input filename:\t\t{:}".format(inputFilename));
-	writeOutput("Output filename:\t\t{:}".format(outputFilename));
+	writeOutput("Output filename:\t{:}".format(outputFilename));
 	writeOutput("Architecture:\t\t{:}".format(architecture.getName()));
 	writeOutput("Compiler:\t\t{:}".format(compiler.getName()));
 	writeOutput("Total instructions:\t{:}".format(len(instructions)));
 	writeOutput("Nops skipped:\t\t{:}".format(nopsSkippedAfterJumps));
 	writeOutput("");
+	# writeOutput("Time taken: \t\t{:}".format(time.strftime("%H:%M:%S", time.gmtime(timeTaken))));
+	writeOutput("Time taken:\t\t{:}".format(timeTakenToString(timeTaken)));
+	writeOutput("Time per 1000 intrs:\t{:}".format(timeTakenToString(timeTaken / (len(instructions) / 1000.0))));
 	writeOutput("Generated at {:}".format(getCurrentTimeReadable()));
 	writeOutput("");
 	writeOutput(("-") * 120);
@@ -210,6 +236,8 @@ def calculateStats(architecture, compiler, inputFilename, outputFilename, instru
 
 	uniqueOpcodesComparedToActual = zip(totalActualOpcodesByType, map(len, uniqueOpcodesByType));
 
+	uniqueOpcodesComparedToActualPercentage = map(lambda (total, used): getPercentage(total)(used), uniqueOpcodesComparedToActual);
+
 	operandTypeCounts = map(len, operandsByType);
 	operandPercentages = map(getPercentage(totalOperands), operandTypeCounts);
 
@@ -261,6 +289,9 @@ def calculateStats(architecture, compiler, inputFilename, outputFilename, instru
 	writeOutput("");
 	writeOutput("Total unique opcodes compared to actual opcodes");
 	printByType(opcodeTypes, uniqueOpcodesComparedToActual, writeOutput = writeOutput);
+	writeOutput("");
+	writeOutput("Total unique opcodes compared to actual opcodes percentage");
+	printByType(opcodeTypes, uniqueOpcodesComparedToActualPercentage, percentageFormat, writeOutput = writeOutput);
 
 	writeOutput("");
 	writeOutput("Total operands: {:}".format(totalOperands));

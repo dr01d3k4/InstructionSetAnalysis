@@ -24,11 +24,6 @@ OPCODE_TYPES = [
 ];
 
 
-UNIQUE_OPCODE_TYPE_COUNT = [100] * len(OPCODE_TYPES);
-
-UNIQUE_OPCODE_COUNT = sum(UNIQUE_OPCODE_TYPE_COUNT);
-
-
 def opcodeTypeToString(opcodeType):
 	if ((opcodeType < 0) or (opcodeType >= len(OPCODE_TYPES))):
 		return "None";
@@ -94,6 +89,7 @@ def conditionalMoveDetails(name):
 	};
 
 
+
 top5BitsOpcodes = {
 	# push r16/32/64
 	0x50: {
@@ -127,6 +123,7 @@ top5BitsOpcodes = {
 		"immediateCanBe64WithRexW": True
 	}
 };
+
 
 twoByteTop5BitsOpcodes = {
 	# bswap r32
@@ -1488,6 +1485,60 @@ twoByteOpcodes = {
 	}
 };
 
+# Total unique opcodes 194
+# Total actual opcodes by type
+# 	0 transfer   68
+# 	1 arithmetic 46
+# 	2 logic      31
+# 	3 misc       7
+# 	4 jump       33
+
+# Total unique opcodes 250
+# Total actual opcodes by type
+# 	0 transfer   72
+# 	1 arithmetic 86
+# 	2 logic      43
+# 	3 misc       11
+# 	4 jump       38
+
+def countOpcodeTypes():
+	opcodeCount = 0;
+	opcodeTypes = [0] * len(OPCODE_TYPES);
+
+	for opcodesDict in [top5BitsOpcodes, twoByteTop5BitsOpcodes, oneByteOpcodes, twoByteOpcodes]:
+		for opcode in opcodesDict.values():
+			opcodeName = opcode["name"];
+			opcodeType = opcode["opcodeType"];
+
+			if (type(opcodeName) == str):
+				opcodeCount += 1;
+				opcodeTypes[opcodeType] += 1;
+			else:
+				# If there are 3 names but all same type
+				# Turn it from type = t
+				# Into type = [t, t, t]
+				if (type(opcodeType) == int):
+					opcodeType = [opcodeType] * len(opcodeName);
+
+				for (n, t) in zip(opcodeName, opcodeType):
+					if (n != ""):
+						opcodeTypes[t] += 1;
+
+			# if (type(opcodeType) == int):
+			# 	opcodeCount += 1;
+			# 	opcodeTypes[opcodeType] += 1;
+			# else:
+			# 	for t in opcodeType:
+			# 		opcodeCount += 1;
+			# 		opcodeTypes[t] += 1;
+
+	return opcodeCount, opcodeTypes;
+
+# UNIQUE_OPCODE_TYPE_COUNT = [100] * len(OPCODE_TYPES);
+# UNIQUE_OPCODE_COUNT = sum(UNIQUE_OPCODE_TYPE_COUNT);
+
+UNIQUE_OPCODE_COUNT, UNIQUE_OPCODE_TYPE_COUNT = countOpcodeTypes();
+
 
 def getOpcodeParamOrDefault(opcodeDetails, parameter):
 	if (parameter in opcodeDetails):
@@ -1531,7 +1582,12 @@ class Opcode(object):
 
 
 	def __repr__(self):
-		s = "Opcode(opcode = " + hex(self._opcode);
+		h = hex(self._opcode);
+		hNoPrefix = h[2:];
+		if (len(hNoPrefix) % 2 == 1):
+			h = "0x0" + hNoPrefix;
+
+		s = "Opcode(opcode = " + h;
 		if (self._extension != -1):
 			s += ", extension = " + hex(self._extension);
 		s += ", name = " + self._name;
@@ -1592,3 +1648,6 @@ def getOpcode(opcodeByte, extension, name, opcodeType):
 			OpcodesCache[opcodeByte][extension] = opcode;
 
 	return opcode;
+
+
+

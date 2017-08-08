@@ -1,11 +1,12 @@
 Input filename:		object_files/BranchTest/main
-Output filename:		object_files/BranchTest/results_for_main_nop_skip.txt
+Output filename:	object_files/BranchTest/results_for_main_nop_skip.txt
 Architecture:		x86
 Compiler:		gcc
 Total instructions:	116
 Nops skipped:		7
 
-Generated at 2017/02/21 16:21:53
+Time taken: 		0.0140109062195
+Generated at 2017/04/30 22:10:26
 
 ------------------------------------------------------------------------------------------------------------------------
 
